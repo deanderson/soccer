@@ -64,7 +64,6 @@
   .how-text span{font-size:11px;color:var(--muted);line-height:1.5;}
 
   /* STATS */
-  .stats-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:24px;}
   .stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;flex:1;min-width:70px;text-align:center;}
   .stat-num{font-family:'Bebas Neue',sans-serif;font-size:24px;line-height:1;margin-bottom:2px;}
   .stat-label{font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);}
@@ -287,95 +286,74 @@
 
     <!-- SOCCER -->
     <div class="sport-panel active" id="panel-football">
-      <div class="legend">
-        <div class="legend-item" style="background:var(--orange-bg);border-color:rgba(240,136,62,0.25);color:var(--orange)">🔥 Score Fest</div>
-        <div class="legend-item" style="background:var(--blue-bg);border-color:rgba(56,139,253,0.25);color:var(--blue)">🧱 Defensive</div>
+      <div class="legend-item" style="background:var(--blue-bg);border-color:rgba(56,139,253,0.25);color:var(--blue)">🧱 Defensive</div>
         <div class="legend-item" style="background:var(--red-bg);border-color:rgba(248,81,73,0.25);color:var(--red)">🎯 Blowout</div>
         <div class="legend-item" style="background:var(--green-bg);border-color:rgba(63,185,80,0.25);color:var(--green)">👀 Worth Watching</div>
         <div class="legend-item" style="background:rgba(125,133,144,0.1);border-color:rgba(125,133,144,0.2);color:var(--muted)">😐 Watchable</div>
       </div>
-      <div class="stats-row" id="football-stats"></div>
       <div class="filter-group" id="football-filters"></div>
       <div id="football-games"></div>
     </div>
 
     <!-- NHL -->
     <div class="sport-panel" id="panel-nhl">
-      <div class="legend">
-        <div class="legend-item" style="background:var(--orange-bg);border-color:rgba(240,136,62,0.25);color:var(--orange)">🔥 Score Fest</div>
-        <div class="legend-item" style="background:var(--blue-bg);border-color:rgba(56,139,253,0.25);color:var(--blue)">🧱 Low Action</div>
+      <div class="legend-item" style="background:var(--blue-bg);border-color:rgba(56,139,253,0.25);color:var(--blue)">🧱 Low Action</div>
         <div class="legend-item" style="background:var(--red-bg);border-color:rgba(248,81,73,0.25);color:var(--red)">🎯 Blowout</div>
         <div class="legend-item" style="background:var(--green-bg);border-color:rgba(63,185,80,0.25);color:var(--green)">👀 Worth Watching</div>
         <div class="legend-item" style="background:rgba(125,133,144,0.1);border-color:rgba(125,133,144,0.2);color:var(--muted)">😐 Watchable</div>
       </div>
-      <div class="stats-row" id="nhl-stats"></div>
       <div class="filters" id="nhl-filters"></div>
       <div id="nhl-games"></div>
     </div>
 
     <!-- MLB -->
     <div class="sport-panel" id="panel-mlb">
-      <div class="legend">
-        <div class="legend-item" style="background:var(--orange-bg);border-color:rgba(240,136,62,0.25);color:var(--orange)">🔥 Score Fest</div>
-        <div class="legend-item" style="background:var(--blue-bg);border-color:rgba(56,139,253,0.25);color:var(--blue)">🧱 Low Action</div>
+      <div class="legend-item" style="background:var(--blue-bg);border-color:rgba(56,139,253,0.25);color:var(--blue)">🧱 Low Action</div>
         <div class="legend-item" style="background:var(--red-bg);border-color:rgba(248,81,73,0.25);color:var(--red)">🎯 Blowout</div>
         <div class="legend-item" style="background:var(--green-bg);border-color:rgba(63,185,80,0.25);color:var(--green)">👀 Worth Watching</div>
         <div class="legend-item" style="background:rgba(125,133,144,0.1);border-color:rgba(125,133,144,0.2);color:var(--muted)">😐 Watchable</div>
       </div>
-      <div class="stats-row" id="mlb-stats"></div>
       <div class="filters" id="mlb-filters"></div>
       <div id="mlb-games"></div>
     </div>
 
     <!-- NBA -->
     <div class="sport-panel" id="panel-nba">
-      <div class="legend">
-        <div class="legend-item" style="background:var(--orange-bg);border-color:rgba(240,136,62,0.25);color:var(--orange)">🔥 Score Fest</div>
-        <div class="legend-item" style="background:var(--blue-bg);border-color:rgba(56,139,253,0.25);color:var(--blue)">🧱 Low Action</div>
+      <div class="legend-item" style="background:var(--blue-bg);border-color:rgba(56,139,253,0.25);color:var(--blue)">🧱 Low Action</div>
         <div class="legend-item" style="background:var(--red-bg);border-color:rgba(248,81,73,0.25);color:var(--red)">🎯 Blowout</div>
         <div class="legend-item" style="background:var(--green-bg);border-color:rgba(63,185,80,0.25);color:var(--green)">👀 Worth Watching</div>
         <div class="legend-item" style="background:rgba(125,133,144,0.1);border-color:rgba(125,133,144,0.2);color:var(--muted)">😐 Watchable</div>
       </div>
-      <div class="stats-row" id="nba-stats"></div>
       <div class="filters" id="nba-filters"></div>
       <div id="nba-games"></div>
     </div>
 
     <!-- NFL -->
     <div class="sport-panel" id="panel-nfl">
-      <div class="legend">
-        <div class="legend-item" style="background:var(--orange-bg);border-color:rgba(240,136,62,0.25);color:var(--orange)">🔥 Score Fest</div>
-        <div class="legend-item" style="background:var(--blue-bg);border-color:rgba(56,139,253,0.25);color:var(--blue)">🧱 Defensive</div>
+      <div class="legend-item" style="background:var(--blue-bg);border-color:rgba(56,139,253,0.25);color:var(--blue)">🧱 Defensive</div>
         <div class="legend-item" style="background:var(--red-bg);border-color:rgba(248,81,73,0.25);color:var(--red)">🎯 Blowout</div>
         <div class="legend-item" style="background:var(--green-bg);border-color:rgba(63,185,80,0.25);color:var(--green)">👀 Worth Watching</div>
         <div class="legend-item" style="background:rgba(125,133,144,0.1);border-color:rgba(125,133,144,0.2);color:var(--muted)">😐 Watchable</div>
       </div>
-      <div class="stats-row" id="nfl-stats"></div>
       <div class="filters" id="nfl-filters"></div>
       <div id="nfl-games"></div>
     </div>
 
     <!-- CRICKET T20 -->
     <div class="sport-panel" id="panel-cricket">
-      <div class="legend">
-        <div class="legend-item" style="background:var(--orange-bg);border-color:rgba(240,136,62,0.25);color:var(--orange)">🔥 Score Fest</div>
-        <div class="legend-item" style="background:var(--green-bg);border-color:rgba(63,185,80,0.25);color:var(--green)">👀 Worth Watching</div>
+      <div class="legend-item" style="background:var(--green-bg);border-color:rgba(63,185,80,0.25);color:var(--green)">👀 Worth Watching</div>
         <div class="legend-item" style="background:rgba(125,133,144,0.1);border-color:rgba(125,133,144,0.2);color:var(--muted)">😐 Watchable</div>
         <div class="legend-item" style="background:var(--red-bg);border-color:rgba(248,81,73,0.25);color:var(--red)">🎯 Blowout</div>
       </div>
-      <div class="stats-row" id="cricket-stats"></div>
       <div class="filters" id="cricket-filters"></div>
       <div id="cricket-games"></div>
     </div>
     <!-- TENNIS -->
     <div class="sport-panel" id="panel-tennis">
-      <div class="legend">
-        <div class="legend-item" style="background:var(--green-bg);border-color:rgba(63,185,80,0.25);color:var(--green)">👀 Thriller</div>
-        <div class="legend-item" style="background:var(--orange-bg);border-color:rgba(240,136,62,0.25);color:var(--orange)">🔥 Epic 5-setter</div>
+      <div class="legend-item" style="background:var(--orange-bg);border-color:rgba(240,136,62,0.25);color:var(--orange)">🔥 Epic 5-setter</div>
         <div class="legend-item" style="background:var(--red-bg);border-color:rgba(248,81,73,0.25);color:var(--red)">🎯 Bagelled</div>
         <div class="legend-item" style="background:rgba(125,133,144,0.1);border-color:rgba(125,133,144,0.2);color:var(--muted)">😐 Watchable</div>
       </div>
-      <div class="stats-row" id="tennis-stats"></div>
       <div class="filters" id="tennis-filters"></div>
       <div id="tennis-games"></div>
     </div>
@@ -771,8 +749,6 @@
           upcoming: (data[apiKey]?.upcoming || []),
         };
         document.getElementById(`${s}-count`).textContent = allData[s].recent.length;
-        buildHowItWorks(s);
-        buildStats(s);
         buildFilters(s);
         renderGames(s);
       });
@@ -787,8 +763,6 @@
         upcoming: cricketRaw.upcoming || [],
       };
       document.getElementById('cricket-count').textContent = allData.cricket.recent.length;
-      buildHowItWorks('cricket');
-      buildStats('cricket');
       buildFilters('cricket');
       renderCricket();
 
@@ -803,8 +777,6 @@
       };
       const tennisCountEl = document.getElementById('tennis-count');
       if (tennisCountEl) tennisCountEl.textContent = allData.tennis.recent.length;
-      buildHowItWorks('tennis');
-      buildStats('tennis');
       buildFilters('tennis');
       renderTennis();
 
@@ -826,50 +798,6 @@
   }
 
   // ── HOW IT WORKS ───────────────────────────────────────────────────────
-  function buildHowItWorks(sport) {
-    const panel = document.getElementById(`panel-${sport}`);
-    if (!panel || document.getElementById(`how-toggle-${sport}`)) return;
-    const legend = panel.querySelector('.legend');
-    if (!legend) return;
-
-    const toggleEl = document.createElement('button');
-    toggleEl.className = 'how-toggle';
-    toggleEl.id = `how-toggle-${sport}`;
-    toggleEl.innerHTML = `<span class="arrow">▶</span> What do the categories mean?`;
-    toggleEl.onclick = () => {
-      toggleEl.classList.toggle('open');
-      document.getElementById(`how-panel-${sport}`).classList.toggle('open');
-    };
-
-    const panelEl = document.createElement('div');
-    panelEl.className = 'how-panel';
-    panelEl.id = `how-panel-${sport}`;
-    panelEl.innerHTML = `<div class="how-grid">${
-      HOW_DEFS[sport].map(d => `
-        <div class="how-item">
-          <div class="how-icon">${d.icon}</div>
-          <div class="how-text"><strong>${d.title}</strong><span>${d.desc}</span></div>
-        </div>`).join('')
-    }</div>`;
-
-    legend.insertAdjacentElement('afterend', panelEl);
-    legend.insertAdjacentElement('afterend', toggleEl);
-  }
-
-  // ── STATS ──────────────────────────────────────────────────────────────
-  function buildStats(sport) {
-    const defs = STAT_DEFS[sport] || STAT_DEFS.nfl;
-    const el   = document.getElementById(`${sport}-stats`);
-    const counts = {};
-    defs.forEach(d => counts[d.key] = 0);
-    allData[sport].recent.forEach(g => { if (counts[g.cat.cls] !== undefined) counts[g.cat.cls]++; });
-    el.innerHTML = defs.map(d => `
-      <div class="stat">
-        <div class="stat-num" style="color:${d.color}">${d.icon} ${counts[d.key]}</div>
-        <div class="stat-label">${d.label}</div>
-      </div>`).join('');
-  }
-
   // ── FILTERS ────────────────────────────────────────────────────────────
   function buildFilters(sport) {
     const el = document.getElementById(`${sport}-filters`);
