@@ -552,9 +552,20 @@ exports.handler = async function (event, context) {
       TENNIS_LEAGUES.map(l => fetchTennisLeague(l.slug, l.name))
     );
 
+    // Dedup across leagues — Madrid Open and other combined events appear in both ATP and WTA feeds
+    function dedupMatches(matches) {
+      const seen = new Set();
+      return matches.filter(m => {
+        const key = `${m.home}|${m.away}|${m.ts}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
     return {
-      recent:   [...atp.recent, ...wta.recent].sort((a, b) => b.ts - a.ts).slice(0, 50),
-      upcoming: [...atp.upcoming, ...wta.upcoming].sort((a, b) => a.ts - b.ts).slice(0, 30),
+      recent:   dedupMatches([...atp.recent, ...wta.recent].sort((a, b) => b.ts - a.ts)).slice(0, 50),
+      upcoming: dedupMatches([...atp.upcoming, ...wta.upcoming].sort((a, b) => a.ts - b.ts)).slice(0, 30),
     };
   }
 
