@@ -135,6 +135,10 @@
   .tp-tab:hover:not(.active){color:var(--text);}
   .tp-empty{color:var(--muted);font-size:13px;padding:20px 0;text-align:center;}
   .tp-empty a{color:var(--yellow);cursor:pointer;text-decoration:underline;background:none;border:none;font-family:'Outfit',sans-serif;font-size:13px;}
+  .tp-empty-suggestion{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 18px;}
+  .tp-empty-suggestion span{font-size:13px;color:var(--muted);}
+  .tp-suggest-btn{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;color:var(--text);cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap;transition:all 0.15s;}
+  .tp-suggest-btn:hover{border-color:var(--green);color:var(--green);}
   .top-picks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
   .top-pick-card{
     background:var(--card);border:1px solid var(--border);
@@ -931,26 +935,14 @@
     const cutoff = now - windows[tpWindow];
 
     const games = allData[activeSport]?.recent || [];
-    const inWindow = games.filter(g => g.ts >= cutoff);
-    if (inWindow.length === 0) return [];
-
-    // Sort by cat rank desc, then ts desc
-    return [...inWindow]
+    return games
+      .filter(g => g.ts >= cutoff && (g.cat?.cls === 'scorefest' || g.cat?.cls === 'watchworthy'))
       .sort((a, b) => {
         const rankDiff = (CAT_RANK[b.cat?.cls] ?? 0) - (CAT_RANK[a.cat?.cls] ?? 0);
         return rankDiff !== 0 ? rankDiff : b.ts - a.ts;
       })
       .slice(0, 3)
       .map(g => ({ ...g, sport: activeSport }));
-  }
-
-  function tpScoreStr(g) {
-    if (g.sport === 'cricket') return g.status || '';
-    if (g.sport === 'tennis') {
-      const sets = (g.sets||[]).map(s=>`${s.h}-${s.a}`).join(' ');
-      return `${g.homeSets}–${g.awaySets}${sets ? ' ('+sets+')' : ''}`;
-    }
-    return `${g.h} – ${g.a}`;
   }
 
   function renderTopPicks() {
@@ -960,14 +952,28 @@
     const picks = getTopPicksGames();
 
     if (picks.length === 0) {
-      // Nothing today → auto-switch to recent
-      if (tpWindow === 'today') {
-        container.innerHTML = `<div class="tp-empty">Nothing great today. <button class="tp-tab" style="display:inline;padding:4px 10px" onclick="setTpWindow('recent',this)">See Recent →</button></div>`;
-      } else {
-        container.innerHTML = `<div class="tp-empty">No standout games in this window.</div>`;
-      }
+      const nextWindow = tpWindow === 'today' ? 'recent' : tpWindow === 'recent' ? 'week' : null;
+      const nextLabel  = tpWindow === 'today' ? 'Recent' : 'This Week';
+      const suggestion = nextWindow
+        ? `<div class="tp-empty-suggestion">
+            <span>No standout games ${tpWindow === 'today' ? 'today' : 'in this window'}.</span>
+            <button class="tp-suggest-btn" onclick="setTpWindow('${nextWindow}',this)">
+              Check ${nextLabel} →
+            </button>
+           </div>`
+        : `<div class="tp-empty">No standout games this week.</div>`;
+      container.innerHTML = suggestion;
       return;
     }
+
+  function tpScoreStr(g) {
+    if (g.sport === 'cricket') return g.status || '';
+    if (g.sport === 'tennis') {
+      const sets = (g.sets||[]).map(s=>`${s.h}-${s.a}`).join(' ');
+      return `${g.homeSets}–${g.awaySets}${sets ? ' ('+sets+')' : ''}`;
+    }
+    return `${g.h} – ${g.a}`;
+  }
 
     container.innerHTML = `<div class="top-picks-grid">
       ${picks.map((g, i) => {
