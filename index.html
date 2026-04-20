@@ -254,9 +254,9 @@
       <div class="top-picks-header">
         <div class="top-picks-title">TOP <span>PICKS</span></div>
         <div class="tp-tabs">
-          <button class="tp-tab active" onclick="setTpWindow('today',this)">Today</button>
-          <button class="tp-tab" onclick="setTpWindow('recent',this)">Recent</button>
-          <button class="tp-tab" onclick="setTpWindow('week',this)">This Week</button>
+          <button class="tp-tab active" data-window="today" onclick="setTpWindow('today')">Today</button>
+          <button class="tp-tab" data-window="recent" onclick="setTpWindow('recent')">Recent</button>
+          <button class="tp-tab" data-window="week" onclick="setTpWindow('week')">This Week</button>
         </div>
       </div>
       <div id="top-picks-container"></div>
@@ -921,10 +921,12 @@
 
   let tpWindow = 'today'; // today | recent | week
 
-  function setTpWindow(w, btn) {
+  function setTpWindow(w) {
     tpWindow = w;
-    document.querySelectorAll('.tp-tab').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
+    // Always highlight the correct tab by data, not by which element was clicked
+    document.querySelectorAll('.tp-tab').forEach(b => {
+      b.classList.toggle('active', b.dataset.window === w);
+    });
     renderTopPicks();
   }
 
@@ -940,36 +942,22 @@
       .sort((a, b) => {
         const rankDiff = (CAT_RANK[b.cat?.cls] ?? 0) - (CAT_RANK[a.cat?.cls] ?? 0);
         if (rankDiff !== 0) return rankDiff;
-        // Within same category, prefer higher-scoring games
+        // Within Score Fest, prefer closer margins (4-3 > 5-2 > 6-2)
+        // Within Worth Watching, prefer higher scoring (3-2 > 2-1)
+        const aDiff  = Math.abs((a.h ?? 0) - (a.a ?? 0));
+        const bDiff  = Math.abs((b.h ?? 0) - (b.a ?? 0));
         const aTotal = (a.h ?? 0) + (a.a ?? 0) + (a.homeSets ?? 0) + (a.awaySets ?? 0);
         const bTotal = (b.h ?? 0) + (b.a ?? 0) + (b.homeSets ?? 0) + (b.awaySets ?? 0);
+        if (b.cat?.cls === 'scorefest') {
+          // Closer margin first, then higher scoring
+          if (aDiff !== bDiff) return aDiff - bDiff;
+        }
         if (bTotal !== aTotal) return bTotal - aTotal;
         return b.ts - a.ts;
       })
       .slice(0, 3)
       .map(g => ({ ...g, sport: activeSport }));
   }
-
-  function renderTopPicks() {
-    const container = document.getElementById('top-picks-container');
-    if (!container) return;
-
-    const picks = getTopPicksGames();
-
-    if (picks.length === 0) {
-      const nextWindow = tpWindow === 'today' ? 'recent' : tpWindow === 'recent' ? 'week' : null;
-      const nextLabel  = tpWindow === 'today' ? 'Recent' : 'This Week';
-      const suggestion = nextWindow
-        ? `<div class="tp-empty-suggestion">
-            <span>No standout games ${tpWindow === 'today' ? 'today' : 'in this window'}.</span>
-            <button class="tp-suggest-btn" onclick="setTpWindow('${nextWindow}',this)">
-              Check ${nextLabel} →
-            </button>
-           </div>`
-        : `<div class="tp-empty">No standout games this week.</div>`;
-      container.innerHTML = suggestion;
-      return;
-    }
 
   function tpScoreStr(g) {
     if (g.sport === 'cricket') return g.status || '';
@@ -979,6 +967,33 @@
     }
     return `${g.h} – ${g.a}`;
   }
+
+  function renderTopPicks() {
+    const container = document.getElementById('top-picks-container');
+    if (!container) return;
+
+    const picks = getTopPicksGames();
+    const nextWindow = tpWindow === 'today' ? 'recent' : tpWindow === 'recent' ? 'week' : null;
+    const nextLabel  = tpWindow === 'today' ? 'Recent' : 'This Week';
+
+    const suggestionHTML = nextWindow
+      ? `<div class="tp-empty-suggestion" style="margin-top:10px">
+           <span>${picks.length === 1 ? 'Only 1 result. More in' : 'No standout games ${tpWindow === "today" ? "today" : "in this window"}. Check'} ${nextLabel}.</span>
+           <button class="tp-suggest-btn" onclick="setTpWindow('${nextWindow}')">
+             ${nextLabel} →
+           </button>
+         </div>`
+      : '';
+
+    if (picks.length === 0) {
+      container.innerHTML = nextWindow
+        ? `<div class="tp-empty-suggestion">
+             <span>No standout games ${tpWindow === 'today' ? 'today' : 'in this window'}.</span>
+             <button class="tp-suggest-btn" onclick="setTpWindow('${nextWindow}')">Check ${nextLabel} →</button>
+           </div>`
+        : `<div class="tp-empty">No standout games this week.</div>`;
+      return;
+    }
 
     container.innerHTML = `<div class="top-picks-grid">
       ${picks.map((g, i) => {
@@ -1002,7 +1017,7 @@
             <div class="tp-score"></div>
           </div>`;
       }).join('')}
-    </div>`;
+    </div>${picks.length === 1 && nextWindow ? suggestionHTML : ''}`;
   }
 
   function revealTpCard(btn) {
