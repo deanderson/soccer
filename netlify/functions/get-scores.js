@@ -42,6 +42,7 @@ exports.handler = async function (event, context) {
       // Use UTC date as the grouping key so all leagues bucket consistently
       const utcDate = `${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,'0')}-${String(date.getUTCDate()).padStart(2,'0')}`;
       return {
+        id:     ev.id ?? null,
         home:   home?.team?.displayName ?? "TBD",
         away:   away?.team?.displayName ?? "TBD",
         h:      parseInt(home?.score ?? "0", 10),
@@ -179,14 +180,178 @@ exports.handler = async function (event, context) {
     return { recent, upcoming };
   }
 
+  // ── SOCCER TIMELINE ENRICHMENT ────────────────────────────────────────
+  // Parse a goal clock string like "90'+3'" into a numeric minute
+  function parseMinute(clockStr) {
+    if (!clockStr) return null;
+    const m = clockStr.match(/^(\d+)(?:'?\+(\d+))?/);
+    if (!m) return null;
+    return parseInt(m[1], 10) + (m[2] ? parseInt(m[2], 10) : 0);
+  }
+
+  // Given keyEvents from the summary endpoint, derive timeline-based category override
+  // Returns a category string like "watchworthy", "scorefest", etc. or null to keep existing
+  function categorizeSoccerByTimeline(keyEvents, h, a) {
+    const goals = keyEvents.filter(e =>
+      e.type?.type === "goal" ||
+      (typeof e.type?.text === "string" && e.type.text.toLowerCase().includes("goal"))
+    );
+
+    if (goals.length === 0) return null;
+
+    // Parse each goal into { minute, homeScore, awayScore, team }
+    const timeline = [];
+    for (const g of goals) {
+      const minute = parseMinute(g.clock?.displayValue);
+      if (minute === null) continue;
+      // Extract score from text e.g. "Aston Villa 3, Sunderland 3"
+      const scoreMatch = g.text?.match(/(\d+),\s*\w[\w\s]* (\d+)/);
+      if (!scoreMatch) continue;
+      timeline.push({
+        minute,
+        team: g.team?.displayName,
+        // We can't reliably know which score is home vs away from text alone
+        // but we have the final h/a and can track direction
+      });
+    }
+
+    // Simpler approach: reconstruct score progression from keyEvent texts
+    const scoreProgression = [];
+    for (const g of goals) {
+      const minute = parseMinute(g.clock?.displayValue);
+      if (minute === null) continue;
+      // Text format: "Goal! Team A N, Team B M. ..."
+      const m = g.text?.match(/Goal!\s+.+?\s+(\d+),\s+.+?\s+(\d+)\./);
+      if (!m) continue;
+      scoreProgression.push({
+        minute,
+        s1: parseInt(m[1], 10), // score for team named first in event title (home)
+        s2: parseInt(m[2], 10),
+        team: g.team?.displayName,
+      });
+    }
+
+    if (scoreProgression.length === 0) return null;
+
+    const lastGoalMinute = Math.max(...scoreProgression.map(g => g.minute));
+    const finalH = h, finalA = a;
+    const diff = Math.abs(finalH - finalA);
+    const total = finalH + finalA;
+
+    // Late drama: decisive goal (changed the result) after 80'
+    const lateGoals = scoreProgression.filter(g => g.minute >= 80);
+    let hasLateDrama = false;
+    if (lateGoals.length > 0) {
+      // Check if any late goal was the winner or equaliser
+      const lastScore = scoreProgression[scoreProgression.length - 1];
+      const lastLate  = lateGoals[lateGoals.length - 1];
+      if (lastLate === lastScore) hasLateDrama = true; // final goal was late
+    }
+
+    // Comeback: team was losing by 2+ and came back to draw or win
+    let maxDeficit = 0;
+    let hadComeback = false;
+    for (let i = 0; i < scoreProgression.length; i++) {
+      const { s1, s2 } = scoreProgression[i];
+      const deficit = Math.abs(s1 - s2);
+      if (deficit > maxDeficit) maxDeficit = deficit;
+    }
+    // If at any point someone was 2 down and the final diff is ≤ 1, it's a comeback
+    if (maxDeficit >= 2 && diff <= 1) hadComeback = true;
+
+    // Lead changes: count times the leading team changed
+    let leadChanges = 0;
+    let prevLeader = null;
+    for (const { s1, s2 } of scoreProgression) {
+      const leader = s1 > s2 ? "home" : s2 > s1 ? "away" : "draw";
+      if (prevLeader !== null && leader !== "draw" && leader !== prevLeader && prevLeader !== "draw") {
+        leadChanges++;
+      }
+      prevLeader = leader;
+    }
+
+    // Now decide category override
+    // Score Fest threshold: 6+ goals (already covered by score alone, but confirm)
+    if (total >= 6) return "scorefest";
+
+    // Comeback from 2 down → always Worth Watching regardless of final margin
+    if (hadComeback) return "watchworthy";
+
+    // Lead changes → exciting regardless of final score
+    if (leadChanges >= 2) return "watchworthy";
+
+    // Late drama on a close game → Worth Watching
+    if (hasLateDrama && diff <= 2) return "watchworthy";
+
+    // Late drama on a 1-goal game that was previously level
+    if (hasLateDrama && diff === 1) return "watchworthy";
+
+    // 1-0 or 0-0 with a late winner — still watchworthy
+    if (hasLateDrama && total <= 2 && diff <= 1) return "watchworthy";
+
+    return null; // no override
+  }
+
+  async function enrichSoccerWithTimeline(games, slug) {
+    // Only enrich games that MIGHT change category — skip blowouts (diff >= 3)
+    // and limit to avoid too many API calls. Cap at 12 per league.
+    const candidates = games
+      .filter(g => g.id && Math.abs(g.h - g.a) <= 2) // close games only
+      .slice(0, 12);
+
+    if (candidates.length === 0) return games;
+
+    const summaries = await Promise.all(
+      candidates.map(g =>
+        fetchESPN(
+          `https://site.web.api.espn.com/apis/site/v2/sports/soccer/${slug}/summary?event=${g.id}&region=us&lang=en&contentorigin=espn`
+        ).catch(() => null)
+      )
+    );
+
+    const overrides = new Map();
+    for (let i = 0; i < candidates.length; i++) {
+      const summary = summaries[i];
+      if (!summary?.keyEvents) continue;
+      const override = categorizeSoccerByTimeline(summary.keyEvents, candidates[i].h, candidates[i].a);
+      if (override) overrides.set(candidates[i].id, override);
+    }
+
+    if (overrides.size === 0) return games;
+
+    return games.map(g => {
+      if (!g.id || !overrides.has(g.id)) return g;
+      return { ...g, timelineCat: overrides.get(g.id) };
+    });
+  }
+
   async function fetchAllSoccer() {
     const results = await Promise.all(
       SOCCER_LEAGUES.map(l => fetchSoccerLeague(l.slug, l.name))
     );
-    return {
-      recent:   results.flatMap(r => r.recent).sort((a, b) => b.ts - a.ts),
-      upcoming: results.flatMap(r => r.upcoming).sort((a, b) => a.ts - b.ts),
-    };
+
+    // Merge all recent games first
+    let allRecent = results.flatMap(r => r.recent).sort((a, b) => b.ts - a.ts);
+    const allUpcoming = results.flatMap(r => r.upcoming).sort((a, b) => a.ts - b.ts);
+
+    // Enrich with timeline data per league (in parallel across leagues)
+    const enriched = await Promise.all(
+      SOCCER_LEAGUES.map((l, i) => {
+        const leagueGames = results[i].recent;
+        return enrichSoccerWithTimeline(leagueGames, l.slug);
+      })
+    );
+
+    // Rebuild allRecent with enriched data
+    const enrichedById = new Map();
+    for (const leagueGames of enriched) {
+      for (const g of leagueGames) {
+        if (g.id) enrichedById.set(g.id, g);
+      }
+    }
+    allRecent = allRecent.map(g => g.id && enrichedById.has(g.id) ? enrichedById.get(g.id) : g);
+
+    return { recent: allRecent, upcoming: allUpcoming };
   }
 
   // ── CRICKET T20 ───────────────────────────────────────────────────────
@@ -287,53 +452,67 @@ exports.handler = async function (event, context) {
 
     async function fetchTennisLeague(slug, leagueName) {
       // ESPN tennis scoreboard returns tournaments with nested groupings/competitions
-      // Date range works here unlike soccer
       const data = await fetchESPN(
-        `${BASE}/tennis/${slug}/scoreboard?dates=${espnDate(-14)}-${espnDate(7)}&limit=200`
+        `${BASE}/tennis/${slug}/scoreboard?dates=${espnDate(-21)}-${espnDate(7)}&limit=200`
       );
 
       const recent = [];
       const upcoming = [];
       const seen = new Set();
+      const threeWeeksAgo = now - 21 * 86400000;
 
       for (const tournament of (data.events || [])) {
         const tournamentName = tournament.name || "Tournament";
 
         for (const grouping of (tournament.groupings || [])) {
-          // Only singles
           if (!SINGLES_SLUGS.has(grouping.grouping?.slug)) continue;
 
           for (const comp of (grouping.competitions || [])) {
             const statusName = comp.status?.type?.name ?? "";
 
-            // Skip retirements, walkovers, qualifying rounds
             if (SKIP_STATUSES.has(statusName)) continue;
             if (EXCLUDED_ROUNDS.has(comp.round?.id)) continue;
 
             const isCompleted = comp.status?.type?.completed === true;
-            const date = new Date(comp.date);
+            const date = new Date(comp.startDate || comp.date);
             const ts = date.getTime();
 
-            // Dedup
             const key = `${comp.id}`;
             if (seen.has(key)) continue;
             seen.add(key);
 
-            // Get competitors — singles uses athlete, doubles uses roster
-            const homeComp = comp.competitors?.find(c => c.homeAway === "home");
-            const awayComp = comp.competitors?.find(c => c.homeAway === "away");
+            // order 1 = first listed player, order 2 = second
+            const competitors = comp.competitors || [];
+            const p1 = competitors.find(c => c.order === 1) || competitors[0];
+            const p2 = competitors.find(c => c.order === 2) || competitors[1];
 
-            const home = homeComp?.athlete?.displayName || homeComp?.roster?.shortDisplayName || "TBD";
-            const away = awayComp?.athlete?.displayName || awayComp?.roster?.shortDisplayName || "TBD";
+            if (!p1 || !p2) continue;
 
-            // Set scores from linescores — home perspective
-            const homeLS = homeComp?.linescores || [];
-            const awayLS = awayComp?.linescores || [];
-            const sets = homeLS.map((ls, idx) => ({
+            // Try linescores first
+            const p1LS = p1?.linescores || [];
+            const p2LS = p2?.linescores || [];
+            let sets = p1LS.map((ls, idx) => ({
               h: ls.value ?? 0,
-              a: awayLS[idx]?.value ?? 0,
-              tiebreak: ls.tiebreak ?? awayLS[idx]?.tiebreak ?? null,
+              a: p2LS[idx]?.value ?? 0,
+              tiebreak: ls.tiebreak ?? p2LS[idx]?.tiebreak ?? null,
             }));
+
+            // Fallback: parse from notes text e.g. "Player bt Player 6-2 7-5"
+            if (sets.length === 0 && comp.notes?.[0]?.text) {
+              const noteText = comp.notes[0].text;
+              const setMatches = [...noteText.matchAll(/(\d+)-(\d+)(?:\s*\([\d-]+\))?/g)];
+              if (setMatches.length > 0) {
+                // Winner is named first, p1 may or may not be the winner
+                const p1Won = p1?.winner === true;
+                sets = setMatches.map(m => {
+                  const s1 = parseInt(m[1]), s2 = parseInt(m[2]);
+                  // If p1 won, winner scores are s1; otherwise s2
+                  return p1Won
+                    ? { h: s1, a: s2, tiebreak: null }
+                    : { h: s2, a: s1, tiebreak: null };
+                });
+              }
+            }
 
             const homeSets = sets.filter(s => s.h > s.a).length;
             const awaySets = sets.filter(s => s.a > s.h).length;
@@ -341,22 +520,20 @@ exports.handler = async function (event, context) {
             const round = comp.round?.displayName || "";
             const utcDate = `${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,'0')}-${String(date.getUTCDate()).padStart(2,'0')}`;
 
+            // Player names
+            const home = p1?.athlete?.displayName || p1?.roster?.shortDisplayName || "TBD";
+            const away = p2?.athlete?.displayName || p2?.roster?.shortDisplayName || "TBD";
+
             const match = {
-              home,
-              away,
-              homeSets,
-              awaySets,
-              sets,
-              tournament: tournamentName,
-              round,
-              league: leagueName,
+              home, away, homeSets, awaySets, sets,
+              tournament: tournamentName, round, league: leagueName,
               date: date.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" }),
               dateKey: utcDate,
               time: date.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit", timeZoneName:"short" }),
               ts,
             };
 
-            if (isCompleted && ts >= twoWeeksAgo) {
+            if (isCompleted && ts >= threeWeeksAgo) {
               recent.push(match);
             } else if (!isCompleted && ts >= now) {
               upcoming.push(match);

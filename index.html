@@ -538,7 +538,7 @@
       {icon:'🔥', title:'Score Fest',     desc:'6 or more total goals. End-to-end madness.'},
       {icon:'🧱', title:'Defensive',      desc:'2 or fewer total goals. Tight, tense, low scoring.'},
       {icon:'🎯', title:'Blowout',        desc:'One team won by 3+ goals. Never really in doubt.'},
-      {icon:'👀', title:'Worth Watching', desc:'1 goal apart and 3+ total goals. A proper contest.'},
+      {icon:'👀', title:'Worth Watching', desc:'Close scoreline, late drama, a comeback, or lead changes. A proper contest.'},
       {icon:'😐', title:'Watchable',      desc:'Everything else. Decent enough game.'},
     ],
     nhl: [
@@ -709,7 +709,28 @@
       ['football','nhl','mlb','nba','nfl'].forEach(s => {
         const apiKey = s === 'football' ? 'soccer' : s; // API still returns 'soccer'
         allData[s] = {
-          recent:   (data[apiKey]?.recent   || []).map(g => ({...g, cat: SPORTS[s].cat(g.h, g.a)})),
+          recent: (data[apiKey]?.recent || []).map(g => {
+            const scoreCat = SPORTS[s].cat(g.h, g.a);
+            // For football, allow timeline analysis to override the score-based category
+            if (s === 'football' && g.timelineCat) {
+              const CAT_MAP = {
+                scorefest:   { label:"Score Fest",    icon:"🔥", cls:"scorefest"   },
+                watchworthy: { label:"Worth Watching", icon:"👀", cls:"watchworthy" },
+                defensive:   { label:"Defensive",      icon:"🧱", cls:"defensive"   },
+                blowout:     { label:"Blowout",        icon:"🎯", cls:"blowout"     },
+                watchable:   { label:"Watchable",      icon:"😐", cls:"watchable"   },
+              };
+              const overrideCat = CAT_MAP[g.timelineCat];
+              // Only upgrade — don't downgrade a score-based blowout to watchworthy
+              // Priority: if timeline says watchworthy and score says defensive/watchable → use timeline
+              // But if score already says scorefest → keep scorefest
+              const scoreRank = { scorefest:4, watchworthy:3, watchable:2, defensive:1, blowout:0 };
+              const scoreR = scoreRank[scoreCat.cls] ?? 2;
+              const overR  = scoreRank[g.timelineCat] ?? 2;
+              return { ...g, cat: overR > scoreR ? (overrideCat || scoreCat) : scoreCat };
+            }
+            return { ...g, cat: scoreCat };
+          }),
           upcoming: (data[apiKey]?.upcoming || []),
         };
         document.getElementById(`${s}-count`).textContent = allData[s].recent.length;
