@@ -39,12 +39,7 @@
 
   /* SPORT TABS */
   .sport-tabs{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px;flex-wrap:wrap;}
-  .sport-tab{flex:1;min-width:70px;padding:11px 8px;text-align:center;cursor:pointer;font-size:12px;font-weight:600;color:var(--muted);background:var(--surface);border:none;font-family:'Outfit',sans-serif;transition:background 0.2s,color 0.2s;display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;}
-  .sport-tab:not(:last-child){border-right:1px solid var(--border);}
-  .sport-tab:hover{color:var(--text);background:var(--card);}
-  .sport-tab.active{background:var(--card);color:var(--text);}
-  .tab-count{background:rgba(255,255,255,0.08);border-radius:10px;padding:1px 6px;font-size:10px;color:var(--muted);}
-  .sport-tab.active .tab-count{background:var(--green-bg);color:var(--green);}
+  /* sport tab styles defined below in scrolling tabs section */
 
   /* LEGEND */
   .legend{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px;}
@@ -129,45 +124,51 @@
   .sport-panel.active{display:block;}
   @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 
-  /* TOP PICKS */
-  .top-picks{margin-bottom:28px;}
-  .top-picks-label{
-    font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;
-    color:var(--yellow);margin-bottom:12px;display:flex;align-items:center;gap:8px;
-  }
-  .top-picks-label::after{content:'';flex:1;height:1px;background:rgba(227,179,65,0.25);}
-  .top-picks-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;}
+  /* TOP PICKS HERO */
+  .top-picks-hero{margin-bottom:32px;}
+  .top-picks-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px;}
+  .top-picks-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.06em;color:var(--text);}
+  .top-picks-title span{color:var(--yellow);}
+  .tp-tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px;}
+  .tp-tab{padding:5px 12px;border-radius:5px;font-size:11px;font-weight:700;letter-spacing:0.04em;cursor:pointer;border:none;background:transparent;color:var(--muted);font-family:'Outfit',sans-serif;transition:all 0.15s;}
+  .tp-tab.active{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.3);}
+  .tp-tab:hover:not(.active){color:var(--text);}
+  .tp-empty{color:var(--muted);font-size:13px;padding:20px 0;text-align:center;}
+  .tp-empty a{color:var(--yellow);cursor:pointer;text-decoration:underline;background:none;border:none;font-family:'Outfit',sans-serif;font-size:13px;}
+  .top-picks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
   .top-pick-card{
-    background:linear-gradient(135deg,rgba(227,179,65,0.08),rgba(227,179,65,0.03));
-    border:1px solid rgba(227,179,65,0.25);border-radius:12px;
-    padding:14px 16px;position:relative;overflow:hidden;
-    animation:fadeUp 0.3s ease both;
+    background:var(--card);border:1px solid var(--border);
+    border-radius:12px;padding:14px 16px;position:relative;overflow:hidden;
+    animation:fadeUp 0.3s ease both;cursor:default;
+    transition:transform 0.15s,box-shadow 0.15s;
   }
-  .top-pick-card::before{
-    content:'';position:absolute;top:0;left:0;right:0;height:2px;
-    background:linear-gradient(90deg,var(--yellow),transparent);
-  }
-  .top-pick-sport{
-    font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;
-    color:var(--yellow);margin-bottom:6px;opacity:0.8;
-  }
-  .top-pick-matchup{font-size:14px;font-weight:600;color:var(--text);margin-bottom:4px;line-height:1.3;}
-  .top-pick-meta{font-size:11px;color:var(--muted);margin-bottom:10px;}
-  .top-pick-badge{
-    display:inline-flex;align-items:center;gap:4px;
-    padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;margin-bottom:10px;
-  }
-  .top-pick-reveal{
-    background:rgba(227,179,65,0.12);border:1px solid rgba(227,179,65,0.3);
-    border-radius:6px;padding:4px 10px;font-size:11px;font-weight:600;
-    color:var(--yellow);cursor:pointer;font-family:'Outfit',sans-serif;
-    transition:background 0.15s;display:block;width:100%;text-align:center;
-  }
-  .top-pick-reveal:hover{background:rgba(227,179,65,0.2);}
-  .top-pick-score{
-    font-size:18px;font-weight:700;font-family:'Bebas Neue',sans-serif;
-    color:var(--yellow);text-align:center;display:none;margin-top:4px;
-  }
+  .top-pick-card:hover{transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,0.35);}
+  .top-pick-card.watchworthy{border-left:3px solid var(--green)!important;}
+  .top-pick-card.scorefest{border-left:3px solid var(--orange)!important;}
+  .top-pick-card.watchable{border-left:3px solid var(--muted)!important;}
+  .top-pick-card.defensive{border-left:3px solid var(--blue)!important;}
+  .top-pick-card.blowout{border-left:3px solid var(--red)!important;}
+  .tp-sport{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+  .tp-matchup{font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px;line-height:1.35;}
+  .tp-meta{font-size:11px;color:var(--muted);margin-bottom:8px;}
+  .tp-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:700;margin-bottom:10px;}
+  .watchworthy .tp-badge{background:var(--green-bg);color:var(--green);border:1px solid rgba(63,185,80,0.25);}
+  .scorefest   .tp-badge{background:var(--orange-bg);color:var(--orange);border:1px solid rgba(240,136,62,0.25);}
+  .watchable   .tp-badge{background:rgba(125,133,144,0.1);color:var(--muted);border:1px solid rgba(125,133,144,0.2);}
+  .defensive   .tp-badge{background:var(--blue-bg);color:var(--blue);border:1px solid rgba(56,139,253,0.25);}
+  .blowout     .tp-badge{background:var(--red-bg);color:var(--red);border:1px solid rgba(248,81,73,0.25);}
+  .tp-reveal{background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;font-family:'Outfit',sans-serif;transition:all 0.15s;display:block;width:100%;text-align:center;}
+  .tp-reveal:hover{background:rgba(255,255,255,0.1);color:var(--text);}
+  .tp-score{font-size:18px;font-weight:700;font-family:'Bebas Neue',sans-serif;text-align:center;display:none;margin-top:6px;letter-spacing:0.05em;}
+  .watchworthy .tp-score{color:var(--green);}
+  .scorefest   .tp-score{color:var(--orange);}
+  .watchable   .tp-score,.defensive .tp-score,.blowout .tp-score{color:var(--muted);}
+
+  /* ALL GAMES DIVIDER */
+  .all-games-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;margin-top:8px;}
+  .all-games-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.06em;color:var(--muted);}
+  .all-games-header::after{content:'';flex:1;height:1px;background:var(--border);}
+
 
   /* LAST UPDATED */
   .last-updated{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;}
@@ -193,10 +194,15 @@
   .game-card.is-watched{opacity:0.4;}
   .game-card.is-watched .matchup{text-decoration:line-through;}
 
-  /* SCROLLING TABS — no wrap, horizontal scroll on mobile */
-  .sport-tabs{display:flex;border:1px solid var(--border);border-radius:10px;overflow-x:auto;overflow-y:hidden;margin-bottom:24px;scrollbar-width:none;}
+  /* SCROLLING TABS — primary sport nav, big and obvious */
+  .sport-tabs{display:flex;border:1px solid var(--border);border-radius:12px;overflow-x:auto;overflow-y:hidden;margin-bottom:20px;scrollbar-width:none;background:var(--surface);}
   .sport-tabs::-webkit-scrollbar{display:none;}
-  .sport-tab{flex:0 0 auto;min-width:80px;}
+  .sport-tab{flex:1;min-width:80px;padding:14px 8px;text-align:center;cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);background:transparent;border:none;font-family:'Outfit',sans-serif;transition:background 0.2s,color 0.2s;display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;letter-spacing:0.01em;}
+  .sport-tab:not(:last-child){border-right:1px solid var(--border);}
+  .sport-tab:hover{color:var(--text);background:var(--card);}
+  .sport-tab.active{background:var(--card);color:var(--text);box-shadow:inset 0 -2px 0 var(--green);}
+  .tab-count{background:rgba(255,255,255,0.08);border-radius:10px;padding:1px 6px;font-size:10px;color:var(--muted);font-weight:600;}
+  .sport-tab.active .tab-count{background:var(--green-bg);color:var(--green);}
 
   @media(max-width:560px){
     h1{font-size:clamp(24px,8vw,40px);}
@@ -219,13 +225,15 @@
 <body>
 <div class="wrap">
   <header>
-    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px;flex-wrap:wrap;">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;">
       <div>
         <h1>SPOILER <span class="accent">FREE</span> SCORES</h1>
-        <div class="spoiler-pill" style="margin-top:8px"><div class="dot"></div> Scores hidden until you reveal them</div>
-        <p style="font-size:13px;color:var(--muted);margin-top:10px;font-weight:300;">Too many games. Find the good ones.</p>
+        <p style="font-size:14px;color:var(--muted);margin-top:6px;font-weight:400;letter-spacing:0.01em;">Skip the boring games. No spoilers.</p>
       </div>
-      <div class="last-updated"><div class="last-updated-dot"></div><span id="last-updated-text">Loading...</span></div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
+        <div class="spoiler-pill"><div class="dot"></div> Spoiler-Free Mode: ON</div>
+        <div class="last-updated"><div class="last-updated-dot"></div><span id="last-updated-text">Loading...</span></div>
+      </div>
     </div>
   </header>
 
@@ -233,6 +241,27 @@
   <div class="error-box" id="error-box">⚠️ Could not load scores. Please try refreshing.</div>
 
   <div id="main-content" style="display:none">
+
+    <!-- SPORT TABS — first thing after header -->
+    <div class="sport-tabs" id="sport-tabs"></div>
+
+    <!-- TOP PICKS HERO -->
+    <div class="top-picks-hero">
+      <div class="top-picks-header">
+        <div class="top-picks-title">TOP <span>PICKS</span></div>
+        <div class="tp-tabs">
+          <button class="tp-tab active" onclick="setTpWindow('today',this)">Today</button>
+          <button class="tp-tab" onclick="setTpWindow('recent',this)">Recent</button>
+          <button class="tp-tab" onclick="setTpWindow('week',this)">This Week</button>
+        </div>
+      </div>
+      <div id="top-picks-container"></div>
+    </div>
+
+    <!-- ALL GAMES -->
+    <div class="all-games-header">
+      <div class="all-games-title">ALL GAMES</div>
+    </div>
 
     <!-- SETTINGS -->
     <div class="settings-bar">
@@ -244,16 +273,6 @@
       <div class="settings-actions">
         <button class="settings-btn" onclick="clearWatched()" style="font-size:11px">🗑 Clear Watched Games</button>
       </div>
-    </div>
-
-    <div class="sport-tabs" id="sport-tabs">
-      <button class="sport-tab active" onclick="switchSport('football',this)">⚽ Football <span class="tab-count" id="football-count">—</span></button>
-      <button class="sport-tab" onclick="switchSport('nhl',this)">🏒 NHL <span class="tab-count" id="nhl-count">—</span></button>
-      <button class="sport-tab" onclick="switchSport('mlb',this)">⚾ MLB <span class="tab-count" id="mlb-count">—</span></button>
-      <button class="sport-tab" onclick="switchSport('nba',this)">🏀 NBA <span class="tab-count" id="nba-count">—</span></button>
-      <button class="sport-tab" onclick="switchSport('nfl',this)">🏈 NFL <span class="tab-count" id="nfl-count">—</span></button>
-      <button class="sport-tab" onclick="switchSport('cricket',this)">🏏 T20 <span class="tab-count" id="cricket-count">—</span></button>
-      <button class="sport-tab" onclick="switchSport('tennis',this)">🎾 Tennis <span class="tab-count" id="tennis-count">—</span></button>
     </div>
 
     <!-- SOCCER -->
@@ -357,11 +376,11 @@
   // ── CATEGORY RULES ────────────────────────────────────────────────────
   function categorizeFootball(h, a) {
     const total = h+a, diff = Math.abs(h-a);
-    if (total >= 6)              return {label:"Score Fest",    icon:"🔥", cls:"scorefest"  };
-    if (total <= 2)              return {label:"Defensive",     icon:"🧱", cls:"defensive"  };
-    if (diff >= 3)               return {label:"Blowout",       icon:"🎯", cls:"blowout"    };
-    if (diff === 1 && total >= 3)return {label:"Worth Watching",icon:"👀", cls:"watchworthy"};
-    return                              {label:"Watchable",     icon:"😐", cls:"watchable"  };
+    if (total >= 6)               return {label:"Score Fest",    icon:"🔥", cls:"scorefest"  };
+    if (total <= 2)               return {label:"Defensive",     icon:"🧱", cls:"defensive"  };
+    if (diff >= 3)                return {label:"Blowout",       icon:"🎯", cls:"blowout"    };
+    if (diff === 1 && total >= 4) return {label:"Worth Watching",icon:"👀", cls:"watchworthy"};
+    return                               {label:"Watchable",     icon:"😐", cls:"watchable"  };
   }
 
   const categorizeSoccer = categorizeFootball;
@@ -741,7 +760,6 @@
           upcoming: (data[apiKey]?.upcoming || []),
         };
         document.getElementById(`${s}-count`).textContent = allData[s].recent.length;
-        buildTopPicks(s);
         buildHowItWorks(s);
         buildStats(s);
         buildFilters(s);
@@ -758,7 +776,6 @@
         upcoming: cricketRaw.upcoming || [],
       };
       document.getElementById('cricket-count').textContent = allData.cricket.recent.length;
-      buildTopPicks('cricket');
       buildHowItWorks('cricket');
       buildStats('cricket');
       buildFilters('cricket');
@@ -775,11 +792,13 @@
       };
       const tennisCountEl = document.getElementById('tennis-count');
       if (tennisCountEl) tennisCountEl.textContent = allData.tennis.recent.length;
-      buildTopPicks('tennis');
       buildHowItWorks('tennis');
       buildStats('tennis');
       buildFilters('tennis');
       renderTennis();
+
+      // Render top picks hero (all sports, single call at the end)
+      renderTopPicks();
 
       document.getElementById('loading').style.display = 'none';
       document.getElementById('main-content').style.display = 'block';
@@ -887,73 +906,103 @@
     renderGames('football');
   }
 
-  // ── TOP PICKS ──────────────────────────────────────────────────────────
-  function buildTopPicks(sport) {
-    const panel = document.getElementById(`panel-${sport}`);
-    if (!panel) return;
+  // ── TOP PICKS HERO ─────────────────────────────────────────────────────
+  const SPORT_LABELS = {
+    football:'⚽ Football', nhl:'🏒 NHL', mlb:'⚾ MLB',
+    nba:'🏀 NBA', nfl:'🏈 NFL', cricket:'🏏 Cricket', tennis:'🎾 Tennis'
+  };
 
-    // Remove existing top picks if any
-    const existing = panel.querySelector('.top-picks');
-    if (existing) existing.remove();
+  // Priority order for picks: scorefest > watchworthy > watchable
+  const CAT_RANK = { scorefest:3, watchworthy:2, watchable:1, defensive:0, blowout:0 };
 
-    const games = allData[sport]?.recent || [];
-    const exciting = games
-      .filter(g => g.cat?.cls === 'watchworthy' || g.cat?.cls === 'scorefest')
-      .slice(0, 3);
+  let tpWindow = 'today'; // today | recent | week
 
-    if (exciting.length === 0) return;
-
-    const sportLabel = {
-      football:'Football', nhl:'NHL', mlb:'MLB', nba:'NBA', nfl:'NFL', cricket:'T20 Cricket', tennis:'Tennis'
-    }[sport] || sport.toUpperCase();
-
-    const container = document.createElement('div');
-    container.className = 'top-picks';
-    container.innerHTML = `
-      <div class="top-picks-label">⭐ Top Picks This Week</div>
-      <div class="top-picks-grid">
-        ${exciting.map((g, i) => {
-          const isCricket = sport === 'cricket';
-          const isTennis  = sport === 'tennis';
-          let revealData;
-          if (isCricket) {
-            revealData = `data-cricket="${(g.status||'').replace(/"/g,'&quot;')}"`;
-          } else if (isTennis) {
-            const sets = (g.sets||[]).map(s=>`${s.h}-${s.a}`).join(', ');
-            const scoreStr = `${g.homeSets}–${g.awaySets} sets${sets ? ' ('+sets+')' : ''}`;
-            revealData = `data-tennis="${scoreStr.replace(/"/g,'&quot;')}"`;
-          } else {
-            revealData = `data-h="${g.h}" data-a="${g.a}"`;
-          }
-          return `
-            <div class="top-pick-card" style="animation-delay:${i*0.08}s">
-              <div class="top-pick-sport">${sportLabel} · ${g.league || g.leagueName || ''}</div>
-              <div class="top-pick-matchup">${g.home} vs ${g.away}</div>
-              <div class="top-pick-meta">${g.date || g.dateStr}</div>
-              <div class="top-pick-badge ${g.cat.cls}" style="background:var(--${g.cat.cls==='scorefest'?'orange':'green'}-bg);color:var(--${g.cat.cls==='scorefest'?'orange':'green'});border:1px solid rgba(${g.cat.cls==='scorefest'?'240,136,62':'63,185,80'},0.25)">
-                ${g.cat.icon} ${g.cat.label}
-              </div>
-              <button class="top-pick-reveal" ${revealData} onclick="revealTopPick(this)">👁 Reveal Result</button>
-              <div class="top-pick-score"></div>
-            </div>`;
-        }).join('')}
-      </div>`;
-
-    // Insert at top of panel, before legend
-    const legend = panel.querySelector('.legend');
-    if (legend) panel.insertBefore(container, legend);
-    else panel.prepend(container);
+  function setTpWindow(w, btn) {
+    tpWindow = w;
+    document.querySelectorAll('.tp-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderTopPicks();
   }
 
-  function revealTopPick(btn) {
+  function getTopPicksGames() {
+    const now = Date.now();
+    const DAY  = 86400000;
+    const windows = { today: 1*DAY, recent: 7*DAY, week: 10*DAY };
+    const cutoff = now - windows[tpWindow];
+
+    const games = allData[activeSport]?.recent || [];
+    const inWindow = games.filter(g => g.ts >= cutoff);
+    if (inWindow.length === 0) return [];
+
+    // Sort by cat rank desc, then ts desc
+    return [...inWindow]
+      .sort((a, b) => {
+        const rankDiff = (CAT_RANK[b.cat?.cls] ?? 0) - (CAT_RANK[a.cat?.cls] ?? 0);
+        return rankDiff !== 0 ? rankDiff : b.ts - a.ts;
+      })
+      .slice(0, 3)
+      .map(g => ({ ...g, sport: activeSport }));
+  }
+
+  function tpScoreStr(g) {
+    if (g.sport === 'cricket') return g.status || '';
+    if (g.sport === 'tennis') {
+      const sets = (g.sets||[]).map(s=>`${s.h}-${s.a}`).join(' ');
+      return `${g.homeSets}–${g.awaySets}${sets ? ' ('+sets+')' : ''}`;
+    }
+    return `${g.h} – ${g.a}`;
+  }
+
+  function renderTopPicks() {
+    const container = document.getElementById('top-picks-container');
+    if (!container) return;
+
+    const picks = getTopPicksGames();
+
+    if (picks.length === 0) {
+      // Nothing today → auto-switch to recent
+      if (tpWindow === 'today') {
+        container.innerHTML = `<div class="tp-empty">Nothing great today. <button class="tp-tab" style="display:inline;padding:4px 10px" onclick="setTpWindow('recent',this)">See Recent →</button></div>`;
+      } else {
+        container.innerHTML = `<div class="tp-empty">No standout games in this window.</div>`;
+      }
+      return;
+    }
+
+    container.innerHTML = `<div class="top-picks-grid">
+      ${picks.map((g, i) => {
+        const scoreStr = tpScoreStr(g).replace(/"/g, '&quot;');
+        const isTennis  = g.sport === 'tennis';
+        const isCricket = g.sport === 'cricket';
+        const revealAttr = isCricket
+          ? `data-cricket="${scoreStr}"`
+          : isTennis
+            ? `data-tennis="${scoreStr}"`
+            : `data-h="${g.h}" data-a="${g.a}"`;
+        const dateLabel = g.date || g.dateStr || '';
+        const leagueLabel = g.league || g.leagueName || g.tournament || '';
+        return `
+          <div class="top-pick-card ${g.cat.cls}" style="animation-delay:${i*0.06}s">
+            <div class="tp-sport">${leagueLabel}</div>
+            <div class="tp-matchup">${g.home} vs ${g.away}</div>
+            <div class="tp-meta">${dateLabel}</div>
+            <div class="tp-badge">${g.cat.icon} ${g.cat.label}</div>
+            <button class="tp-reveal" ${revealAttr} onclick="revealTpCard(this)">👁 Reveal</button>
+            <div class="tp-score"></div>
+          </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  function revealTpCard(btn) {
     const scoreEl = btn.nextElementSibling;
     if (scoreEl.style.display === 'block') {
       scoreEl.style.display = 'none';
-      btn.textContent = '👁 Reveal Result';
+      btn.innerHTML = '👁 Reveal';
     } else {
       if (btn.dataset.cricket) {
         scoreEl.style.fontFamily = "'Outfit',sans-serif";
-        scoreEl.style.fontSize = '12px';
+        scoreEl.style.fontSize = '11px';
         scoreEl.textContent = btn.dataset.cricket;
       } else if (btn.dataset.tennis) {
         scoreEl.style.fontFamily = "'Outfit',sans-serif";
@@ -963,7 +1012,7 @@
         scoreEl.textContent = `${btn.dataset.h} – ${btn.dataset.a}`;
       }
       scoreEl.style.display = 'block';
-      btn.textContent = '🙈 Hide Result';
+      btn.innerHTML = '🙈 Hide';
     }
   }
 
@@ -1262,12 +1311,16 @@
     else { el.textContent = scoreStr; el.style.display='block'; btn.textContent='🙈 Hide'; }
   }
 
+  let activeSport = 'football';
+
   function switchSport(sport, tabEl) {
     if (hiddenSports.has(sport)) return;
+    activeSport = sport;
     document.querySelectorAll('.sport-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.sport-panel').forEach(p => p.classList.remove('active'));
     tabEl.classList.add('active');
     document.getElementById(`panel-${sport}`)?.classList.add('active');
+    renderTopPicks();
   }
 
   loadScores();
