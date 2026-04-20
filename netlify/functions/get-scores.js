@@ -14,7 +14,7 @@ exports.handler = async function (event, context) {
     try {
       const res = await fetch(url, {
         headers: { "User-Agent": "Mozilla/5.0" },
-        signal: AbortSignal.timeout(8000),
+        signal: AbortSignal.timeout(4000),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
@@ -114,10 +114,10 @@ exports.handler = async function (event, context) {
   ];
 
   // ESPN soccer scoreboard only accepts a single date (not a range).
-  // We fetch each of the past 14 days + next 7 days per league in parallel.
+  // We fetch each of the past 10 days + next 5 days per league in parallel.
   async function fetchSoccerLeague(slug, leagueName) {
-    // Build array of day offsets: -14 to +7
-    const offsets = Array.from({ length: 22 }, (_, i) => i - 14);
+    // Build array of day offsets: -10 to +4 (15 days total, down from 22)
+    const offsets = Array.from({ length: 15 }, (_, i) => i - 10);
 
     const dayResults = await Promise.all(
       offsets.map(offset =>
@@ -293,11 +293,10 @@ exports.handler = async function (event, context) {
   }
 
   async function enrichSoccerWithTimeline(games, slug) {
-    // Only enrich games that MIGHT change category — skip blowouts (diff >= 3)
-    // and limit to avoid too many API calls. Cap at 12 per league.
+    // Only enrich the most recent close games — cap at 5 per league to keep load times fast
     const candidates = games
-      .filter(g => g.id && Math.abs(g.h - g.a) <= 2) // close games only
-      .slice(0, 12);
+      .filter(g => g.id && Math.abs(g.h - g.a) <= 2)
+      .slice(0, 5);
 
     if (candidates.length === 0) return games;
 
@@ -363,7 +362,7 @@ exports.handler = async function (event, context) {
       try {
         const res = await fetch(
           `https://api.cricapi.com/v1/currentMatches?apikey=${API_KEY}&offset=${offset}`,
-          { signal: AbortSignal.timeout(8000) }
+          { signal: AbortSignal.timeout(4000) }
         );
         const json = await res.json();
         return json.status === "success" ? (json.data || []) : [];
