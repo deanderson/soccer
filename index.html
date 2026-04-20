@@ -406,27 +406,34 @@
   // sets = [{h, a}, ...] — each set's game counts
   function categorizeTennis(homeSets, awaySets, sets) {
     const totalSets = homeSets + awaySets;
-    // Check for a bagel (6-0) or breadstick (6-1) set — dominant win
-    const hasBagel = sets.some(s => (s.h === 6 && s.a === 0) || (s.a === 6 && s.h === 0));
-    const hasBreadstick = sets.some(s => (s.h === 6 && s.a === 1) || (s.a === 6 && s.h === 1));
-    // Tiebreak sets — any set decided in a tiebreak (e.g. 7-6)
-    const hasTiebreak = sets.some(s => s.h === 7 || s.a === 7);
-    // Count close sets (decided by 2 games or tiebreak)
-    const closeSets = sets.filter(s => Math.abs(s.h - s.a) <= 2).length;
     const loserSets = Math.min(homeSets, awaySets);
+    // Tiebreak sets — any set decided in a tiebreak (7-6)
+    const hasTiebreak = sets.some(s => s.h === 7 || s.a === 7);
+    // Close sets: decided by 2 games or fewer (including tiebreaks)
+    const closeSets = sets.filter(s => Math.abs(s.h - s.a) <= 2).length;
+    // Bagel (6-0) or breadstick (6-1) — dominant
+    const hasBagel      = sets.some(s => (s.h === 6 && s.a === 0) || (s.a === 6 && s.h === 0));
+    const hasBreadstick = sets.some(s => (s.h === 6 && s.a === 1) || (s.a === 6 && s.h === 1));
 
-    // Epic: went the full distance (3rd set in best-of-3, 5th in best-of-5)
+    // Epic 5-setter (Grand Slam)
     if (totalSets >= 5) return {label:"Epic 5-setter", icon:"🔥", cls:"scorefest"};
-    if (totalSets >= 3 && loserSets >= 1 && (hasTiebreak || closeSets >= 2))
-      return {label:"Thriller", icon:"👀", cls:"watchworthy"};
-    if (hasBagel && loserSets === 0)
+
+    // Any 3-setter is at least a Thriller — winner had to work for it
+    if (totalSets >= 3 && loserSets >= 1) return {label:"Thriller", icon:"👀", cls:"watchworthy"};
+
+    // Straight sets with tiebreak(s) — close despite being 2-0
+    if (loserSets === 0 && hasTiebreak) return {label:"Thriller", icon:"👀", cls:"watchworthy"};
+
+    // Dominant straight-set win — bagel or breadstick with no tiebreak
+    if (loserSets === 0 && (hasBagel || hasBreadstick) && !hasTiebreak)
       return {label:"Bagelled", icon:"🎯", cls:"blowout"};
-    if ((hasBagel || hasBreadstick) && loserSets === 0)
-      return {label:"Bagelled", icon:"🎯", cls:"blowout"};
-    if (loserSets === 0 && !hasTiebreak)
-      return {label:"Blowout",  icon:"🎯", cls:"blowout"};
-    if (hasTiebreak || closeSets >= 2)
-      return {label:"Thriller", icon:"👀", cls:"watchworthy"};
+
+    // Straight sets, close-ish (e.g. 7-5 6-4) — Watchable
+    if (loserSets === 0 && closeSets >= 2) return {label:"Watchable", icon:"😐", cls:"watchable"};
+
+    // Straight sets, not close
+    if (loserSets === 0) return {label:"Blowout", icon:"🎯", cls:"blowout"};
+
     return {label:"Watchable", icon:"😐", cls:"watchable"};
   }
 
