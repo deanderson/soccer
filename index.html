@@ -131,7 +131,7 @@
   .top-picks-title span{color:var(--yellow);}
   .tp-tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px;}
   .tp-tab{padding:5px 12px;border-radius:5px;font-size:11px;font-weight:700;letter-spacing:0.04em;cursor:pointer;border:none;background:transparent;color:var(--muted);font-family:'Outfit',sans-serif;transition:all 0.15s;}
-  .tp-tab.active{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.3);}
+  .tp-tab.active{background:var(--green);color:#000;box-shadow:0 1px 4px rgba(63,185,80,0.4);}
   .tp-tab:hover:not(.active){color:var(--text);}
   .tp-empty{color:var(--muted);font-size:13px;padding:20px 0;text-align:center;}
   .tp-empty a{color:var(--yellow);cursor:pointer;text-decoration:underline;background:none;border:none;font-family:'Outfit',sans-serif;font-size:13px;}
@@ -939,7 +939,12 @@
       .filter(g => g.ts >= cutoff && (g.cat?.cls === 'scorefest' || g.cat?.cls === 'watchworthy'))
       .sort((a, b) => {
         const rankDiff = (CAT_RANK[b.cat?.cls] ?? 0) - (CAT_RANK[a.cat?.cls] ?? 0);
-        return rankDiff !== 0 ? rankDiff : b.ts - a.ts;
+        if (rankDiff !== 0) return rankDiff;
+        // Within same category, prefer higher-scoring games
+        const aTotal = (a.h ?? 0) + (a.a ?? 0) + (a.homeSets ?? 0) + (a.awaySets ?? 0);
+        const bTotal = (b.h ?? 0) + (b.a ?? 0) + (b.homeSets ?? 0) + (b.awaySets ?? 0);
+        if (bTotal !== aTotal) return bTotal - aTotal;
+        return b.ts - a.ts;
       })
       .slice(0, 3)
       .map(g => ({ ...g, sport: activeSport }));

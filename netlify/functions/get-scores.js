@@ -271,25 +271,18 @@ exports.handler = async function (event, context) {
     }
 
     // Now decide category override
-    // Score Fest threshold: 6+ goals (already covered by score alone, but confirm)
     if (total >= 6) return "scorefest";
 
-    // Comeback from 2 down → always Worth Watching regardless of final margin
-    if (hadComeback) return "watchworthy";
+    // Comeback from 2+ down that ended level or 1-apart
+    if (hadComeback && maxDeficit >= 2 && diff <= 1) return "watchworthy";
 
-    // Lead changes → exciting regardless of final score
+    // Lead changes — game went back and forth
     if (leadChanges >= 2) return "watchworthy";
 
-    // Late drama on a close game → Worth Watching
-    if (hasLateDrama && diff <= 2) return "watchworthy";
+    // Late drama (final goal after 80') on a close game
+    if (hasLateDrama && diff <= 1) return "watchworthy";
 
-    // Late drama on a 1-goal game that was previously level
-    if (hasLateDrama && diff === 1) return "watchworthy";
-
-    // 1-0 or 0-0 with a late winner — still watchworthy
-    if (hasLateDrama && total <= 2 && diff <= 1) return "watchworthy";
-
-    return null; // no override
+    return null;
   }
 
   async function enrichSoccerWithTimeline(games, slug) {
