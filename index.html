@@ -790,6 +790,7 @@
   }
 
   function processSportData(data, sport) {
+    try {
     const apiKey = API_KEY[sport];
     if (sport === 'cricket') {
       const raw = data.cricket || { recent:[], upcoming:[] };
@@ -828,6 +829,9 @@
       if (el) el.textContent = allData[sport].recent.length;
       buildFilters(sport);
       renderGames(sport);
+    }
+    } catch(err) {
+      console.error(`processSportData failed for ${sport}:`, err);
     }
   }
 
