@@ -32,8 +32,11 @@
   .spoiler-pill:hover{background:rgba(63,185,80,0.15);}
   .spoiler-pill.off{background:rgba(125,133,144,0.1);border-color:rgba(125,133,144,0.3);color:var(--muted);}
   .spoiler-pill.off .dot{background:var(--muted);animation:none;}
-  .spoiler-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 18px;font-size:12px;font-weight:600;color:var(--text);box-shadow:0 4px 20px rgba(0,0,0,0.4);z-index:200;opacity:0;transition:opacity 0.2s;pointer-events:none;white-space:nowrap;}
+  .spoiler-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 22px;font-size:13px;font-weight:700;color:var(--text);box-shadow:0 4px 24px rgba(0,0,0,0.5);z-index:200;opacity:0;transition:opacity 0.2s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;}
   .spoiler-toast.show{opacity:1;}
+  .spoiler-toast.toast-error{border-color:var(--red);color:var(--red);background:var(--red-bg);}
+  .spoiler-toast.toast-success{border-color:var(--green);color:var(--green);background:var(--green-bg);}
+  .spoiler-toast.toast-warn{border-color:var(--orange);color:var(--orange);background:var(--orange-bg);}
   .dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:blink 2s ease-in-out infinite;}
   @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
 
@@ -97,7 +100,7 @@
   .debug-score{font-size:13px;font-weight:700;color:var(--green);margin-bottom:6px;}
   .debug-factor{display:flex;justify-content:space-between;color:var(--muted);padding:1px 0;}
   .debug-factor span:last-child{color:var(--green);}
-  .debug-mode .debug-panel{display:block;}
+  .game-card.best-pick{box-shadow:0 0 0 1px rgba(63,185,80,0.25),0 4px 20px rgba(63,185,80,0.1);}
   .debug-toast{position:fixed;top:16px;right:16px;background:var(--card);border:1px solid var(--green);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;color:var(--green);z-index:300;opacity:0;transition:opacity 0.2s;pointer-events:none;}
   .debug-toast.show{opacity:1;}
 
@@ -586,7 +589,7 @@
     nba:      { cat: 'all' },
     nfl:      { cat: 'all' },
     cricket:  { cat: 'all' },
-    tennis:   { cat: 'all' },
+    tennis:   { cat: 'all', tour: 'all' },
   };
   let allData = {};
 
@@ -711,21 +714,18 @@
       const result = await res.json();
 
       if (res.status === 429) {
-        // Cooldown still active — update our local timer
-        showToast(`⏱ ${result.message}`);
+        showToast(`⏱ ${result.message}`, 'warn');
         if (result.fetchedAt) loadedAt = result.fetchedAt;
       } else if (result.ok) {
-        // Success — reload data
-        showToast('✓ Scores refreshed');
+        showToast('✓ Scores refreshed', 'success');
         refreshCooldownUntil = Date.now() + 5 * 60 * 1000;
-        // Reload all sport data
         await loadScores();
       } else {
-        showToast('⚠️ Refresh failed, try again');
+        showToast('⚠️ Refresh failed, try again', 'error');
         btn.disabled = false;
       }
     } catch (err) {
-      showToast('⚠️ Refresh failed');
+      showToast('⚠️ Refresh failed', 'error');
       btn.disabled = false;
     }
 
@@ -854,11 +854,36 @@
             <button class="filter-btn ${state.football.league===l?'league-active':''}"
               onclick="setFootballFilter('league','${l}',this)">${l}</button>`).join('')}
         </div>`;
+    } else if (sport === 'tennis') {
+      el.innerHTML = `
+        <div class="filters" id="tennis-cat-filters">
+          ${SPORTS.tennis.filterDefs.map(k => `
+            <button class="filter-btn ${state.tennis.cat===k?'active':''}"
+              onclick="setTennisFilter('cat','${k}',this)">${FILTER_LABELS[k]||k}</button>`).join('')}
+        </div>
+        <div class="filters" id="tennis-tour-filters" style="margin-top:8px">
+          <button class="filter-btn league-active" id="tennis-tour-all"
+            onclick="setTennisFilter('tour','all',this)">🎾 All Tours</button>
+          <button class="filter-btn"
+            onclick="setTennisFilter('tour','ATP',this)">🎾 ATP</button>
+          <button class="filter-btn"
+            onclick="setTennisFilter('tour','WTA',this)">🎾 WTA</button>
+        </div>`;
     } else {
       el.innerHTML = SPORTS[sport].filterDefs.map(k => `
         <button class="filter-btn ${state[sport].cat===k?'active':''}"
           onclick="setCatFilter('${sport}','${k}',this)">${labels[k]||k}</button>`).join('');
     }
+  }
+
+  function setTennisFilter(type, value, btn) {
+    state.tennis[type] = value;
+    const groupId = type === 'cat' ? 'tennis-cat-filters' : 'tennis-tour-filters';
+    document.getElementById(groupId)?.querySelectorAll('.filter-btn').forEach(b =>
+      b.classList.remove('active', 'league-active')
+    );
+    btn.classList.add(type === 'tour' ? 'league-active' : 'active');
+    renderTennis();
   }
 
   function setCatFilter(sport, key, btn) {
@@ -1082,8 +1107,7 @@
       if (filtered.length === 0) {
         html += '<p class="no-games">No games found for this filter.</p>';
       } else if (state.football.league === 'all') {
-        // All Leagues: flat list grouped by UTC date key, newest first
-        // game-meta already shows the league name on each card
+        const bestPick = sortByExcitement(filtered)[0];
         const byDate = {};
         filtered.forEach(g => {
           const key = g.dateKey || g.date;
@@ -1095,7 +1119,7 @@
           .sort(([, a], [, b]) => b.maxTs - a.maxTs)
           .forEach(([, { games, label }]) => {
             html += `<div class="section-label">${label}</div>`;
-            html += sortByExcitement(games).map((g, i) => gameCardHTML(g, i)).join('');
+            html += sortByExcitement(games).map((g, i) => gameCardHTML(g, i, g===bestPick)).join('');
           });
       } else {
         // Specific league: group by UTC date key, newest first
@@ -1143,11 +1167,13 @@
       if (filtered.length === 0) {
         html += '<p class="no-games">No games found for this category.</p>';
       } else {
+        // Find the best pick — top game by excitement across all dates
+        const bestPick = sortByExcitement(filtered)[0];
         const byDate = {};
         filtered.forEach(g => { if(!byDate[g.date]) byDate[g.date]=[]; byDate[g.date].push(g); });
         Object.keys(byDate).sort((a,b) => byDate[b][0].ts - byDate[a][0].ts).forEach(date => {
           html += `<div class="section-label">${date}</div>`;
-          html += sortByExcitement(byDate[date]).map((g,i) => gameCardHTML(g,i)).join('');
+          html += sortByExcitement(byDate[date]).map((g,i) => gameCardHTML(g,i, g===bestPick)).join('');
         });
       }
 
@@ -1206,12 +1232,12 @@
       </div>`;
   }
 
-  function gameCardHTML(g, i) {
+  function gameCardHTML(g, i, isBestPick = false) {
     const gameId = makeGameId(g);
     const isWatched = watched.has(gameId);
     const safeId = gameId.replace(/'/g, "\\'");
     return `
-      <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
+      <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${isBestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
         <div class="teams" style="flex:1;min-width:0;">
           <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
           <div class="game-meta">${g.date} · ${g.league}</div>
@@ -1260,12 +1286,17 @@
   }
 
   let toastTimer;
-  function showToast(msg) {
+  function showToast(msg, type = '') {
     const toast = document.getElementById('spoiler-toast');
     toast.textContent = msg;
+    toast.classList.remove('toast-error', 'toast-success', 'toast-warn');
+    if (type) toast.classList.add(`toast-${type}`);
     toast.classList.add('show');
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toast.classList.remove('show'), 2500);
+    toastTimer = setTimeout(() => {
+      toast.classList.remove('show');
+      setTimeout(() => toast.classList.remove('toast-error','toast-success','toast-warn'), 200);
+    }, 3000);
   }
 
   function spoilerBlocked(btn) {
@@ -1304,6 +1335,7 @@
     const container = document.getElementById('cricket-games');
     const filter = state.cricket.cat;
     const filtered = filter === 'all' ? recent : recent.filter(g => g.cat.cls === filter);
+    const bestPick = sortByExcitement(filtered)[0];
 
     let html = '';
 
@@ -1325,14 +1357,14 @@
           const isWatched = watched.has(gameId);
           const safeId = gameId.replace(/'/g, "\\'");
           html += `
-            <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}" style="animation-delay:${i*0.04}s">
-              <div class="teams">
+            <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${g===bestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
+              <div class="teams" style="flex:1;min-width:0;">
                 <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
                 <div class="game-meta">${g.dateStr} · ${g.league}</div>
               </div>
               <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
               <button class="reveal-btn" onclick="toggleCricketScore(this,'${safeStatus}')">👁 Reveal</button>
-              <div class="score-reveal" style="font-family:'Outfit',sans-serif;font-size:11px;min-width:80px"></div>
+              <div class="score-reveal" style="font-family:'Outfit',sans-serif;font-size:11px;white-space:normal;max-width:160px;line-height:1.4;text-align:right;"></div>
               <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
             </div>`;
         });
@@ -1369,8 +1401,12 @@
     const container = document.getElementById('tennis-games');
     if (!container) return;
     const filter = state.tennis.cat;
-    const filtered = filter === 'all' ? recent : recent.filter(g => g.cat.cls === filter);
+    const tour   = state.tennis.tour || 'all';
 
+    let filtered = filter === 'all' ? recent : recent.filter(g => g.cat.cls === filter);
+    if (tour !== 'all') filtered = filtered.filter(g => g.league === tour);
+
+    const bestPick = sortByExcitement(filtered)[0];
     let html = '';
 
     function setScoreStr(g) {
@@ -1382,7 +1418,6 @@
     if (filtered.length === 0) {
       html += '<p class="no-games">No tennis matches found for this category.</p>';
     } else {
-      // Group by league (ATP / WTA)
       const byLeague = {};
       filtered.forEach(g => {
         if (!byLeague[g.league]) byLeague[g.league] = [];
@@ -1392,7 +1427,6 @@
       Object.entries(byLeague).forEach(([league, games]) => {
         html += `<div class="league-heading">${league === 'ATP' ? '🎾 ATP' : '🎾 WTA'} — ${league}</div>`;
 
-        // Group by tournament within league
         const byTournament = {};
         games.forEach(g => {
           const t = g.tournament || 'Tournament';
@@ -1408,14 +1442,14 @@
             const isWatched = watched.has(gameId);
             const safeId = gameId.replace(/'/g, "\\'");
             html += `
-              <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}" style="animation-delay:${i*0.04}s">
-                <div class="teams">
+              <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${g===bestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
+                <div class="teams" style="flex:1;min-width:0;">
                   <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
                   <div class="game-meta">${g.date} · ${g.league}</div>
                 </div>
                 <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
                 <button class="reveal-btn" onclick="toggleTennisScore(this,'${safeScore}')">👁 Reveal</button>
-                <div class="score-reveal" style="font-family:'Outfit',sans-serif;font-size:11px;min-width:90px;white-space:nowrap"></div>
+                <div class="score-reveal" style="font-family:'Outfit',sans-serif;font-size:11px;white-space:normal;max-width:130px;line-height:1.4;text-align:right;"></div>
                 <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
               </div>`;
           });
@@ -1423,11 +1457,12 @@
       });
     }
 
-    // Upcoming
-    if (upcoming.length > 0) {
+    // Upcoming — filter by tour too
+    const upcomingFiltered = tour === 'all' ? upcoming : upcoming.filter(g => g.league === tour);
+    if (upcomingFiltered.length > 0) {
       html += `<div class="upcoming-divider">📅 Coming Up</div>`;
       const byLeague = {};
-      upcoming.forEach(g => {
+      upcomingFiltered.forEach(g => {
         if (!byLeague[g.league]) byLeague[g.league] = [];
         byLeague[g.league].push(g);
       });
