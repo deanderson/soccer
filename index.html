@@ -835,48 +835,24 @@
     try {
       buildSportTabs();
 
-      // Phase 1: load the user's default sport immediately
-      const defaultSport = activeSport;
-      const res1 = await fetch(`/.netlify/functions/get-scores?sport=${defaultSport}`);
-      if (!res1.ok) throw new Error('Bad response');
-      const data1 = await res1.json();
+      // Single fetch — blob cache makes this near-instant
+      const res = await fetch(`/.netlify/functions/get-scores?sport=all`);
+      if (!res.ok) throw new Error('Bad response');
+      const data = await res.json();
 
       // Use server's fetch timestamp if available (from blob cache)
-      const serverFetchedAt = res1.headers.get('X-Fetched-At');
+      const serverFetchedAt = res.headers.get('X-Fetched-At');
       loadedAt = serverFetchedAt ? new Date(serverFetchedAt).getTime() : Date.now();
 
-      processSportData(data1, defaultSport);
+      // Process all sports at once
+      ALL_SPORTS.forEach(s => processSportData(data, s.key));
+
       renderTopPicks();
 
-      // Show the page as soon as default sport is ready
       document.getElementById('loading').style.display = 'none';
       document.getElementById('main-content').style.display = 'block';
-      loadedAt = Date.now();
       updateLastUpdatedText();
       setInterval(updateLastUpdatedText, 60000);
-
-      // Mark other tabs as loading
-      otherSports.forEach(s => {
-        const el = document.getElementById(`${s}-count`);
-        if (el) el.textContent = '…';
-      });
-
-      // Phase 2: load all other sports in background, one request each in parallel
-      const otherSports = ALL_SPORTS.map(s => s.key).filter(s => s !== defaultSport);
-      const results = await Promise.all(
-        otherSports.map(s =>
-          fetch(`/.netlify/functions/get-scores?sport=${s}`)
-            .then(r => r.ok ? r.json() : {})
-            .catch(() => ({}))
-        )
-      );
-
-      otherSports.forEach((sport, i) => {
-        processSportData(results[i], sport);
-      });
-
-      // Re-render top picks now all data is loaded
-      renderTopPicks();
 
     } catch(err) {
       console.error(err);
