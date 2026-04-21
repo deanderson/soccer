@@ -89,8 +89,17 @@
   .upcoming-divider::before,.upcoming-divider::after{content:'';flex:1;height:1px;background:linear-gradient(to right,transparent,rgba(188,140,255,0.3),transparent);}
 
   /* GAME CARD */
-  .game-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:9px;display:flex;align-items:center;gap:14px;transition:transform 0.15s,box-shadow 0.15s;animation:fadeUp 0.35s ease both;position:relative;}
+  .game-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:9px;display:flex;align-items:center;gap:14px;transition:transform 0.15s,box-shadow 0.15s;animation:fadeUp 0.35s ease both;position:relative;flex-wrap:nowrap;}
   .game-card:hover{transform:translateX(3px);box-shadow:0 4px 20px rgba(0,0,0,0.3);}
+
+  /* DEBUG MODE */
+  .debug-panel{display:none;width:100%;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;font-family:monospace;}
+  .debug-score{font-size:13px;font-weight:700;color:var(--green);margin-bottom:6px;}
+  .debug-factor{display:flex;justify-content:space-between;color:var(--muted);padding:1px 0;}
+  .debug-factor span:last-child{color:var(--green);}
+  .debug-mode .debug-panel{display:block;}
+  .debug-toast{position:fixed;top:16px;right:16px;background:var(--card);border:1px solid var(--green);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;color:var(--green);z-index:300;opacity:0;transition:opacity 0.2s;pointer-events:none;}
+  .debug-toast.show{opacity:1;}
 
   /* UPCOMING CARD */
   .upcoming-card{background:var(--purple-bg);border:1px solid rgba(188,140,255,0.2);border-left:3px solid var(--purple)!important;border-radius:12px;padding:14px 18px;margin-bottom:9px;display:flex;align-items:center;gap:14px;animation:fadeUp 0.35s ease both;}
@@ -103,8 +112,8 @@
   .game-meta{font-size:11px;color:var(--muted);margin-top:2px;}
 
   .cat-badge{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:7px;font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0;}
-  .reveal-btn{background:rgba(255,255,255,0.06);border:1px solid var(--border);border-radius:7px;padding:5px 11px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background 0.15s,color 0.15s;font-family:'Outfit',sans-serif;}
-  .reveal-btn:hover{background:rgba(255,255,255,0.1);color:var(--text);}
+  .reveal-btn{background:transparent;border:1px solid rgba(255,255,255,0.08);border-radius:7px;padding:4px 10px;font-size:11px;font-weight:500;color:var(--muted);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background 0.15s,color 0.15s;font-family:'Outfit',sans-serif;}
+  .reveal-btn:hover{background:rgba(255,255,255,0.06);color:var(--text);}
   .score-reveal{font-size:16px;font-weight:700;font-family:'Bebas Neue',sans-serif;letter-spacing:0.05em;display:none;flex-shrink:0;min-width:52px;text-align:center;}
 
   .scorefest  {border-left:3px solid var(--orange) !important;}
@@ -156,6 +165,7 @@
   .top-pick-card.watchable{border-left:3px solid var(--muted)!important;}
   .top-pick-card.defensive{border-left:3px solid var(--blue)!important;}
   .top-pick-card.blowout{border-left:3px solid var(--red)!important;}
+  .top-pick-card.best-pick{box-shadow:0 0 0 1px rgba(63,185,80,0.25),0 4px 20px rgba(63,185,80,0.1);}
   .tp-sport{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
   .tp-matchup{font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px;line-height:1.35;}
   .tp-meta{font-size:11px;color:var(--muted);margin-bottom:8px;}
@@ -165,8 +175,8 @@
   .watchable   .tp-badge{background:rgba(125,133,144,0.1);color:var(--muted);border:1px solid rgba(125,133,144,0.2);}
   .defensive   .tp-badge{background:var(--blue-bg);color:var(--blue);border:1px solid rgba(56,139,253,0.25);}
   .blowout     .tp-badge{background:var(--red-bg);color:var(--red);border:1px solid rgba(248,81,73,0.25);}
-  .tp-reveal{background:rgba(255,255,255,0.05);border:1px solid var(--border);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:600;color:var(--muted);cursor:pointer;font-family:'Outfit',sans-serif;transition:all 0.15s;display:block;width:100%;text-align:center;}
-  .tp-reveal:hover{background:rgba(255,255,255,0.1);color:var(--text);}
+  .tp-reveal{background:transparent;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:4px 10px;font-size:11px;font-weight:500;color:var(--muted);cursor:pointer;font-family:'Outfit',sans-serif;transition:all 0.15s;display:block;width:100%;text-align:center;}
+  .tp-reveal:hover{background:rgba(255,255,255,0.06);color:var(--text);}
   .tp-score{font-size:18px;font-weight:700;font-family:'Bebas Neue',sans-serif;text-align:center;display:none;margin-top:6px;letter-spacing:0.05em;}
   .watchworthy .tp-score{color:var(--green);}
   .scorefest   .tp-score{color:var(--orange);}
@@ -181,6 +191,10 @@
   /* LAST UPDATED */
   .last-updated{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;}
   .last-updated-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;}
+  .refresh-btn{background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;padding:2px 6px;border-radius:4px;transition:color 0.15s;display:inline-flex;align-items:center;gap:3px;}
+  .refresh-btn:hover:not(:disabled){color:var(--text);}
+  .refresh-btn:disabled{opacity:0.4;cursor:not-allowed;}
+  .refresh-btn.spinning{animation:spin 1s linear infinite;display:inline-block;}
 
   /* SETTINGS PANEL */
   .settings-bar{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:12px;}
@@ -205,7 +219,7 @@
   /* SCROLLING TABS — primary sport nav, big and obvious */
   .sport-tabs{display:flex;border:1px solid var(--border);border-radius:12px;overflow-x:auto;overflow-y:hidden;margin-bottom:20px;scrollbar-width:none;background:var(--surface);}
   .sport-tabs::-webkit-scrollbar{display:none;}
-  .sport-tab{flex:1;min-width:80px;padding:14px 8px;text-align:center;cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);background:transparent;border:none;font-family:'Outfit',sans-serif;transition:background 0.2s,color 0.2s;display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;letter-spacing:0.01em;}
+  .sport-tab{flex:0 0 auto;padding:14px 14px;text-align:center;cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);background:transparent;border:none;font-family:'Outfit',sans-serif;transition:background 0.2s,color 0.2s;display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;letter-spacing:0.01em;}
   .sport-tab:not(:last-child){border-right:1px solid var(--border);}
   .sport-tab:hover{color:var(--text);background:var(--card);}
   .sport-tab.active{background:var(--card);color:var(--text);box-shadow:inset 0 -2px 0 var(--green);}
@@ -233,6 +247,7 @@
 <body>
 <div class="wrap">
   <div class="spoiler-toast" id="spoiler-toast"></div>
+  <div class="debug-toast" id="debug-toast"></div>
   <header>
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;">
       <div>
@@ -241,7 +256,7 @@
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
         <button id="spoiler-pill" class="spoiler-pill" onclick="toggleSpoilerMode()"><div class="dot"></div> Spoiler-Free Mode: <span id="spoiler-status">ON</span></button>
-        <div class="last-updated"><div class="last-updated-dot"></div><span id="last-updated-text">Loading...</span></div>
+        <div class="last-updated"><div class="last-updated-dot"></div><span id="last-updated-text">Loading...</span><button class="refresh-btn" id="refresh-btn" onclick="refreshNow()" title="Refresh scores">↻</button></div>
       </div>
     </div>
   </header>
@@ -703,6 +718,7 @@
 
   // ── LAST UPDATED (feature #6) ──────────────────────────────────────────
   let loadedAt = null;
+  let refreshCooldownUntil = 0;
 
   function updateLastUpdatedText() {
     if (!loadedAt) return;
@@ -710,86 +726,158 @@
     const txt = mins < 1 ? 'Just updated' : mins === 1 ? 'Updated 1 min ago' : `Updated ${mins} mins ago`;
     const el = document.getElementById('last-updated-text');
     if (el) el.textContent = txt;
+
+    // Update refresh button state
+    const btn = document.getElementById('refresh-btn');
+    if (btn) btn.disabled = Date.now() < refreshCooldownUntil;
+  }
+
+  async function refreshNow() {
+    const btn = document.getElementById('refresh-btn');
+    if (!btn || btn.disabled) return;
+
+    btn.disabled = true;
+    btn.textContent = '↻';
+    btn.classList.add('spinning');
+
+    try {
+      const res = await fetch('/.netlify/functions/refresh-scores', { method: 'POST' });
+      const result = await res.json();
+
+      if (res.status === 429) {
+        // Cooldown still active — update our local timer
+        showToast(`⏱ ${result.message}`);
+        if (result.fetchedAt) loadedAt = result.fetchedAt;
+      } else if (result.ok) {
+        // Success — reload data
+        showToast('✓ Scores refreshed');
+        refreshCooldownUntil = Date.now() + 5 * 60 * 1000;
+        // Reload all sport data
+        await loadScores();
+      } else {
+        showToast('⚠️ Refresh failed, try again');
+        btn.disabled = false;
+      }
+    } catch (err) {
+      showToast('⚠️ Refresh failed');
+      btn.disabled = false;
+    }
+
+    btn.classList.remove('spinning');
+    btn.textContent = '↻';
   }
 
   // ── LOAD ───────────────────────────────────────────────────────────────
-  async function loadScores() {
-    try {
-      const res = await fetch('/.netlify/functions/get-scores');
-      if (!res.ok) throw new Error('Bad response');
-      const data = await res.json();
+  // Map from frontend sport key to API response key
+  const API_KEY = { football:'soccer', nhl:'nhl', mlb:'mlb', nba:'nba', nfl:'nfl', cricket:'cricket', tennis:'tennis' };
 
-      buildSportTabs(); // build tabs respecting hidden sports
+  const TIMELINE_CAT_MAP = {
+    scorefest:   { label:"Score Fest",    icon:"🔥", cls:"scorefest"   },
+    watchworthy: { label:"Worth Watching",icon:"👀", cls:"watchworthy" },
+    defensive:   { label:"Defensive",     icon:"🧱", cls:"defensive"   },
+    blowout:     { label:"Blowout",       icon:"🎯", cls:"blowout"     },
+    watchable:   { label:"Watchable",     icon:"😐", cls:"watchable"   },
+  };
+  const TIMELINE_RANK = { scorefest:4, watchworthy:3, watchable:2, defensive:1, blowout:0 };
 
-      ['football','nhl','mlb','nba','nfl'].forEach(s => {
-        const apiKey = s === 'football' ? 'soccer' : s; // API still returns 'soccer'
-        allData[s] = {
-          recent: (data[apiKey]?.recent || []).map(g => {
-            const scoreCat = SPORTS[s].cat(g.h, g.a);
-            // For football, allow timeline analysis to override the score-based category
-            if (s === 'football' && g.timelineCat) {
-              const CAT_MAP = {
-                scorefest:   { label:"Score Fest",    icon:"🔥", cls:"scorefest"   },
-                watchworthy: { label:"Worth Watching", icon:"👀", cls:"watchworthy" },
-                defensive:   { label:"Defensive",      icon:"🧱", cls:"defensive"   },
-                blowout:     { label:"Blowout",        icon:"🎯", cls:"blowout"     },
-                watchable:   { label:"Watchable",      icon:"😐", cls:"watchable"   },
-              };
-              const overrideCat = CAT_MAP[g.timelineCat];
-              // Only upgrade — don't downgrade a score-based blowout to watchworthy
-              // Priority: if timeline says watchworthy and score says defensive/watchable → use timeline
-              // But if score already says scorefest → keep scorefest
-              const scoreRank = { scorefest:4, watchworthy:3, watchable:2, defensive:1, blowout:0 };
-              const scoreR = scoreRank[scoreCat.cls] ?? 2;
-              const overR  = scoreRank[g.timelineCat] ?? 2;
-              return { ...g, cat: overR > scoreR ? (overrideCat || scoreCat) : scoreCat };
-            }
-            return { ...g, cat: scoreCat };
-          }),
-          upcoming: (data[apiKey]?.upcoming || []),
-        };
-        document.getElementById(`${s}-count`).textContent = allData[s].recent.length;
-        buildFilters(s);
-        renderGames(s);
-      });
+  function applyTimelineCat(g, scoreCat) {
+    if (!g.timelineCat) return scoreCat;
+    const override = TIMELINE_CAT_MAP[g.timelineCat];
+    if (!override) return scoreCat;
+    const scoreR = TIMELINE_RANK[scoreCat.cls] ?? 2;
+    const overR  = TIMELINE_RANK[g.timelineCat] ?? 2;
+    return overR > scoreR ? override : scoreCat;
+  }
 
-      // Cricket — different data shape, categorize using result text
-      const cricketRaw = data.cricket || { recent: [], upcoming: [] };
+  function processSportData(data, sport) {
+    const apiKey = API_KEY[sport];
+    if (sport === 'cricket') {
+      const raw = data.cricket || { recent:[], upcoming:[] };
       allData.cricket = {
-        recent:   (cricketRaw.recent || []).map(g => ({
-          ...g,
-          cat: categorizeCricket(g.resultMargin, g.resultType, g.maxInnings),
-        })),
-        upcoming: cricketRaw.upcoming || [],
+        recent: (raw.recent||[]).map(g => {
+          const scoreCat = categorizeCricket(g.resultMargin, g.resultType, g.maxInnings);
+          return { ...g, cat: applyTimelineCat(g, scoreCat) };
+        }),
+        upcoming: raw.upcoming || [],
       };
-      document.getElementById('cricket-count').textContent = allData.cricket.recent.length;
+      const el = document.getElementById('cricket-count');
+      if (el) el.textContent = allData.cricket.recent.length;
       buildFilters('cricket');
       renderCricket();
-
-      // Tennis — categorize using set scores
-      const tennisRaw = data.tennis || { recent: [], upcoming: [] };
+    } else if (sport === 'tennis') {
+      const raw = data.tennis || { recent:[], upcoming:[] };
       allData.tennis = {
-        recent:   (tennisRaw.recent || []).map(g => ({
-          ...g,
-          cat: categorizeTennis(g.homeSets, g.awaySets, g.sets || []),
-        })),
-        upcoming: tennisRaw.upcoming || [],
+        recent:   (raw.recent||[]).map(g => ({ ...g, cat: categorizeTennis(g.homeSets, g.awaySets, g.sets||[]) })),
+        upcoming: raw.upcoming || [],
       };
-      const tennisCountEl = document.getElementById('tennis-count');
-      if (tennisCountEl) tennisCountEl.textContent = allData.tennis.recent.length;
+      const el = document.getElementById('tennis-count');
+      if (el) el.textContent = allData.tennis.recent.length;
       buildFilters('tennis');
       renderTennis();
+    } else {
+      // football and nhl get timeline override applied
+      const useTimeline = sport === 'football' || sport === 'nhl' || sport === 'nba';
+      allData[sport] = {
+        recent: (data[apiKey]?.recent || []).map(g => {
+          const scoreCat = SPORTS[sport].cat(g.h, g.a);
+          return { ...g, cat: useTimeline ? applyTimelineCat(g, scoreCat) : scoreCat };
+        }),
+        upcoming: data[apiKey]?.upcoming || [],
+      };
+      const el = document.getElementById(`${sport}-count`);
+      if (el) el.textContent = allData[sport].recent.length;
+      buildFilters(sport);
+      renderGames(sport);
+    }
+  }
 
-      // Render top picks hero (all sports, single call at the end)
+  async function loadScores() {
+    try {
+      buildSportTabs();
+
+      // Phase 1: load the user's default sport immediately
+      const defaultSport = activeSport;
+      const res1 = await fetch(`/.netlify/functions/get-scores?sport=${defaultSport}`);
+      if (!res1.ok) throw new Error('Bad response');
+      const data1 = await res1.json();
+
+      // Use server's fetch timestamp if available (from blob cache)
+      const serverFetchedAt = res1.headers.get('X-Fetched-At');
+      loadedAt = serverFetchedAt ? new Date(serverFetchedAt).getTime() : Date.now();
+
+      processSportData(data1, defaultSport);
       renderTopPicks();
 
+      // Show the page as soon as default sport is ready
       document.getElementById('loading').style.display = 'none';
       document.getElementById('main-content').style.display = 'block';
-
-      // Last updated
       loadedAt = Date.now();
       updateLastUpdatedText();
       setInterval(updateLastUpdatedText, 60000);
+
+      // Mark other tabs as loading
+      otherSports.forEach(s => {
+        const el = document.getElementById(`${s}-count`);
+        if (el) el.textContent = '…';
+      });
+
+      // Phase 2: load all other sports in background, one request each in parallel
+      const otherSports = ALL_SPORTS.map(s => s.key).filter(s => s !== defaultSport);
+      const results = await Promise.all(
+        otherSports.map(s =>
+          fetch(`/.netlify/functions/get-scores?sport=${s}`)
+            .then(r => r.ok ? r.json() : {})
+            .catch(() => ({}))
+        )
+      );
+
+      otherSports.forEach((sport, i) => {
+        processSportData(results[i], sport);
+      });
+
+      // Re-render top picks now all data is loaded
+      renderTopPicks();
+
     } catch(err) {
       console.error(err);
       document.getElementById('loading').style.display = 'none';
@@ -891,6 +979,9 @@
     renderTopPicks();
   }
 
+  // Tier 1 leagues always get priority slots in football Top Picks
+  const FOOTBALL_TIER1 = new Set(['Champions League', 'Premier League']);
+
   function getTopPicksGames() {
     const now = Date.now();
     const DAY  = 86400000;
@@ -898,26 +989,51 @@
     const cutoff = now - windows[tpWindow];
 
     const games = allData[activeSport]?.recent || [];
-    return games
+    const candidates = games
       .filter(g => g.ts >= cutoff && (g.cat?.cls === 'scorefest' || g.cat?.cls === 'watchworthy'))
       .sort((a, b) => {
+        // For football, Tier 1 leagues rank above everything else
+        if (activeSport === 'football') {
+          const aTier1 = FOOTBALL_TIER1.has(a.league) ? 1 : 0;
+          const bTier1 = FOOTBALL_TIER1.has(b.league) ? 1 : 0;
+          if (bTier1 !== aTier1) return bTier1 - aTier1;
+        }
         const rankDiff = (CAT_RANK[b.cat?.cls] ?? 0) - (CAT_RANK[a.cat?.cls] ?? 0);
         if (rankDiff !== 0) return rankDiff;
-        // Within Score Fest, prefer closer margins (4-3 > 5-2 > 6-2)
-        // Within Worth Watching, prefer higher scoring (3-2 > 2-1)
         const aDiff  = Math.abs((a.h ?? 0) - (a.a ?? 0));
         const bDiff  = Math.abs((b.h ?? 0) - (b.a ?? 0));
         const aTotal = (a.h ?? 0) + (a.a ?? 0) + (a.homeSets ?? 0) + (a.awaySets ?? 0);
         const bTotal = (b.h ?? 0) + (b.a ?? 0) + (b.homeSets ?? 0) + (b.awaySets ?? 0);
-        if (b.cat?.cls === 'scorefest') {
-          // Closer margin first, then higher scoring
-          if (aDiff !== bDiff) return aDiff - bDiff;
-        }
+        if (b.cat?.cls === 'scorefest' && aDiff !== bDiff) return aDiff - bDiff;
         if (bTotal !== aTotal) return bTotal - aTotal;
         return b.ts - a.ts;
-      })
-      .slice(0, 3)
-      .map(g => ({ ...g, sport: activeSport }));
+      });
+
+    // One per league, but ensure at least 1-2 Tier 1 games if available
+    const seenLeagues = new Set();
+    const picks = [];
+    const tier1Games = candidates.filter(g => FOOTBALL_TIER1.has(g.league));
+    const otherGames = candidates.filter(g => !FOOTBALL_TIER1.has(g.league));
+
+    // Fill up to 2 Tier 1 slots first (if football)
+    if (activeSport === 'football') {
+      for (const g of tier1Games) {
+        if (picks.length >= 2) break;
+        if (seenLeagues.has(g.league)) continue;
+        seenLeagues.add(g.league);
+        picks.push(g);
+      }
+    }
+
+    // Fill remaining slots from all games (one per league)
+    for (const g of candidates) {
+      if (picks.length >= 3) break;
+      if (seenLeagues.has(g.league)) continue;
+      seenLeagues.add(g.league);
+      picks.push(g);
+    }
+
+    return picks.slice(0, 3).map(g => ({ ...g, sport: activeSport }));
   }
 
   function tpScoreStr(g) {
@@ -969,7 +1085,7 @@
         const dateLabel = g.date || g.dateStr || '';
         const leagueLabel = g.league || g.leagueName || g.tournament || '';
         return `
-          <div class="top-pick-card ${g.cat.cls}" style="animation-delay:${i*0.06}s">
+          <div class="top-pick-card ${g.cat.cls}${i === 0 ? ' best-pick' : ''}" style="animation-delay:${i*0.06}s">
             <div class="tp-sport">${leagueLabel}</div>
             <div class="tp-matchup">${g.home} vs ${g.away}</div>
             <div class="tp-meta">${dateLabel}</div>
@@ -1103,13 +1219,54 @@
     container.innerHTML = html;
   }
 
+  // ── DEBUG MODE ─────────────────────────────────────────────────────────
+  let debugMode = false;
+  let debugToastTimer;
+
+  document.addEventListener('keydown', e => {
+    if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+      e.preventDefault();
+      debugMode = !debugMode;
+      document.body.classList.toggle('debug-mode', debugMode);
+      const toast = document.getElementById('debug-toast');
+      toast.textContent = debugMode ? '🔍 Debug Mode ON' : '🔍 Debug Mode OFF';
+      toast.classList.add('show');
+      clearTimeout(debugToastTimer);
+      debugToastTimer = setTimeout(() => toast.classList.remove('show'), 2000);
+      // Re-render current sport to show/hide debug panels
+      if (allData[activeSport]) {
+        if (activeSport === 'cricket') renderCricket();
+        else if (activeSport === 'tennis') renderTennis();
+        else renderGames(activeSport);
+      }
+    }
+  });
+
+  function debugPanelHTML(g) {
+    if (!g.confidence) return '';
+    const { score, factors } = g.confidence;
+    const bar = '█'.repeat(Math.round(score / 10)) + '░'.repeat(10 - Math.round(score / 10));
+    return `
+      <div class="debug-panel">
+        <div class="debug-score">Confidence: ${score}/100 ${bar}</div>
+        ${factors.map(f => `
+          <div class="debug-factor">
+            <span>${f.label}</span>
+            <span>+${f.points}</span>
+          </div>`).join('')}
+        ${g.debug ? `<div class="debug-factor" style="margin-top:4px;color:var(--blue)">
+          <span>Lead changes: ${g.debug.leadChanges ?? '—'} · Largest lead: ${g.debug.largestLead ?? '—'}${g.debug.hasOT ? ' · OT' : ''}${g.debug.hadComeback ? ' · Comeback' : ''}</span>
+        </div>` : ''}
+      </div>`;
+  }
+
   function gameCardHTML(g, i) {
     const gameId = makeGameId(g);
     const isWatched = watched.has(gameId);
     const safeId = gameId.replace(/'/g, "\\'");
     return `
-      <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}" style="animation-delay:${i*0.04}s">
-        <div class="teams">
+      <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
+        <div class="teams" style="flex:1;min-width:0;">
           <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
           <div class="game-meta">${g.date} · ${g.league}</div>
         </div>
@@ -1117,6 +1274,7 @@
         <button class="reveal-btn" onclick="toggleScore(this,${g.h},${g.a})">👁 Reveal</button>
         <div class="score-reveal"></div>
         <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
+        ${debugPanelHTML(g)}
       </div>`;
   }
 

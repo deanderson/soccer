@@ -1,0 +1,9 @@
+{
+  "name": "spoilerfreescores-functions",
+  "version": "1.0.0",
+  "description": "Netlify functions for Spoiler Free Scores",
+  "dependencies": {
+    "@netlify/blobs": "^8.1.0",
+    "@netlify/functions": "^2.8.1"
+  }
+}

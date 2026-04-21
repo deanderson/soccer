@@ -1,7 +1,51 @@
 // ESPN Unofficial API — no API key required (all sports except cricket)
 // Cricket: CricketData.org API (api.cricapi.com) — requires CRICKET_API_KEY env var
 
+const { connectLambda, getStore } = require('@netlify/blobs');
+
 exports.handler = async function (event, context) {
+  connectLambda(event);
+
+  // If called internally by the scheduler, skip blob and do live fetch
+  const isInternal = event.queryStringParameters?._internal === '1';
+  const sportParam = event.queryStringParameters?.sport || 'all';
+
+  // For user-facing requests, try to serve from blob first
+  if (!isInternal) {
+    try {
+      const store = getStore('scores');
+      const cached = await store.get('latest', { type: 'json' });
+      if (cached?.data && cached?.fetchedAt) {
+        const ageMs = Date.now() - cached.fetchedAt;
+        // Serve from cache if less than 20 minutes old (gives buffer for 15min schedule)
+        if (ageMs < 20 * 60 * 1000) {
+          // If sport-specific request, return just that sport's data
+          const body = sportParam !== 'all' && sportParam !== undefined
+            ? buildSportSubset(cached.data, sportParam)
+            : cached.data;
+          return {
+            statusCode: 200,
+            headers: {
+              'Content-Type': 'application/json',
+              'Cache-Control': 'public, max-age=60',
+              'X-Cache': 'HIT',
+              'X-Fetched-At': new Date(cached.fetchedAt).toISOString(),
+            },
+            body: JSON.stringify(body),
+          };
+        }
+      }
+    } catch (err) {
+      console.log('Blob read failed, falling back to live fetch:', err.message);
+    }
+  }
+
+  // Helper to extract one sport's data from the full blob
+  function buildSportSubset(data, sport) {
+    const apiKey = sport === 'football' ? 'soccer' : sport;
+    if (data[apiKey]) return { [apiKey]: data[apiKey] };
+    return data;
+  }
 
   const MIN = 8;
 
@@ -61,7 +105,7 @@ exports.handler = async function (event, context) {
 
   const BASE = "https://site.api.espn.com/apis/site/v2/sports";
   const now  = Date.now();
-  const twoWeeksAgo = now - 14 * 86400000;
+  const twoWeeksAgo = now - 9 * 86400000;
 
   async function fetchSport(scoreboardUrl, leagueName, upcomingCap = 50) {
     const data = await fetchESPN(
@@ -103,21 +147,21 @@ exports.handler = async function (event, context) {
 
   // ── SOCCER LEAGUES ────────────────────────────────────────────────────
   const SOCCER_LEAGUES = [
-    { slug: "eng.1",          name: "Premier League"   },
-    { slug: "esp.1",          name: "La Liga"          },
-    { slug: "ger.1",          name: "Bundesliga"       },
-    { slug: "ita.1",          name: "Serie A"          },
-    { slug: "fra.1",          name: "Ligue 1"          },
-    { slug: "uefa.champions", name: "Champions League" },
-    { slug: "uefa.europa",    name: "Europa League"    },
-    { slug: "usa.1",          name: "MLS"              },
+    { slug: "uefa.champions", name: "Champions League", tier: 1 },
+    { slug: "eng.1",          name: "Premier League",   tier: 1 },
+    { slug: "esp.1",          name: "La Liga",          tier: 2 },
+    { slug: "ger.1",          name: "Bundesliga",       tier: 2 },
+    { slug: "ita.1",          name: "Serie A",          tier: 2 },
+    { slug: "fra.1",          name: "Ligue 1",          tier: 3 },
+    { slug: "uefa.europa",    name: "Europa League",    tier: 3 },
+    { slug: "usa.1",          name: "MLS",              tier: 3 },
   ];
+  const SOCCER_TIMELINE_CAP = { 1: 7, 2: 5, 3: 2 };
 
   // ESPN soccer scoreboard only accepts a single date (not a range).
-  // We fetch each of the past 10 days + next 5 days per league in parallel.
+  // Fetch 9 days back + 4 ahead = 13 requests per league (down from 15)
   async function fetchSoccerLeague(slug, leagueName) {
-    // Build array of day offsets: -10 to +4 (15 days total, down from 22)
-    const offsets = Array.from({ length: 15 }, (_, i) => i - 10);
+    const offsets = Array.from({ length: 13 }, (_, i) => i - 9);
 
     const dayResults = await Promise.all(
       offsets.map(offset =>
@@ -285,11 +329,10 @@ exports.handler = async function (event, context) {
     return null;
   }
 
-  async function enrichSoccerWithTimeline(games, slug) {
-    // Only enrich the most recent close games — cap at 5 per league to keep load times fast
+  async function enrichSoccerWithTimeline(games, slug, cap) {
     const candidates = games
       .filter(g => g.id && Math.abs(g.h - g.a) <= 2)
-      .slice(0, 5);
+      .slice(0, cap);
 
     if (candidates.length === 0) return games;
 
@@ -322,31 +365,150 @@ exports.handler = async function (event, context) {
       SOCCER_LEAGUES.map(l => fetchSoccerLeague(l.slug, l.name))
     );
 
-    // Merge all recent games first
-    let allRecent = results.flatMap(r => r.recent).sort((a, b) => b.ts - a.ts);
-    const allUpcoming = results.flatMap(r => r.upcoming).sort((a, b) => a.ts - b.ts);
-
-    // Enrich with timeline data per league (in parallel across leagues)
+    // Timeline enrichment — tiered caps by league importance
+    // Tier 1 (UCL, PL): 7 each = 14 requests
+    // Tier 2 (La Liga, Bundesliga, Serie A): 5 each = 15 requests
+    // Tier 3 (Ligue 1, Europa, MLS): 2 each = 6 requests
+    // Total: 35 timeline requests, all parallel
     const enriched = await Promise.all(
       SOCCER_LEAGUES.map((l, i) => {
-        const leagueGames = results[i].recent;
-        return enrichSoccerWithTimeline(leagueGames, l.slug);
+        const cap = SOCCER_TIMELINE_CAP[l.tier] ?? 2;
+        return enrichSoccerWithTimeline(results[i].recent, l.slug, cap);
       })
     );
 
-    // Rebuild allRecent with enriched data
     const enrichedById = new Map();
     for (const leagueGames of enriched) {
       for (const g of leagueGames) {
         if (g.id) enrichedById.set(g.id, g);
       }
     }
+
+    let allRecent = results.flatMap(r => r.recent).sort((a, b) => b.ts - a.ts);
     allRecent = allRecent.map(g => g.id && enrichedById.has(g.id) ? enrichedById.get(g.id) : g);
 
-    return { recent: allRecent, upcoming: allUpcoming };
+    return {
+      recent:   allRecent,
+      upcoming: results.flatMap(r => r.upcoming).sort((a, b) => a.ts - b.ts),
+    };
   }
 
-  // ── CRICKET T20 ───────────────────────────────────────────────────────
+  // ── CRICKET T20 (ESPN) ────────────────────────────────────────────────
+  // ESPN cricket league IDs for T20 competitions
+  const CRICKET_LEAGUES = [
+    { id: '8048',  name: 'IPL',       slug: '23694' }, // Indian Premier League (series 8048, league 23694)
+    { id: '12555', name: 'BBL',       slug: '23694' }, // Big Bash League
+    { id: '12801', name: 'PSL',       slug: '23694' }, // Pakistan Super League
+    { id: '23694', name: 'T20I',      slug: '23694' }, // International T20s
+  ];
+
+  function parseCricketNotes(notes) {
+    // Extract key match facts from ESPN cricket notes array
+    const result = {
+      powerplayHome: null,    // runs in powerplay (batting team 2)
+      powerplayAway: null,    // runs in powerplay (batting team 1)
+      inningsBreakScore: null,// score at end of first innings
+      chaseAtDrinks: null,    // score at drinks in chase
+      wicketsInLastOver: 0,
+      lastOverRuns: null,
+    };
+
+    for (const note of (notes || [])) {
+      const t = note.text || '';
+      const sec = note.section;
+
+      // Powerplay note: "Powerplay: Overs 0.1 - 6.0 (Mandatory - 71 runs, 0 wicket)"
+      const pwMatch = t.match(/Powerplay.*?(\d+)\s*runs?,\s*(\d+)\s*wicket/i);
+      if (pwMatch) {
+        const val = { runs: parseInt(pwMatch[1]), wickets: parseInt(pwMatch[2]) };
+        if (sec === '1') result.powerplayAway = val;
+        if (sec === '2') result.powerplayHome = val;
+      }
+
+      // Innings break: "Innings Break: New Zealand - 215/7 in 20.0 overs"
+      const ibMatch = t.match(/Innings Break.*?(\d+)\/(\d+)\s+in\s+([\d.]+)\s+overs/i);
+      if (ibMatch) {
+        result.inningsBreakScore = {
+          runs: parseInt(ibMatch[1]),
+          wickets: parseInt(ibMatch[2]),
+          overs: parseFloat(ibMatch[3]),
+        };
+      }
+
+      // Drinks in chase (section 2): "Drinks: India - 77/4 in 10.0 overs"
+      const drinksMatch = t.match(/Drinks:.*?(\d+)\/(\d+)\s+in\s+([\d.]+)\s+overs/i);
+      if (drinksMatch && sec === '2') {
+        result.chaseAtDrinks = {
+          runs: parseInt(drinksMatch[1]),
+          wickets: parseInt(drinksMatch[2]),
+          overs: parseFloat(drinksMatch[3]),
+        };
+      }
+    }
+
+    return result;
+  }
+
+  function categorizeCricketByTimeline(notes, rosters, resultMargin, resultType, maxInnings) {
+    const facts = parseCricketNotes(notes);
+    const factors = [];
+
+    // Super over would show in notes — look for it
+    const hasSuper = (notes || []).some(n => /super over/i.test(n.text));
+    if (hasSuper) return { cat: 'scorefest', factors: ['Super Over'] };
+
+    // Last-over finish: won by wickets with very few balls to spare
+    // Approximation: if won by wickets and result text mentions last over
+    const lastOverWin = resultType === 'wickets' && resultMargin <= 2;
+
+    // Wicket cluster in chase: 4+ wickets in powerplay
+    const chaseCollapse = facts.powerplayHome && facts.powerplayHome.wickets >= 3;
+
+    // High scoring: both innings 180+
+    const highScoring = facts.inningsBreakScore && facts.inningsBreakScore.runs >= 180 && maxInnings >= 180;
+
+    // Close chase: at drinks (10 overs) batting team within 10 runs of required
+    let closeChase = false;
+    if (facts.chaseAtDrinks && facts.inningsBreakScore) {
+      const target = facts.inningsBreakScore.runs + 1;
+      const overs = facts.chaseAtDrinks.overs;
+      const runsScored = facts.chaseAtDrinks.runs;
+      // Required rate at drinks vs actual rate
+      const requiredRemaining = target - runsScored;
+      const oversRemaining = 20 - overs;
+      const requiredRate = requiredRemaining / oversRemaining;
+      const actualRate = runsScored / overs;
+      // If required rate is between 8-12 (tense but achievable) it's a close chase
+      if (requiredRate >= 8 && requiredRate <= 13) closeChase = true;
+    }
+
+    if (highScoring && (resultMargin <= 10 || resultType === 'wickets')) {
+      return { cat: 'scorefest', factors: ['High scoring', 'Close finish'] };
+    }
+    if (lastOverWin) {
+      return { cat: 'watchworthy', factors: ['Last-over finish'] };
+    }
+    if (closeChase && resultType === 'wickets' && resultMargin <= 4) {
+      return { cat: 'watchworthy', factors: ['Close chase'] };
+    }
+    if (chaseCollapse && resultType === 'runs' && resultMargin <= 20) {
+      return { cat: 'watchworthy', factors: ['Collapse under pressure'] };
+    }
+    if (highScoring) {
+      return { cat: 'scorefest', factors: ['High scoring'] };
+    }
+
+    return null;
+  }
+
+  async function fetchCricketSummary(espnId, leagueSlug) {
+    try {
+      return await fetchESPN(
+        `https://site.web.api.espn.com/apis/site/v2/sports/cricket/${leagueSlug}/summary?event=${espnId}&region=us&lang=en&contentorigin=espn`
+      );
+    } catch (e) { return null; }
+  }
+
   async function fetchCricket() {
     const API_KEY = process.env.CRICKET_API_KEY;
     if (!API_KEY) return { recent: [], upcoming: [] };
@@ -383,27 +545,19 @@ exports.handler = async function (event, context) {
       const dateStr = date.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
       const timeStr = date.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit", timeZoneName:"short" });
 
-      // Extract league name from match name
       const leagueMatch = m.name.match(/,\s*(.+)$/);
       const league = leagueMatch ? leagueMatch[1].trim() : "T20";
 
-      // Parse teams from name (before the comma)
       const teams = m.teams || [];
       const home = teams[0] || "TBD";
       const away = teams[1] || "TBD";
 
-      // Parse scores for Score Fest detection
       const scores = m.score || [];
       const maxInnings = Math.max(0, ...scores.map(s => s.r ?? 0));
 
-      // Parse result from status string
-      // e.g. "Gujarat Titans won by 5 wkts" or "India won by 47 runs"
-      let resultMargin = null;
-      let resultType   = null; // "runs" or "wickets"
-
+      let resultMargin = null, resultType = null;
       const runsMatch    = m.status?.match(/won by (\d+) runs?/i);
       const wicketsMatch = m.status?.match(/won by (\d+) wkts?/i);
-
       if (runsMatch)    { resultMargin = parseInt(runsMatch[1]);    resultType = "runs";    }
       if (wicketsMatch) { resultMargin = parseInt(wicketsMatch[1]); resultType = "wickets"; }
 
@@ -413,20 +567,88 @@ exports.handler = async function (event, context) {
           ts: date.getTime(),
           status: m.status,
           resultMargin, resultType, maxInnings,
+          // Store cricapi ID for potential ESPN matching
+          cricapiId: m.id,
         });
       } else if (!m.matchEnded && date.getTime() >= now) {
-        upcoming.push({
-          home, away, league, dateStr, timeStr,
-          ts: date.getTime(),
-        });
+        upcoming.push({ home, away, league, dateStr, timeStr, ts: date.getTime() });
       }
     });
 
+    const recentSorted = recent.sort((a, b) => b.ts - a.ts).slice(0, 20);
+
+    // Timeline enrichment via ESPN — match by team name + date
+    // We search ESPN's T20I scoreboard for matching games and fetch summaries
+    // ESPN league 23694 covers international T20s; IPL needs series-specific search
+    // Strategy: try to find ESPN event IDs by searching their cricket scoreboard
+    const candidates = recentSorted.filter(g =>
+      g.resultMargin !== null && (
+        (g.resultType === 'wickets' && g.resultMargin <= 3) ||
+        (g.resultType === 'runs' && g.resultMargin <= 20) ||
+        g.maxInnings >= 180
+      )
+    ).slice(0, 5);
+
+    if (candidates.length > 0) {
+      // Try ESPN cricket scoreboard to find event IDs
+      try {
+        const today = espnDate(0);
+        const tenDaysAgo = espnDate(-10);
+        const espnScoreboard = await fetchESPN(
+          `https://site.api.espn.com/apis/site/v2/sports/cricket/23694/scoreboard?dates=${tenDaysAgo}-${today}&limit=50`
+        ).catch(() => null);
+
+        if (espnScoreboard?.events) {
+          // Build a map of ESPN events by team names + date for matching
+          const espnEventMap = new Map();
+          for (const ev of espnScoreboard.events) {
+            const competitors = ev.competitions?.[0]?.competitors || [];
+            const names = competitors.map(c => c.team?.displayName || c.team?.shortDisplayName || '').join('|').toLowerCase();
+            const dateKey = ev.date?.slice(0, 10);
+            espnEventMap.set(`${names}|${dateKey}`, ev.id);
+          }
+
+          // Try to match candidates to ESPN events
+          const enriched = await Promise.all(candidates.map(async g => {
+            const dateKey = new Date(g.ts).toISOString().slice(0, 10);
+            const teamKey = `${g.home}|${g.away}`.toLowerCase();
+            const reverseKey = `${g.away}|${g.home}`.toLowerCase();
+
+            // Try both team orderings
+            const espnId = espnEventMap.get(`${teamKey}|${dateKey}`) ||
+                           espnEventMap.get(`${reverseKey}|${dateKey}`);
+
+            if (!espnId) return g;
+
+            const summary = await fetchCricketSummary(espnId, '23694');
+            if (!summary) return g;
+
+            const timelineResult = categorizeCricketByTimeline(
+              summary.notes, summary.rosters, g.resultMargin, g.resultType, g.maxInnings
+            );
+
+            if (!timelineResult) return g;
+            return { ...g, timelineCat: timelineResult.cat, debug: { factors: timelineResult.factors } };
+          }));
+
+          // Merge enriched back
+          const enrichedMap = new Map(enriched.map(g => [g.cricapiId, g]));
+          return {
+            recent: recentSorted.map(g => enrichedMap.get(g.cricapiId) || g),
+            upcoming: upcoming.sort((a, b) => a.ts - b.ts).slice(0, 20),
+          };
+        }
+      } catch (err) {
+        console.log('Cricket ESPN enrichment failed, using basic data:', err.message);
+      }
+    }
+
     return {
-      recent:   recent.sort((a, b) => b.ts - a.ts).slice(0, 20),
+      recent:   recentSorted,
       upcoming: upcoming.sort((a, b) => a.ts - b.ts).slice(0, 20),
     };
   }
+
 
   // ── TENNIS ────────────────────────────────────────────────────────────
   async function fetchTennis() {
@@ -561,23 +783,325 @@ exports.handler = async function (event, context) {
     };
   }
 
-  // ── FETCH ALL ─────────────────────────────────────────────────────────
-  const [soccer, nhl, mlb, nba, nfl, cricket, tennis] = await Promise.all([
-    fetchAllSoccer(),
-    fetchSport(`${BASE}/hockey/nhl/scoreboard`,     "NHL"),
-    fetchSport(`${BASE}/baseball/mlb/scoreboard`,   "MLB", 15),
-    fetchSport(`${BASE}/basketball/nba/scoreboard`, "NBA"),
-    fetchSport(`${BASE}/football/nfl/scoreboard`,   "NFL"),
-    fetchCricket(),
-    fetchTennis(),
-  ]);
+  // ── NHL TIMELINE ENRICHMENT ───────────────────────────────────────────
+  function categorizeNHLByTimeline(plays, h, a) {
+    const diff  = Math.abs(h - a);
+    const total = h + a;
+
+    // Only look at goal plays
+    const goals = plays.filter(p =>
+      p.type?.text?.toLowerCase().includes('goal') ||
+      p.type?.id === '505' // ESPN goal type ID
+    );
+
+    if (goals.length === 0) return null;
+
+    // Track score progression
+    const scoreProgression = [];
+    for (const g of goals) {
+      const period = g.period?.number ?? 0;
+      const clock  = g.clock?.displayValue ?? '';
+      // Convert clock to elapsed minutes (NHL clock counts down)
+      const [mins, secs] = clock.split(':').map(Number);
+      const periodStart = (period - 1) * 20;
+      const elapsed = isNaN(mins) ? periodStart : periodStart + (20 - mins - (secs > 0 ? 0 : 0));
+      const homeScore = g.homeScore ?? g.score?.home ?? null;
+      const awayScore = g.awayScore ?? g.score?.away ?? null;
+      if (homeScore !== null) {
+        scoreProgression.push({ elapsed, period, h: homeScore, a: awayScore, team: g.team?.displayName });
+      }
+    }
+
+    if (scoreProgression.length === 0) return null;
+
+    // Late drama: goal in last 5 min of regulation (period 3, <5 min remaining) or OT
+    const lateGoals = scoreProgression.filter(g => g.period >= 3);
+    const lastGoal  = scoreProgression[scoreProgression.length - 1];
+    const hasOT     = scoreProgression.some(g => g.period > 3);
+    const hasLateDrama = hasOT || (lateGoals.length > 0 && lastGoal === lateGoals[lateGoals.length - 1]);
+
+    // Comeback: team was 2+ down and came back to win or tie
+    let maxDeficit = 0;
+    for (const { h: hs, a: as } of scoreProgression) {
+      maxDeficit = Math.max(maxDeficit, Math.abs(hs - as));
+    }
+    const hadComeback = maxDeficit >= 2 && diff <= 1;
+
+    // Lead changes
+    let leadChanges = 0, prevLeader = null;
+    for (const { h: hs, a: as } of scoreProgression) {
+      const leader = hs > as ? 'home' : as > hs ? 'away' : 'draw';
+      if (prevLeader && leader !== 'draw' && leader !== prevLeader && prevLeader !== 'draw') leadChanges++;
+      prevLeader = leader;
+    }
+
+    if (total >= 8) return 'scorefest';
+    if (hadComeback) return 'watchworthy';
+    if (leadChanges >= 2) return 'watchworthy';
+    if (hasLateDrama && diff <= 1) return 'watchworthy';
+    return null;
+  }
+
+  async function fetchNHLWithTimeline() {
+    const data = await fetchESPN(`${BASE}/hockey/nhl/scoreboard?dates=${espnDate(-14)}-${espnDate(7)}&limit=500`);
+    const events = normalizeEvents(data, "NHL");
+
+    const recent = events.filter(g => g.status === "final" && g.ts >= twoWeeksAgo).sort((a, b) => b.ts - a.ts);
+    const upcoming = events.filter(g => g.status === "upcoming" && g.ts >= now).sort((a, b) => a.ts - b.ts).slice(0, 50);
+
+    // Enrich close games with timeline data — cap at 7
+    const candidates = recent.filter(g => g.id && Math.abs(g.h - g.a) <= 2).slice(0, 7);
+
+    if (candidates.length === 0) return { recent, upcoming };
+
+    const summaries = await Promise.all(
+      candidates.map(g =>
+        fetchESPN(
+          `https://site.web.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=${g.id}&region=us&lang=en&contentorigin=espn`
+        ).catch(() => null)
+      )
+    );
+
+    const overrides = new Map();
+    for (let i = 0; i < candidates.length; i++) {
+      const summary = summaries[i];
+      if (!summary) continue;
+      // ESPN NHL summary has plays array
+      const plays = summary.plays || summary.playByPlay || [];
+      const override = categorizeNHLByTimeline(plays, candidates[i].h, candidates[i].a);
+      if (override) overrides.set(candidates[i].id, override);
+    }
+
+    const enrichedRecent = recent.map(g =>
+      g.id && overrides.has(g.id) ? { ...g, timelineCat: overrides.get(g.id) } : g
+    );
+
+    return { recent: enrichedRecent, upcoming };
+  }
+
+  // ── NBA TIMELINE ENRICHMENT ───────────────────────────────────────────
+  function categorizeNBAByTimeline(summary, h, a) {
+    const diff  = Math.abs(h - a);
+    const total = h + a;
+
+    // ESPN NBA summary has boxscore with team stats including leadChanges and largestLead
+    const teams = summary.boxscore?.teams || [];
+    const homeTeam = teams.find(t => t.homeAway === 'home') || teams[0];
+    const awayTeam = teams.find(t => t.homeAway === 'away') || teams[1];
+
+    // Extract lead changes and largest lead from team stats
+    let leadChanges = 0, largestLead = 0;
+    for (const team of teams) {
+      for (const stat of (team.statistics || [])) {
+        if (stat.name === 'leadChanges') leadChanges = Math.max(leadChanges, parseInt(stat.displayValue) || 0);
+        if (stat.name === 'largestLead') largestLead = Math.max(largestLead, parseInt(stat.displayValue) || 0);
+      }
+    }
+
+    // Check for OT from header
+    const hasOT = (summary.header?.competitions?.[0]?.status?.period ?? 4) > 4;
+
+    // Q4 scoring from line scores — check if trailing team won or closed the gap in Q4
+    const homeLinescore = homeTeam?.statistics?.find(s => s.name === 'points')?.splits?.categories?.[0]?.stats || [];
+    const awayLinescore = awayTeam?.statistics?.find(s => s.name === 'points')?.splits?.categories?.[0]?.stats || [];
+
+    // Comeback: was down big (largestLead ≥ 10) but won or kept it close
+    const hadComeback = largestLead >= 10 && diff <= 7;
+
+    // Score Fest: 220+ and close
+    if (total >= 220 && diff <= 7) return { cat: 'scorefest', leadChanges, largestLead, hasOT, hadComeback };
+
+    // Worth watching conditions
+    if (hasOT) return { cat: 'watchworthy', leadChanges, largestLead, hasOT, hadComeback };
+    if (hadComeback) return { cat: 'watchworthy', leadChanges, largestLead, hasOT, hadComeback };
+    if (leadChanges >= 10 && diff <= 7) return { cat: 'watchworthy', leadChanges, largestLead, hasOT, hadComeback };
+
+    return { cat: null, leadChanges, largestLead, hasOT, hadComeback };
+  }
+
+  async function fetchNBAWithTimeline() {
+    const data = await fetchESPN(`${BASE}/basketball/nba/scoreboard?dates=${espnDate(-14)}-${espnDate(7)}&limit=500`);
+    const events = normalizeEvents(data, "NBA");
+
+    const recent = events.filter(g => g.status === "final" && g.ts >= twoWeeksAgo).sort((a, b) => b.ts - a.ts);
+    const upcoming = events.filter(g => g.status === "upcoming" && g.ts >= now).sort((a, b) => a.ts - b.ts).slice(0, 50);
+
+    // Enrich close games — cap at 7
+    const candidates = recent.filter(g => g.id && Math.abs(g.h - g.a) <= 10).slice(0, 7);
+
+    if (candidates.length === 0) return { recent, upcoming };
+
+    const summaries = await Promise.all(
+      candidates.map(g =>
+        fetchESPN(
+          `https://site.web.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${g.id}&region=us&lang=en&contentorigin=espn`
+        ).catch(() => null)
+      )
+    );
+
+    const enrichedRecent = recent.map(g => {
+      if (!g.id) return g;
+      const idx = candidates.findIndex(c => c.id === g.id);
+      if (idx === -1 || !summaries[idx]) return g;
+      const result = categorizeNBAByTimeline(summaries[idx], g.h, g.a);
+      return {
+        ...g,
+        timelineCat: result.cat || undefined,
+        debug: {
+          leadChanges: result.leadChanges,
+          largestLead: result.largestLead,
+          hasOT: result.hasOT,
+          hadComeback: result.hadComeback,
+        }
+      };
+    });
+
+    return { recent: enrichedRecent, upcoming };
+  }
+
+  // ── CONFIDENCE SCORING ────────────────────────────────────────────────
+  // Returns { score: 0-100, factors: [{label, points}] }
+  function computeConfidence(g, sport) {
+    const factors = [];
+    let score = 0;
+
+    const h = g.h ?? 0, a = g.a ?? 0;
+    const diff  = Math.abs(h - a);
+    const total = h + a;
+
+    if (sport === 'football') {
+      // Goals
+      if (total >= 7)      { factors.push({ label: `${total} total goals`, points: 30 }); score += 30; }
+      else if (total >= 5) { factors.push({ label: `${total} total goals`, points: 20 }); score += 20; }
+      else if (total >= 3) { factors.push({ label: `${total} total goals`, points: 10 }); score += 10; }
+
+      // Margin
+      if (diff === 0)      { factors.push({ label: 'Draw', points: 15 }); score += 15; }
+      else if (diff === 1) { factors.push({ label: '1 goal margin', points: 12 }); score += 12; }
+      else if (diff === 2) { factors.push({ label: '2 goal margin', points: 5 }); score += 5; }
+
+      // Timeline factors
+      if (g.timelineCat) {
+        if (g.debug?.hasLateDrama)  { factors.push({ label: 'Late drama (80\'+)', points: 20 }); score += 20; }
+        if (g.debug?.hadComeback)   { factors.push({ label: 'Comeback from 2+ down', points: 20 }); score += 20; }
+        if (g.debug?.leadChanges >= 2) { factors.push({ label: `${g.debug.leadChanges} lead changes`, points: 15 }); score += 15; }
+      }
+
+      // League tier
+      const leagueTier = { 'Champions League': 1, 'Premier League': 1, 'La Liga': 2, 'Bundesliga': 2, 'Serie A': 2 };
+      const tier = leagueTier[g.league];
+      if (tier === 1)      { factors.push({ label: `Tier 1 league (${g.league})`, points: 8 }); score += 8; }
+      else if (tier === 2) { factors.push({ label: `Tier 2 league (${g.league})`, points: 4 }); score += 4; }
+
+    } else if (sport === 'nhl') {
+      if (total >= 8)      { factors.push({ label: `${total} goals`, points: 25 }); score += 25; }
+      else if (total >= 6) { factors.push({ label: `${total} goals`, points: 15 }); score += 15; }
+      if (diff <= 1)       { factors.push({ label: '1 goal margin', points: 15 }); score += 15; }
+      if (g.debug?.hasOT)        { factors.push({ label: 'Overtime/Shootout', points: 25 }); score += 25; }
+      if (g.debug?.hadComeback)  { factors.push({ label: 'Comeback from 2+ down', points: 20 }); score += 20; }
+      if ((g.debug?.leadChanges ?? 0) >= 2) { factors.push({ label: `${g.debug.leadChanges} lead changes`, points: 15 }); score += 15; }
+
+    } else if (sport === 'nba') {
+      if (total >= 230)    { factors.push({ label: `${total} combined points`, points: 20 }); score += 20; }
+      else if (total >= 210) { factors.push({ label: `${total} combined points`, points: 10 }); score += 10; }
+      if (diff <= 5)       { factors.push({ label: `${diff} point margin`, points: 20 }); score += 20; }
+      else if (diff <= 10) { factors.push({ label: `${diff} point margin`, points: 10 }); score += 10; }
+      if (g.debug?.hasOT)        { factors.push({ label: 'Overtime', points: 20 }); score += 20; }
+      if (g.debug?.hadComeback)  { factors.push({ label: `Comeback (down ${g.debug?.largestLead})`, points: 20 }); score += 20; }
+      const lc = g.debug?.leadChanges ?? 0;
+      if (lc >= 15)        { factors.push({ label: `${lc} lead changes`, points: 20 }); score += 20; }
+      else if (lc >= 8)    { factors.push({ label: `${lc} lead changes`, points: 12 }); score += 12; }
+
+    } else if (sport === 'tennis') {
+      const sets = g.homeSets + g.awaySets;
+      if (sets >= 5)       { factors.push({ label: '5-set epic', points: 40 }); score += 40; }
+      else if (sets >= 3)  { factors.push({ label: '3-set match', points: 25 }); score += 25; }
+      if (g.sets?.some(s => s.h === 7 || s.a === 7)) { factors.push({ label: 'Tiebreak(s)', points: 20 }); score += 20; }
+      const closeSets = (g.sets || []).filter(s => Math.abs(s.h - s.a) <= 2).length;
+      if (closeSets >= 2)  { factors.push({ label: `${closeSets} close sets`, points: 15 }); score += 15; }
+
+    } else if (sport === 'cricket') {
+      if (g.maxInnings >= 200)   { factors.push({ label: `${g.maxInnings} run innings`, points: 20 }); score += 20; }
+      if (g.resultType === 'wickets' && g.resultMargin <= 2) { factors.push({ label: `Won by ${g.resultMargin} wickets`, points: 35 }); score += 35; }
+      else if (g.resultType === 'runs' && g.resultMargin <= 10) { factors.push({ label: `Won by ${g.resultMargin} runs`, points: 30 }); score += 30; }
+      else if (g.resultType === 'wickets' && g.resultMargin <= 5) { factors.push({ label: `Won by ${g.resultMargin} wickets`, points: 20 }); score += 20; }
+    }
+
+    // Recency bonus
+    const daysAgo = (Date.now() - g.ts) / 86400000;
+    if (daysAgo <= 1)      { factors.push({ label: 'Today', points: 5 }); score += 5; }
+    else if (daysAgo <= 3) { factors.push({ label: 'Last 3 days', points: 3 }); score += 3; }
+
+    return { score: Math.min(score, 100), factors };
+  }
+
+
+  // Attach confidence scores to all games in a result
+  function withConfidence(result, sport) {
+    const apiKey = { football:'soccer' }[sport] || sport;
+    const data = result[apiKey] || result[sport];
+    if (!data) return result;
+    return {
+      ...result,
+      [apiKey]: { ...data, recent: attachConfidence(data.recent || [], sport) }
+    };
+  }
+
+  function attachConfidence(games, sport) {
+    return games.map(g => ({ ...g, confidence: computeConfidence(g, sport) }));
+  }
+
+  // Route to the appropriate fetcher
+  const SPORT_FETCHERS = {
+    football: async () => withConfidence({ soccer: await fetchAllSoccer() }, 'football'),
+    nhl:      async () => withConfidence({ nhl:    await fetchNHLWithTimeline() }, 'nhl'),
+    mlb:      async () => withConfidence({ mlb:    await fetchSport(`${BASE}/baseball/mlb/scoreboard`, "MLB", 15) }, 'mlb'),
+    nba:      async () => withConfidence({ nba:    await fetchNBAWithTimeline() }, 'nba'),
+    nfl:      async () => withConfidence({ nfl:    await fetchSport(`${BASE}/football/nfl/scoreboard`, "NFL") }, 'nfl'),
+    cricket:  async () => withConfidence({ cricket: await fetchCricket() }, 'cricket'),
+    tennis:   async () => withConfidence({ tennis:  await fetchTennis() }, 'tennis'),
+  };
+
+  let body;
+
+  if (sportParam === 'all' || !SPORT_FETCHERS[sportParam]) {
+    const [soccer, nhl, mlb, nba, nfl, cricket, tennis] = await Promise.all([
+      fetchAllSoccer(),
+      fetchNHLWithTimeline(),
+      fetchSport(`${BASE}/baseball/mlb/scoreboard`,   "MLB", 15),
+      fetchNBAWithTimeline(),
+      fetchSport(`${BASE}/football/nfl/scoreboard`,   "NFL"),
+      fetchCricket(),
+      fetchTennis(),
+    ]);
+    body = {
+      soccer:  { ...soccer,  recent: attachConfidence(soccer.recent,  'football') },
+      nhl:     { ...nhl,     recent: attachConfidence(nhl.recent,     'nhl')      },
+      mlb:     { ...mlb,     recent: attachConfidence(mlb.recent,     'mlb')      },
+      nba:     { ...nba,     recent: attachConfidence(nba.recent,     'nba')      },
+      nfl:     { ...nfl,     recent: attachConfidence(nfl.recent,     'nfl')      },
+      cricket: { ...cricket, recent: attachConfidence(cricket.recent, 'cricket')  },
+      tennis:  { ...tennis,  recent: attachConfidence(tennis.recent,  'tennis')   },
+    };
+
+    // Save full fetch to blob for future requests
+    try {
+      const store = getStore('scores');
+      await store.setJSON('latest', { data: body, fetchedAt: Date.now(), fetchedAtISO: new Date().toISOString() });
+    } catch (err) {
+      console.error('Failed to save to blob:', err.message);
+    }
+  } else {
+    body = await SPORT_FETCHERS[sportParam]();
+  }
 
   return {
     statusCode: 200,
     headers: {
       "Content-Type": "application/json",
-      "Cache-Control": "public, max-age=300",
+      "Cache-Control": "public, max-age=60",
+      "X-Cache": "MISS",
     },
-    body: JSON.stringify({ soccer, nhl, mlb, nba, nfl, cricket, tennis }),
+    body: JSON.stringify(body),
   };
 };
