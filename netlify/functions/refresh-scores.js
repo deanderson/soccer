@@ -1,6 +1,6 @@
-// On-demand refresh endpoint
-// Called by the frontend "Refresh now" button
-// Has a 5-minute cooldown enforced by checking the blob timestamp
+// On-demand refresh endpoint — called by the frontend refresh button
+// Fetches fresh data directly and writes to blob
+// 5-minute cooldown to prevent abuse
 
 const { connectLambda, getStore } = require('@netlify/blobs');
 
@@ -9,7 +9,6 @@ const COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
 exports.handler = async function(event, context) {
   connectLambda(event);
 
-  // Only allow POST
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method not allowed' };
   }
@@ -17,11 +16,11 @@ exports.handler = async function(event, context) {
   const store = getStore('scores');
 
   try {
-    // Check cooldown — read current blob timestamp
+    // Check cooldown
     let existing = null;
     try {
       existing = await store.get('latest', { type: 'json' });
-    } catch (e) { /* no blob yet, that's fine */ }
+    } catch (e) { /* no blob yet */ }
 
     if (existing?.fetchedAt) {
       const age = Date.now() - existing.fetchedAt;
@@ -38,19 +37,27 @@ exports.handler = async function(event, context) {
       }
     }
 
-    // Trigger a fresh fetch via the job function
+    // Call get-scores with _internal=1 to bypass blob read and do live fetch
     const baseUrl = process.env.URL || 'https://spoilerfreescores.com';
-    const res = await fetch(`${baseUrl}/.netlify/functions/fetch-scores-job`, {
-      method: 'POST',
-      signal: AbortSignal.timeout(28000),
-    });
+    const res = await fetch(
+      `${baseUrl}/.netlify/functions/get-scores?sport=all&_internal=1`,
+      { signal: AbortSignal.timeout(25000) }
+    );
 
-    if (!res.ok) throw new Error(`fetch-scores-job returned ${res.status}`);
-    const result = await res.json();
+    if (!res.ok) throw new Error(`get-scores returned ${res.status}`);
+    const data = await res.json();
+
+    // Write to blob ourselves
+    const fetchedAt = Date.now();
+    await store.setJSON('latest', {
+      data,
+      fetchedAt,
+      fetchedAtISO: new Date(fetchedAt).toISOString(),
+    });
 
     return {
       statusCode: 200,
-      body: JSON.stringify({ ok: true, fetchedAt: result.fetchedAt }),
+      body: JSON.stringify({ ok: true, fetchedAt }),
     };
   } catch (err) {
     console.error('refresh-scores failed:', err.message);
