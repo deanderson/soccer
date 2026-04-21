@@ -1,5 +1,5 @@
 // ESPN Unofficial API — no API key required (all sports except cricket)
-// Cricket: CricketData.org API (api.cricapi.com) — requires CRICKET_API_KEY env var
+// ESPN Unofficial API — no API key required (all sports including cricket)
 
 const { connectLambda, getStore } = require('@netlify/blobs');
 
@@ -394,13 +394,130 @@ exports.handler = async function (event, context) {
   }
 
   // ── CRICKET T20 (ESPN) ────────────────────────────────────────────────
-  // ESPN cricket league IDs for T20 competitions
-  const CRICKET_LEAGUES = [
-    { id: '8048',  name: 'IPL',       slug: '23694' }, // Indian Premier League (series 8048, league 23694)
-    { id: '12555', name: 'BBL',       slug: '23694' }, // Big Bash League
-    { id: '12801', name: 'PSL',       slug: '23694' }, // Pakistan Super League
-    { id: '23694', name: 'T20I',      slug: '23694' }, // International T20s
-  ];
+  // ESPN scoreboard header gives ALL active series in one call — no API key needed
+
+  async function fetchCricket() {
+    try {
+      // Single call returns all active cricket series with scores
+      const data = await fetchESPN(
+        `https://site.api.espn.com/apis/personalized/v2/scoreboard/header?sport=cricket&region=us&lang=en`
+      );
+
+      const leagues = data?.sports?.[0]?.leagues || [];
+      const recent = [], upcoming = [];
+
+      for (const league of leagues) {
+        // Only T20 formats — filter by generalClassCard
+        for (const ev of (league.events || [])) {
+          const classCard = ev.class?.generalClassCard || '';
+          const eventType = ev.eventType || '';
+          const isT20 = classCard.toLowerCase().includes('t20') ||
+                        eventType === 'T20' ||
+                        classCard === 'Twenty20';
+          if (!isT20) continue;
+
+          const competitors = ev.competitors || [];
+          if (competitors.length < 2) continue;
+
+          const home = competitors.find(c => c.homeAway === 'home') || competitors[0];
+          const away = competitors.find(c => c.homeAway === 'away') || competitors[1];
+
+          const date = new Date(ev.date);
+          const dateStr = date.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
+          const timeStr = date.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit", timeZoneName:"short" });
+
+          const status = ev.status || '';
+          const fullStatus = ev.fullStatus?.type;
+          const isFinished = fullStatus?.state === 'post';
+          const isLive     = fullStatus?.state === 'in';
+          const isPre      = fullStatus?.state === 'pre';
+
+          // Result text — ESPN puts it in fullStatus.longSummary
+          const resultText = ev.fullStatus?.longSummary || ev.fullStatus?.summary || '';
+
+          let resultMargin = null, resultType = null;
+          const runsMatch    = resultText.match(/won by (\d+) runs?/i);
+          const wicketsMatch = resultText.match(/won by (\d+) wkts?/i);
+          if (runsMatch)    { resultMargin = parseInt(runsMatch[1]);    resultType = 'runs';    }
+          if (wicketsMatch) { resultMargin = parseInt(wicketsMatch[1]); resultType = 'wickets'; }
+
+          // Parse max innings score from competitor score strings e.g. "156/9" or "160/5"
+          const scoreNums = [home.score, away.score]
+            .map(s => parseInt((s || '').split('/')[0]))
+            .filter(n => !isNaN(n) && n > 0);
+          const maxInnings = Math.max(0, ...scoreNums);
+
+          const leagueName = league.shortName || league.name || 'T20';
+
+          const game = {
+            id: ev.id,
+            home: home.displayName || home.name || 'Home',
+            away: away.displayName || away.name || 'Away',
+            league: leagueName,
+            dateStr, timeStr,
+            ts: date.getTime(),
+            status: resultText || fullStatus?.shortDetail || '',
+            resultMargin, resultType, maxInnings,
+          };
+
+          if (isFinished) {
+            recent.push(game);
+          } else if (isPre || isLive) {
+            upcoming.push({ ...game, time: timeStr });
+          }
+        }
+      }
+
+      const recentSorted = recent
+        .filter(g => g.ts >= now - 14 * 86400000)
+        .sort((a, b) => b.ts - a.ts)
+        .slice(0, 25);
+
+      // Timeline enrichment for interesting games
+      const candidates = recentSorted.filter(g =>
+        g.id && g.resultMargin !== null && (
+          (g.resultType === 'wickets' && g.resultMargin <= 3) ||
+          (g.resultType === 'runs'    && g.resultMargin <= 20) ||
+          g.maxInnings >= 180
+        )
+      ).slice(0, 5);
+
+      if (candidates.length > 0) {
+        const summaries = await Promise.all(
+          candidates.map(g => fetchCricketSummary(g.id, '23694').catch(() => null))
+        );
+
+        const overrides = new Map();
+        for (let i = 0; i < candidates.length; i++) {
+          if (!summaries[i]) continue;
+          const result = categorizeCricketByTimeline(
+            summaries[i].notes, summaries[i].rosters,
+            candidates[i].resultMargin, candidates[i].resultType, candidates[i].maxInnings
+          );
+          if (result) overrides.set(candidates[i].id, result);
+        }
+
+        const enrichedRecent = recentSorted.map(g => {
+          if (!g.id || !overrides.has(g.id)) return g;
+          const r = overrides.get(g.id);
+          return { ...g, timelineCat: r.cat, debug: { factors: r.factors } };
+        });
+
+        return {
+          recent:   enrichedRecent,
+          upcoming: upcoming.sort((a, b) => a.ts - b.ts).slice(0, 20),
+        };
+      }
+
+      return {
+        recent:   recentSorted,
+        upcoming: upcoming.sort((a, b) => a.ts - b.ts).slice(0, 20),
+      };
+    } catch (err) {
+      console.error('fetchCricket failed:', err.message);
+      return { recent: [], upcoming: [] };
+    }
+  }
 
   function parseCricketNotes(notes) {
     // Extract key match facts from ESPN cricket notes array
@@ -508,155 +625,6 @@ exports.handler = async function (event, context) {
       );
     } catch (e) { return null; }
   }
-
-  async function fetchCricket() {
-    const API_KEY = process.env.CRICKET_API_KEY;
-    if (!API_KEY) return { recent: [], upcoming: [] };
-
-    async function fetchPage(offset, endpoint = 'matches') {
-      try {
-        const res = await fetch(
-          `https://api.cricapi.com/v1/${endpoint}?apikey=${API_KEY}&offset=${offset}`,
-          { signal: AbortSignal.timeout(5000) }
-        );
-        const json = await res.json();
-        return json.status === "success" ? (json.data || []) : [];
-      } catch (err) {
-        console.error("Cricket fetch error:", err.message);
-        return [];
-      }
-    }
-
-    // Fetch recent/finished matches from 'matches' endpoint + current/upcoming from 'currentMatches'
-    const [recent0, recent25, current] = await Promise.all([
-      fetchPage(0, 'matches'),
-      fetchPage(25, 'matches'),
-      fetchPage(0, 'currentMatches'),
-    ]);
-
-    // Merge, deduplicate by id
-    const seen = new Set();
-    const all = [...recent0, ...recent25, ...current].filter(m => {
-      if (seen.has(m.id)) return false;
-      seen.add(m.id);
-      return true;
-    });
-
-    // Filter T20 only
-    const t20 = all.filter(m => m.matchType === "t20");
-
-    const recent = [];
-    const upcoming = [];
-
-    t20.forEach(m => {
-      const date = new Date(m.dateTimeGMT);
-      const dateStr = date.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
-      const timeStr = date.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit", timeZoneName:"short" });
-
-      const leagueMatch = m.name.match(/,\s*(.+)$/);
-      const league = leagueMatch ? leagueMatch[1].trim() : "T20";
-
-      const teams = m.teams || [];
-      const home = teams[0] || "TBD";
-      const away = teams[1] || "TBD";
-
-      const scores = m.score || [];
-      const maxInnings = Math.max(0, ...scores.map(s => s.r ?? 0));
-
-      let resultMargin = null, resultType = null;
-      const runsMatch    = m.status?.match(/won by (\d+) runs?/i);
-      const wicketsMatch = m.status?.match(/won by (\d+) wkts?/i);
-      if (runsMatch)    { resultMargin = parseInt(runsMatch[1]);    resultType = "runs";    }
-      if (wicketsMatch) { resultMargin = parseInt(wicketsMatch[1]); resultType = "wickets"; }
-
-      if (m.matchEnded) {
-        recent.push({
-          home, away, league, dateStr, timeStr,
-          ts: date.getTime(),
-          status: m.status,
-          resultMargin, resultType, maxInnings,
-          // Store cricapi ID for potential ESPN matching
-          cricapiId: m.id,
-        });
-      } else if (!m.matchEnded && date.getTime() >= now) {
-        upcoming.push({ home, away, league, dateStr, timeStr, ts: date.getTime() });
-      }
-    });
-
-    const recentSorted = recent.sort((a, b) => b.ts - a.ts).slice(0, 20);
-
-    // Timeline enrichment via ESPN — match by team name + date
-    // We search ESPN's T20I scoreboard for matching games and fetch summaries
-    // ESPN league 23694 covers international T20s; IPL needs series-specific search
-    // Strategy: try to find ESPN event IDs by searching their cricket scoreboard
-    const candidates = recentSorted.filter(g =>
-      g.resultMargin !== null && (
-        (g.resultType === 'wickets' && g.resultMargin <= 3) ||
-        (g.resultType === 'runs' && g.resultMargin <= 20) ||
-        g.maxInnings >= 180
-      )
-    ).slice(0, 5);
-
-    if (candidates.length > 0) {
-      // Try ESPN cricket scoreboard to find event IDs
-      try {
-        const today = espnDate(0);
-        const tenDaysAgo = espnDate(-10);
-        const espnScoreboard = await fetchESPN(
-          `https://site.api.espn.com/apis/site/v2/sports/cricket/23694/scoreboard?dates=${tenDaysAgo}-${today}&limit=50`
-        ).catch(() => null);
-
-        if (espnScoreboard?.events) {
-          // Build a map of ESPN events by team names + date for matching
-          const espnEventMap = new Map();
-          for (const ev of espnScoreboard.events) {
-            const competitors = ev.competitions?.[0]?.competitors || [];
-            const names = competitors.map(c => c.team?.displayName || c.team?.shortDisplayName || '').join('|').toLowerCase();
-            const dateKey = ev.date?.slice(0, 10);
-            espnEventMap.set(`${names}|${dateKey}`, ev.id);
-          }
-
-          // Try to match candidates to ESPN events
-          const enriched = await Promise.all(candidates.map(async g => {
-            const dateKey = new Date(g.ts).toISOString().slice(0, 10);
-            const teamKey = `${g.home}|${g.away}`.toLowerCase();
-            const reverseKey = `${g.away}|${g.home}`.toLowerCase();
-
-            // Try both team orderings
-            const espnId = espnEventMap.get(`${teamKey}|${dateKey}`) ||
-                           espnEventMap.get(`${reverseKey}|${dateKey}`);
-
-            if (!espnId) return g;
-
-            const summary = await fetchCricketSummary(espnId, '23694');
-            if (!summary) return g;
-
-            const timelineResult = categorizeCricketByTimeline(
-              summary.notes, summary.rosters, g.resultMargin, g.resultType, g.maxInnings
-            );
-
-            if (!timelineResult) return g;
-            return { ...g, timelineCat: timelineResult.cat, debug: { factors: timelineResult.factors } };
-          }));
-
-          // Merge enriched back
-          const enrichedMap = new Map(enriched.map(g => [g.cricapiId, g]));
-          return {
-            recent: recentSorted.map(g => enrichedMap.get(g.cricapiId) || g),
-            upcoming: upcoming.sort((a, b) => a.ts - b.ts).slice(0, 20),
-          };
-        }
-      } catch (err) {
-        console.log('Cricket ESPN enrichment failed, using basic data:', err.message);
-      }
-    }
-
-    return {
-      recent:   recentSorted,
-      upcoming: upcoming.sort((a, b) => a.ts - b.ts).slice(0, 20),
-    };
-  }
-
 
   // ── TENNIS ────────────────────────────────────────────────────────────
   async function fetchTennis() {
