@@ -513,11 +513,11 @@ exports.handler = async function (event, context) {
     const API_KEY = process.env.CRICKET_API_KEY;
     if (!API_KEY) return { recent: [], upcoming: [] };
 
-    async function fetchPage(offset) {
+    async function fetchPage(offset, endpoint = 'matches') {
       try {
         const res = await fetch(
-          `https://api.cricapi.com/v1/currentMatches?apikey=${API_KEY}&offset=${offset}`,
-          { signal: AbortSignal.timeout(4000) }
+          `https://api.cricapi.com/v1/${endpoint}?apikey=${API_KEY}&offset=${offset}`,
+          { signal: AbortSignal.timeout(5000) }
         );
         const json = await res.json();
         return json.status === "success" ? (json.data || []) : [];
@@ -527,12 +527,20 @@ exports.handler = async function (event, context) {
       }
     }
 
-    // Fetch two pages to get enough matches
-    const [page0, page25] = await Promise.all([
-      fetchPage(0),
-      fetchPage(25),
+    // Fetch recent/finished matches from 'matches' endpoint + current/upcoming from 'currentMatches'
+    const [recent0, recent25, current] = await Promise.all([
+      fetchPage(0, 'matches'),
+      fetchPage(25, 'matches'),
+      fetchPage(0, 'currentMatches'),
     ]);
-    const all = [...page0, ...page25];
+
+    // Merge, deduplicate by id
+    const seen = new Set();
+    const all = [...recent0, ...recent25, ...current].filter(m => {
+      if (seen.has(m.id)) return false;
+      seen.add(m.id);
+      return true;
+    });
 
     // Filter T20 only
     const t20 = all.filter(m => m.matchType === "t20");
