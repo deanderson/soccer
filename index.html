@@ -1432,6 +1432,7 @@
               <button class="reveal-btn" onclick="toggleCricketScore(this,'${safeStatus}')">👁 Reveal</button>
               <div class="score-reveal" style="font-family:'Outfit',sans-serif;font-size:11px;white-space:normal;max-width:160px;line-height:1.4;text-align:right;"></div>
               <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
+              ${debugPanelHTML(g)}
             </div>`;
         });
       });
@@ -1521,6 +1522,7 @@
                 <button class="reveal-btn" onclick="toggleTennisScore(this,'${safeScore}')">👁 Reveal</button>
                 <div class="score-reveal" style="font-family:'Outfit',sans-serif;font-size:11px;white-space:normal;max-width:130px;line-height:1.4;text-align:right;"></div>
                 <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
+                ${debugPanelHTML(g)}
               </div>`;
           });
         });
