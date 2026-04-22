@@ -375,7 +375,7 @@
     scorefest:   { label: 'Must Watch', icon: '👀', cls: 'scorefest',   badge: '🔥 Score Fest'  },
     watchworthy: { label: 'Must Watch', icon: '👀', cls: 'watchworthy', badge: null             },
     watchable:   { label: 'Watchable',  icon: '😐', cls: 'watchable',   badge: null             },
-    defensive:   { label: 'Skip',       icon: '⏭',  cls: 'defensive',   badge: '🧱 Low Scoring' },
+    defensive:   { label: 'Skip',       icon: '⏭',  cls: 'defensive',   badge: '🧱 Flat Game'   },
     blowout:     { label: 'Skip',       icon: '⏭',  cls: 'blowout',     badge: '🎯 Blowout'     },
   };
 
@@ -814,12 +814,7 @@
     if (!g.timelineCat) return scoreCat;
     const timelineCat = TIMELINE_CAT_MAP[g.timelineCat];
     if (!timelineCat) return scoreCat;
-    const hints = g.dramaHints || [];
-    // Only vibe-based hints — no event-specific spoilers
-    const badge = hints.includes('back-and-forth') ? '🔁 Back & Forth'
-                : hints.includes('late drama')     ? '⚡ Tense Finish'
-                : null;
-    return { ...timelineCat, badge };
+    return timelineCat;
   }
 
   function processSportData(data, sport) {
@@ -832,16 +827,7 @@
       if (g.confidence?.cls) {
         // Backend already computed the category from score — always trust it
         const baseCat = makeCat(g.confidence.cls);
-        const isMW = g.confidence.cls === 'scorefest' || g.confidence.cls === 'watchworthy';
-        const hints = g.dramaHints || [];
-        // Only show hint badges on Must Watch — vibe-based only, no spoilers
-        const badge = isMW
-          ? (hints.includes('back-and-forth') ? '🔁 Back & Forth'
-           : hints.includes('late drama')     ? '⚡ Tense Finish'
-           : hints.some(h => h.toLowerCase().includes('scoring')) ? '🔥 High Scoring'
-           : baseCat.badge || null)
-          : baseCat.badge || null;
-        return { ...baseCat, badge };
+        return baseCat;
       }
       // Fallback: compute from frontend rules (should rarely happen)
       if (sport === 'cricket') return applyTimelineCat(g, categorizeCricket(g.resultMargin, g.resultType, g.maxInnings));
@@ -1096,10 +1082,8 @@
 
     const suggestionHTML = nextWindow
       ? `<div class="tp-empty-suggestion" style="margin-top:10px">
-           <span>${picks.length === 1 ? 'Only 1 result. More in' : 'No standout games ${tpWindow === "today" ? "today" : "in this window"}. Check'} ${nextLabel}.</span>
-           <button class="tp-suggest-btn" onclick="setTpWindow('${nextWindow}')">
-             ${nextLabel} →
-           </button>
+           <span>${picks.length === 1 ? 'That\'s the one worth watching today.' : `Nothing worth your time ${tpWindow === 'today' ? 'today' : 'in this window'}. Check`} ${picks.length !== 1 ? nextLabel + '.' : ''}</span>
+           ${picks.length !== 1 ? `<button class="tp-suggest-btn" onclick="setTpWindow('${nextWindow}')">${nextLabel} →</button>` : ''}
          </div>`
       : '';
 
@@ -1313,20 +1297,11 @@
     const gameId = makeGameId(g);
     const isWatched = watched.has(gameId);
     const safeId = gameId.replace(/'/g, "\\'");
-
-    const isMustWatch = g.cat?.cls === 'scorefest' || g.cat?.cls === 'watchworthy';
-    const dramaHint = isMustWatch && g.dramaHints?.length > 0
-      ? ' · <span style="color:var(--green);font-weight:600">' + (
-          g.dramaHints.includes('back-and-forth') ? '🔁 Back & Forth' :
-          g.dramaHints.includes('late drama')     ? '⚡ Tense Finish' :
-          g.dramaHints.some(h => h.toLowerCase().includes('scoring')) ? '🔥 High Scoring' :
-          ''
-        ) + '</span>' : '';
     return `
       <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${isBestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
         <div class="teams" style="flex:1;min-width:0;">
           <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
-          <div class="game-meta">${g.date} · ${g.league}${dramaHint}${g.cat.badge && !dramaHint ? ' · <span class="sub-badge">' + g.cat.badge + '</span>' : ''}</div>
+          <div class="game-meta">${g.date} · ${g.league}</div>
         </div>
         ${isBestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
         <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
@@ -1446,19 +1421,11 @@
           const gameId = makeGameId(g);
           const isWatched = watched.has(gameId);
           const safeId = gameId.replace(/'/g, "\\'");
-          const isMW = g.cat?.cls === 'scorefest' || g.cat?.cls === 'watchworthy';
-          const hint = isMW && g.dramaHints?.length > 0
-            ? ' · <span style="color:var(--green);font-weight:600">' + (
-                g.dramaHints.some(h => h.toLowerCase().includes('scoring')) ? '🔥 High Scoring' :
-                g.dramaHints.some(h => h.toLowerCase().includes('back'))    ? '🔁 Back & Forth' :
-                g.dramaHints.some(h => h.toLowerCase().includes('late') || h.toLowerCase().includes('drama')) ? '⚡ Tense Finish' :
-                ''
-              ) + '</span>' : '';
           html += `
             <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${g===bestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
               <div class="teams" style="flex:1;min-width:0;">
                 <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
-                <div class="game-meta">${g.dateStr} · ${g.league}${hint}</div>
+                <div class="game-meta">${g.dateStr} · ${g.league}</div>
               </div>
               ${g===bestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
               <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>

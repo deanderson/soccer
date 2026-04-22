@@ -478,7 +478,7 @@ exports.handler = async function (event, context) {
             const resultText = ev.fullStatus?.longSummary || ev.fullStatus?.summary || '';
             let resultMargin = null, resultType = null;
             const runsMatch    = resultText.match(/won by (\d+) runs?/i);
-            const wicketsMatch = resultText.match(/won by (\d+) wkts?/i);
+            const wicketsMatch = resultText.match(/won by (\d+) (?:wkts?|wickets?)/i);
             if (runsMatch)    { resultMargin = parseInt(runsMatch[1]);    resultType = 'runs';    }
             if (wicketsMatch) { resultMargin = parseInt(wicketsMatch[1]); resultType = 'wickets'; }
 
@@ -1019,7 +1019,7 @@ exports.handler = async function (event, context) {
       else if (diff === 2) { factors.push({ label: '2 goal margin', points: 5  }); score += 5;  }
       else                 { factors.push({ label: 'Large margin', points: -40 }); score -= 40; }
       if (hasComeback)  { factors.push({ label: '⚡ Comeback', points: 25 }); score += 25; }
-      if (hasLateDrama) { factors.push({ label: '⚡ Late drama', points: 22 }); score += 22; }
+      if (hasLateDrama) { factors.push({ label: '⚡ Late drama', points: 18 }); score += 18; }
       if (hasBackForth) { factors.push({ label: '⚡ Back & forth', points: 18 }); score += 18; }
       const leagueTier = { 'Champions League': 1, 'Premier League': 1, 'La Liga': 2, 'Bundesliga': 2, 'Serie A': 2 };
       const tier = leagueTier[g.league];
@@ -1071,14 +1071,15 @@ exports.handler = async function (event, context) {
     } else if (sport === 'cricket') {
       if (g.maxInnings >= 200) { factors.push({ label: `${g.maxInnings} run innings`, points: 25 }); score += 25; }
       if (g.resultType === 'wickets') {
-        if      (g.resultMargin <= 2) { factors.push({ label: `Won by ${g.resultMargin} wkts`, points: 30 }); score += 30; }
-        else if (g.resultMargin <= 4) { factors.push({ label: `Won by ${g.resultMargin} wkts`, points: 18 }); score += 18; }
-        else if (g.resultMargin >= 7) { factors.push({ label: 'Comfortable win', points: -40 }); score -= 40; }
+        if      (g.resultMargin <= 2) { factors.push({ label: `Won by ${g.resultMargin} wkts`, points: 45 }); score += 45; }
+        else if (g.resultMargin <= 4) { factors.push({ label: `Won by ${g.resultMargin} wkts`, points: 35 }); score += 35; }
+        else if (g.resultMargin <= 6) { factors.push({ label: `Won by ${g.resultMargin} wkts`, points: 20 }); score += 20; }
+        else if (g.resultMargin >= 8) { factors.push({ label: `Comfortable win`, points: -20 }); score -= 20; }
       } else if (g.resultType === 'runs') {
-        if      (g.resultMargin <= 10) { factors.push({ label: `Won by ${g.resultMargin} runs`, points: 28 }); score += 28; }
-        else if (g.resultMargin <= 20) { factors.push({ label: `Won by ${g.resultMargin} runs`, points: 15 }); score += 15; }
-        else if (g.resultMargin >= 40) { factors.push({ label: 'Large margin', points: -40 }); score -= 40; }
-        else                           { factors.push({ label: 'Won by runs', points: -10 }); score -= 10; }
+        if      (g.resultMargin <= 10) { factors.push({ label: `Won by ${g.resultMargin} runs`, points: 40 }); score += 40; }
+        else if (g.resultMargin <= 20) { factors.push({ label: `Won by ${g.resultMargin} runs`, points: 25 }); score += 25; }
+        else if (g.resultMargin <= 35) { factors.push({ label: `Won by ${g.resultMargin} runs`, points: 10 }); score += 10; }
+        else                           { factors.push({ label: 'Large margin', points: -20 }); score -= 20; }
       }
       if (hasLastOver)    { factors.push({ label: '⚡ Last over finish', points: 20 }); score += 20; }
       if (hasCloseChase)  { factors.push({ label: '⚡ Close chase', points: 15 }); score += 15; }
@@ -1111,14 +1112,14 @@ exports.handler = async function (event, context) {
     const mustWatch = sport === 'football' ? 60
                     : sport === 'nhl'      ? 48
                     : sport === 'nba'      ? 45
-                    : sport === 'cricket'  ? 45
+                    : sport === 'cricket'  ? 38
                     : sport === 'mlb'      ? 45
                     : sport === 'tennis'   ? 50
                     : 60;
     const watchable = sport === 'football' ? 38
                     : sport === 'nhl'      ? 30
                     : sport === 'nba'      ? 28
-                    : sport === 'cricket'  ? 28
+                    : sport === 'cricket'  ? 22
                     : sport === 'mlb'      ? 28
                     : sport === 'tennis'   ? 35
                     : 38;
