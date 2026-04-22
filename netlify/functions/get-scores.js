@@ -54,11 +54,11 @@ exports.handler = async function (event, context) {
     return d.toISOString().slice(0, 10).replace(/-/g, "");
   }
 
-  async function fetchESPN(url) {
+  async function fetchESPN(url, timeoutMs = 8000) {
     try {
       const res = await fetch(url, {
         headers: { "User-Agent": "Mozilla/5.0" },
-        signal: AbortSignal.timeout(4000),
+        signal: AbortSignal.timeout(timeoutMs),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
@@ -66,6 +66,11 @@ exports.handler = async function (event, context) {
       console.error("ESPN fetch error:", url, err.message);
       return { events: [] };
     }
+  }
+
+  // Lighter timeout for summary/timeline endpoints — fail fast if ESPN is struggling
+  async function fetchESPNSummary(url) {
+    return fetchESPN(url, 5000);
   }
 
   const FINAL_STATUSES = new Set([
@@ -108,29 +113,32 @@ exports.handler = async function (event, context) {
   const twoWeeksAgo = now - 9 * 86400000;
 
   async function fetchSport(scoreboardUrl, leagueName, upcomingCap = 50) {
-    const data = await fetchESPN(
-      `${scoreboardUrl}?dates=${espnDate(-14)}-${espnDate(7)}&limit=500`
-    );
-    const events = normalizeEvents(data, leagueName);
+    // Fetch recent (past 14 days) and upcoming (next 4 days) separately to avoid ESPN timeout
+    const [recentData, upcomingData] = await Promise.all([
+      fetchESPN(`${scoreboardUrl}?dates=${espnDate(-14)}-${espnDate(0)}&limit=200`),
+      fetchESPN(`${scoreboardUrl}?dates=${espnDate(1)}-${espnDate(4)}&limit=100`),
+    ]);
 
-    const recent14 = events
+    const recentEvents  = normalizeEvents(recentData,   leagueName);
+    const upcomingEvents = normalizeEvents(upcomingData, leagueName);
+
+    const recent14 = recentEvents
       .filter(g => g.status === "final" && g.ts >= twoWeeksAgo)
       .sort((a, b) => a.ts - b.ts);
 
-    const upcoming = events
+    const upcoming = upcomingEvents
       .filter(g => g.status === "upcoming" && g.ts >= now)
       .sort((a, b) => a.ts - b.ts)
       .slice(0, upcomingCap);
 
     if (recent14.length < MIN) {
       const fallback = await fetchESPN(
-        `${scoreboardUrl}?dates=${espnDate(-180)}-${espnDate(0)}&limit=500`
+        `${scoreboardUrl}?dates=${espnDate(-60)}-${espnDate(-15)}&limit=100`
       );
       const fallbackRecent = normalizeEvents(fallback, leagueName)
         .filter(g => g.status === "final")
         .sort((a, b) => a.ts - b.ts)
         .slice(-MIN);
-      // Merge: use fallback only for the older portion, keep any real 14-day games too
       const merged = [...fallbackRecent, ...recent14];
       const seen = new Set();
       const deduped = merged.filter(g => {
@@ -327,7 +335,7 @@ exports.handler = async function (event, context) {
 
     const summaries = await Promise.all(
       candidates.map(g =>
-        fetchESPN(
+        fetchESPNSummary(
           `https://site.web.api.espn.com/apis/site/v2/sports/soccer/${slug}/summary?event=${g.id}&region=us&lang=en&contentorigin=espn`
         ).catch(() => null)
       )
@@ -505,9 +513,16 @@ exports.handler = async function (event, context) {
       ).slice(0, 20);
 
       if (candidates.length > 0) {
-        const summaries = await Promise.all(
-          candidates.map(g => fetchCricketSummary(g.id, '23694').catch(() => null))
-        );
+        // Batch requests in groups of 5 to avoid ESPN rate limiting
+        const summaries = [];
+        for (let i = 0; i < candidates.length; i += 5) {
+          const batch = candidates.slice(i, i + 5);
+          const results = await Promise.all(
+            batch.map(g => fetchCricketSummary(g.id, '23694').catch(() => null))
+          );
+          summaries.push(...results);
+          if (i + 5 < candidates.length) await new Promise(r => setTimeout(r, 300));
+        }
         const overrides = new Map();
         for (let i = 0; i < candidates.length; i++) {
           if (!summaries[i]) continue;
@@ -639,7 +654,7 @@ exports.handler = async function (event, context) {
 
   async function fetchCricketSummary(espnId, leagueSlug) {
     try {
-      return await fetchESPN(
+      return await fetchESPNSummary(
         `https://site.web.api.espn.com/apis/site/v2/sports/cricket/${leagueSlug}/summary?event=${espnId}&region=us&lang=en&contentorigin=espn`
       );
     } catch (e) { return null; }
@@ -839,7 +854,7 @@ exports.handler = async function (event, context) {
   }
 
   async function fetchNHLWithTimeline() {
-    const data = await fetchESPN(`${BASE}/hockey/nhl/scoreboard?dates=${espnDate(-14)}-${espnDate(7)}&limit=500`);
+    const data = await fetchESPN(`${BASE}/hockey/nhl/scoreboard?dates=${espnDate(-14)}-${espnDate(0)}&limit=200`);
     const events = normalizeEvents(data, "NHL");
 
     const recent = events.filter(g => g.status === "final" && g.ts >= twoWeeksAgo).sort((a, b) => b.ts - a.ts);
@@ -852,7 +867,7 @@ exports.handler = async function (event, context) {
 
     const summaries = await Promise.all(
       candidates.map(g =>
-        fetchESPN(
+        fetchESPNSummary(
           `https://site.web.api.espn.com/apis/site/v2/sports/hockey/nhl/summary?event=${g.id}&region=us&lang=en&contentorigin=espn`
         ).catch(() => null)
       )
@@ -917,7 +932,7 @@ exports.handler = async function (event, context) {
   }
 
   async function fetchNBAWithTimeline() {
-    const data = await fetchESPN(`${BASE}/basketball/nba/scoreboard?dates=${espnDate(-14)}-${espnDate(7)}&limit=500`);
+    const data = await fetchESPN(`${BASE}/basketball/nba/scoreboard?dates=${espnDate(-14)}-${espnDate(0)}&limit=200`);
     const events = normalizeEvents(data, "NBA");
 
     const recent = events.filter(g => g.status === "final" && g.ts >= twoWeeksAgo).sort((a, b) => b.ts - a.ts);
@@ -930,7 +945,7 @@ exports.handler = async function (event, context) {
 
     const summaries = await Promise.all(
       candidates.map(g =>
-        fetchESPN(
+        fetchESPNSummary(
           `https://site.web.api.espn.com/apis/site/v2/sports/basketball/nba/summary?event=${g.id}&region=us&lang=en&contentorigin=espn`
         ).catch(() => null)
       )
@@ -1015,20 +1030,22 @@ exports.handler = async function (event, context) {
 
     } else if (sport === 'nhl') {
       // Goals
-      if      (total >= 8) { factors.push({ label: `${total} goals`, points: 20 }); score += 20; }
-      else if (total >= 6) { factors.push({ label: `${total} goals`, points: 12 }); score += 12; }
-      else if (total <= 3) { factors.push({ label: 'Low scoring', points: -10 }); score -= 10; }
+      if      (total >= 8) { factors.push({ label: `${total} goals`, points: 25 }); score += 25; }
+      else if (total >= 6) { factors.push({ label: `${total} goals`, points: 15 }); score += 15; }
+      else if (total >= 4) { factors.push({ label: `${total} goals`, points: 8  }); score += 8;  }
+      else if (total <= 2) { factors.push({ label: 'Low scoring', points: -10 }); score -= 10; }
 
       // Margin
-      if      (diff <= 1) { factors.push({ label: '1 goal margin', points: 20 }); score += 20; }
-      else if (diff === 2) { factors.push({ label: '2 goal margin', points: 8 }); score += 8; }
+      if      (diff === 0) { factors.push({ label: 'Tied/OT', points: 30 }); score += 30; }
+      else if (diff === 1) { factors.push({ label: '1 goal margin', points: 25 }); score += 25; }
+      else if (diff === 2) { factors.push({ label: '2 goal margin', points: 10 }); score += 10; }
       else                 { factors.push({ label: 'Large margin', points: -15 }); score -= 15; }
 
-      // Timeline
+      // Timeline — these are strong signals for NHL
       if (hasOT)        { factors.push({ label: '⚡ Overtime', points: 25 }); score += 25; }
-      if (hasComeback)  { factors.push({ label: '⚡ Comeback', points: 20 }); score += 20; }
-      if (hasBackForth) { factors.push({ label: '⚡ Back & forth', points: 15 }); score += 15; }
-      if (hasLateDrama) { factors.push({ label: '⚡ Late drama', points: 12 }); score += 12; }
+      if (hasComeback)  { factors.push({ label: '⚡ Comeback', points: 22 }); score += 22; }
+      if (hasBackForth) { factors.push({ label: '⚡ Back & forth', points: 18 }); score += 18; }
+      if (hasLateDrama) { factors.push({ label: '⚡ Late drama', points: 18 }); score += 18; }
 
       // Also read from debug for lead changes
       const lc = g.debug?.leadChanges ?? 0;
