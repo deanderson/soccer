@@ -1135,6 +1135,7 @@ exports.handler = async function (event, context) {
   };
 
   let body;
+  let fetchedAt = Date.now();
 
   if (sportParam === 'all' || !SPORT_FETCHERS[sportParam]) {
     const [soccer, nhl, mlb, nba, nfl, cricket, tennis] = await Promise.all([
@@ -1157,7 +1158,7 @@ exports.handler = async function (event, context) {
     };
 
     // Save full fetch to blob for future requests
-    const fetchedAt = Date.now();
+    fetchedAt = Date.now();
     try {
       const store = getStore('scores');
       await store.setJSON('latest', { data: body, fetchedAt, fetchedAtISO: new Date(fetchedAt).toISOString() });
