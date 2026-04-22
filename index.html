@@ -762,6 +762,16 @@
       if (res.status === 429) {
         showToast(`⏱ ${result.message}`, 'warn');
         if (result.fetchedAt) loadedAt = result.fetchedAt;
+        refreshCooldownUntil = result.fetchedAt ? result.fetchedAt + 5 * 60 * 1000 : Date.now() + 60 * 1000;
+      } else if (result.ok && result.background) {
+        // Background fetch triggered — wait then reload from blob
+        const waitMs = result.reloadAfterMs || 18000;
+        showToast('🔄 Refreshing scores...', 'success');
+        refreshCooldownUntil = Date.now() + 5 * 60 * 1000;
+        setTimeout(async () => {
+          await loadScores();
+          showToast('✓ Scores updated', 'success');
+        }, waitMs);
       } else if (result.ok) {
         showToast('✓ Scores refreshed', 'success');
         refreshCooldownUntil = Date.now() + 5 * 60 * 1000;
