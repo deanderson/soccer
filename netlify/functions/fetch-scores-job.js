@@ -1,5 +1,5 @@
 // Scheduled function — runs every 15 minutes
-// Triggers get-scores?_internal=1 which does the live fetch and writes to blob itself
+// Uses DEPLOY_URL to bypass Cloudflare on the custom domain
 
 const { connectLambda } = require('@netlify/blobs');
 
@@ -7,13 +7,26 @@ exports.handler = async function(event, context) {
   connectLambda(event);
 
   const start = Date.now();
-  const baseUrl = process.env.URL || 'https://spoilerfreescores.com';
-  console.log('fetch-scores-job: starting at', new Date().toISOString());
+
+  // DEPLOY_URL is Netlify's own CDN URL (e.g. https://abc123.netlify.app)
+  // This bypasses Cloudflare which blocks requests to the custom domain
+  const baseUrl = process.env.DEPLOY_URL
+                || process.env.NETLIFY_FUNCTION_SITE_URL
+                || process.env.URL
+                || 'https://spoilerfreescores.com';
+
+  console.log('fetch-scores-job: starting at', new Date().toISOString(), 'via', baseUrl);
 
   try {
     const res = await fetch(
       `${baseUrl}/.netlify/functions/get-scores?sport=all&_internal=1`,
-      { signal: AbortSignal.timeout(55000) }
+      {
+        signal: AbortSignal.timeout(55000),
+        headers: {
+          'User-Agent': 'Netlify-Scheduled-Function/1.0',
+          'X-Netlify-Internal': '1',
+        }
+      }
     );
 
     const elapsed = Date.now() - start;
@@ -24,7 +37,6 @@ exports.handler = async function(event, context) {
       return { statusCode: 500, body: JSON.stringify({ ok: false, error: `HTTP ${res.status}` }) };
     }
 
-    // get-scores writes blob itself — just confirm it completed
     const xCache = res.headers.get('X-Cache') || 'unknown';
     const xFetchedAt = res.headers.get('X-Fetched-At') || 'unknown';
     console.log(`fetch-scores-job: completed in ${elapsed}ms, X-Cache=${xCache}, fetchedAt=${xFetchedAt}`);
@@ -41,7 +53,6 @@ exports.handler = async function(event, context) {
   }
 };
 
-// Run every 15 minutes
 exports.config = {
   schedule: '*/15 * * * *',
 };

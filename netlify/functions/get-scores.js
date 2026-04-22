@@ -1107,15 +1107,29 @@ exports.handler = async function (event, context) {
 
     const finalScore = Math.max(0, Math.min(100, Math.round(score)));
 
+    // Sport-specific thresholds — different sports have different score ranges
+    const mustWatch = sport === 'football' ? 60
+                    : sport === 'nhl'      ? 48
+                    : sport === 'nba'      ? 45
+                    : sport === 'cricket'  ? 45
+                    : sport === 'mlb'      ? 45
+                    : sport === 'tennis'   ? 50
+                    : 60;
+    const watchable = sport === 'football' ? 38
+                    : sport === 'nhl'      ? 30
+                    : sport === 'nba'      ? 28
+                    : sport === 'cricket'  ? 28
+                    : sport === 'mlb'      ? 28
+                    : sport === 'tennis'   ? 35
+                    : 38;
+
     // Derive category from score
-    // Distinguish defensive (boring low-scoring) from blowout (one-sided)
     let cls;
-    if (finalScore >= SCORE_MUST_WATCH) {
+    if (finalScore >= mustWatch) {
       cls = 'watchworthy';
-    } else if (finalScore >= SCORE_WATCHABLE) {
+    } else if (finalScore >= watchable) {
       cls = 'watchable';
     } else {
-      // Skip — use defensive for low-scoring/boring, blowout for large margins
       const isLargeMargin = (g.h != null && g.a != null && Math.abs(g.h - g.a) >= 3) ||
                             (g.resultType === 'wickets' && g.resultMargin >= 7) ||
                             (g.resultType === 'runs' && g.resultMargin >= 40);
