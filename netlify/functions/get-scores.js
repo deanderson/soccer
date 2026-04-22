@@ -243,33 +243,15 @@ exports.handler = async function (event, context) {
 
     if (goals.length === 0) return null;
 
-    // Parse each goal into { minute, homeScore, awayScore, team }
-    const timeline = [];
-    for (const g of goals) {
-      const minute = parseMinute(g.clock?.displayValue);
-      if (minute === null) continue;
-      // Extract score from text e.g. "Aston Villa 3, Sunderland 3"
-      const scoreMatch = g.text?.match(/(\d+),\s*\w[\w\s]* (\d+)/);
-      if (!scoreMatch) continue;
-      timeline.push({
-        minute,
-        team: g.team?.displayName,
-        // We can't reliably know which score is home vs away from text alone
-        // but we have the final h/a and can track direction
-      });
-    }
-
-    // Simpler approach: reconstruct score progression from keyEvent texts
     const scoreProgression = [];
     for (const g of goals) {
       const minute = parseMinute(g.clock?.displayValue);
       if (minute === null) continue;
-      // Text format: "Goal! Team A N, Team B M. ..."
       const m = g.text?.match(/Goal!\s+.+?\s+(\d+),\s+.+?\s+(\d+)\./);
       if (!m) continue;
       scoreProgression.push({
         minute,
-        s1: parseInt(m[1], 10), // score for team named first in event title (home)
+        s1: parseInt(m[1], 10),
         s2: parseInt(m[2], 10),
         team: g.team?.displayName,
       });
@@ -277,61 +259,61 @@ exports.handler = async function (event, context) {
 
     if (scoreProgression.length === 0) return null;
 
-    const lastGoalMinute = Math.max(...scoreProgression.map(g => g.minute));
-    const finalH = h, finalA = a;
-    const diff = Math.abs(finalH - finalA);
-    const total = finalH + finalA;
+    const diff  = Math.abs(h - a);
+    const total = h + a;
 
-    // Late drama: decisive goal (changed the result) after 80'
+    // Late drama: final goal after 80'
     const lateGoals = scoreProgression.filter(g => g.minute >= 80);
     let hasLateDrama = false;
     if (lateGoals.length > 0) {
-      // Check if any late goal was the winner or equaliser
       const lastScore = scoreProgression[scoreProgression.length - 1];
       const lastLate  = lateGoals[lateGoals.length - 1];
-      if (lastLate === lastScore) hasLateDrama = true; // final goal was late
+      if (lastLate === lastScore) hasLateDrama = true;
     }
 
-    // Comeback: team was losing by 2+ and came back to draw or win
+    // Comeback: down 2+ and ended level or 1 apart
     let maxDeficit = 0;
     let hadComeback = false;
-    for (let i = 0; i < scoreProgression.length; i++) {
-      const { s1, s2 } = scoreProgression[i];
+    for (const { s1, s2 } of scoreProgression) {
       const deficit = Math.abs(s1 - s2);
       if (deficit > maxDeficit) maxDeficit = deficit;
     }
-    // If at any point someone was 2 down and the final diff is ≤ 1, it's a comeback
     if (maxDeficit >= 2 && diff <= 1) hadComeback = true;
 
-    // Lead changes: count times the leading team changed
+    // Lead changes
     let leadChanges = 0;
     let prevLeader = null;
     for (const { s1, s2 } of scoreProgression) {
       const leader = s1 > s2 ? "home" : s2 > s1 ? "away" : "draw";
-      if (prevLeader !== null && leader !== "draw" && leader !== prevLeader && prevLeader !== "draw") {
-        leadChanges++;
-      }
+      if (prevLeader !== null && leader !== "draw" && leader !== prevLeader && prevLeader !== "draw") leadChanges++;
       prevLeader = leader;
     }
 
-    // Now decide category override
-    if (total >= 6) return "scorefest";
+    // Build drama hint for display
+    const hints = [];
+    if (hadComeback)         hints.push('comeback');
+    if (hasLateDrama)        hints.push('late drama');
+    if (leadChanges >= 2)    hints.push('back-and-forth');
 
-    // Comeback from 2+ down that ended level or 1-apart
-    if (hadComeback && maxDeficit >= 2 && diff <= 1) return "watchworthy";
+    // Drama-first categorization — timeline IS the primary signal
+    if (total >= 6)                                        return { cat: 'scorefest',   hints };
+    if (hadComeback)                                       return { cat: 'watchworthy', hints };
+    if (leadChanges >= 2)                                  return { cat: 'watchworthy', hints };
+    if (hasLateDrama && diff <= 1)                         return { cat: 'watchworthy', hints };
+    if (hasLateDrama && diff <= 2)                         return { cat: 'watchworthy', hints }; // 2-0 with late goal still interesting
+    if (total >= 4 && diff <= 1)                           return { cat: 'watchworthy', hints }; // 3-2, 2-1 with high scoring
+    if (diff >= 3 && !hasLateDrama && leadChanges === 0)   return { cat: 'blowout',     hints }; // no drama at all
+    if (total <= 1)                                        return { cat: 'defensive',   hints }; // 0-0 or 1-0 with no late goal
+    if (diff <= 1)                                         return { cat: 'watchable',   hints };
 
-    // Lead changes — game went back and forth
-    if (leadChanges >= 2) return "watchworthy";
-
-    // Late drama (final goal after 80') on a close game
-    if (hasLateDrama && diff <= 1) return "watchworthy";
-
-    return null;
+    return null; // fall back to score heuristics
   }
 
   async function enrichSoccerWithTimeline(games, slug, cap) {
+    // Expanded candidates: include any game that could have timeline drama
+    // Not just margin <= 2 — a 4-1 with late goals is still interesting
     const candidates = games
-      .filter(g => g.id && Math.abs(g.h - g.a) <= 2)
+      .filter(g => g.id)
       .slice(0, cap);
 
     if (candidates.length === 0) return games;
@@ -348,15 +330,16 @@ exports.handler = async function (event, context) {
     for (let i = 0; i < candidates.length; i++) {
       const summary = summaries[i];
       if (!summary?.keyEvents) continue;
-      const override = categorizeSoccerByTimeline(summary.keyEvents, candidates[i].h, candidates[i].a);
-      if (override) overrides.set(candidates[i].id, override);
+      const result = categorizeSoccerByTimeline(summary.keyEvents, candidates[i].h, candidates[i].a);
+      if (result) overrides.set(candidates[i].id, result);
     }
 
     if (overrides.size === 0) return games;
 
     return games.map(g => {
       if (!g.id || !overrides.has(g.id)) return g;
-      return { ...g, timelineCat: overrides.get(g.id) };
+      const r = overrides.get(g.id);
+      return { ...g, timelineCat: r.cat, dramaHints: r.hints };
     });
   }
 
@@ -529,7 +512,7 @@ exports.handler = async function (event, context) {
           recent: recentSorted.map(g => {
             if (!g.id || !overrides.has(g.id)) return g;
             const r = overrides.get(g.id);
-            return { ...g, timelineCat: r.cat, debug: { factors: r.factors } };
+            return { ...g, timelineCat: r.cat, dramaHints: r.factors || [], debug: { factors: r.factors } };
           }),
           upcoming: upcoming.sort((a, b) => a.ts - b.ts).slice(0, 20),
         };
@@ -627,19 +610,19 @@ exports.handler = async function (event, context) {
     }
 
     if (highScoring && (resultMargin <= 10 || resultType === 'wickets')) {
-      return { cat: 'scorefest', factors: ['High scoring', 'Close finish'] };
+      return { cat: 'scorefest', hints: ['High scoring', 'Close finish'], factors: ['High scoring', 'Close finish'] };
     }
     if (lastOverWin) {
-      return { cat: 'watchworthy', factors: ['Last-over finish'] };
+      return { cat: 'watchworthy', hints: ['Last-over finish'], factors: ['Last-over finish'] };
     }
     if (closeChase && resultType === 'wickets' && resultMargin <= 4) {
-      return { cat: 'watchworthy', factors: ['Close chase'] };
+      return { cat: 'watchworthy', hints: ['Close chase'], factors: ['Close chase'] };
     }
     if (chaseCollapse && resultType === 'runs' && resultMargin <= 20) {
-      return { cat: 'watchworthy', factors: ['Collapse under pressure'] };
+      return { cat: 'watchworthy', hints: ['Collapse'], factors: ['Collapse under pressure'] };
     }
     if (highScoring) {
-      return { cat: 'scorefest', factors: ['High scoring'] };
+      return { cat: 'scorefest', hints: ['High scoring'], factors: ['High scoring'] };
     }
 
     return null;
@@ -838,10 +821,11 @@ exports.handler = async function (event, context) {
       prevLeader = leader;
     }
 
-    if (total >= 8) return 'scorefest';
-    if (hadComeback) return 'watchworthy';
-    if (leadChanges >= 2) return 'watchworthy';
-    if (hasLateDrama && diff <= 1) return 'watchworthy';
+    if (total >= 8) return { cat: 'scorefest',   hints: [] };
+    if (hadComeback) return { cat: 'watchworthy', hints: ['comeback'] };
+    if (leadChanges >= 2) return { cat: 'watchworthy', hints: ['back-and-forth'] };
+    if (hasLateDrama && diff <= 1) return { cat: 'watchworthy', hints: ['late drama'] };
+    if (hasOT) return { cat: 'watchworthy', hints: ['overtime'] };
     return null;
   }
 
@@ -852,8 +836,8 @@ exports.handler = async function (event, context) {
     const recent = events.filter(g => g.status === "final" && g.ts >= twoWeeksAgo).sort((a, b) => b.ts - a.ts);
     const upcoming = events.filter(g => g.status === "upcoming" && g.ts >= now).sort((a, b) => a.ts - b.ts).slice(0, 50);
 
-    // Enrich close games with timeline data — cap at 7
-    const candidates = recent.filter(g => g.id && Math.abs(g.h - g.a) <= 2).slice(0, 7);
+    // Expand to all recent games — timeline is primary signal now
+    const candidates = recent.filter(g => g.id).slice(0, 7);
 
     if (candidates.length === 0) return { recent, upcoming };
 
@@ -869,14 +853,15 @@ exports.handler = async function (event, context) {
     for (let i = 0; i < candidates.length; i++) {
       const summary = summaries[i];
       if (!summary) continue;
-      // ESPN NHL summary has plays array
       const plays = summary.plays || summary.playByPlay || [];
-      const override = categorizeNHLByTimeline(plays, candidates[i].h, candidates[i].a);
-      if (override) overrides.set(candidates[i].id, override);
+      const result = categorizeNHLByTimeline(plays, candidates[i].h, candidates[i].a);
+      if (result) overrides.set(candidates[i].id, result);
     }
 
     const enrichedRecent = recent.map(g =>
-      g.id && overrides.has(g.id) ? { ...g, timelineCat: overrides.get(g.id) } : g
+      g.id && overrides.has(g.id)
+        ? { ...g, timelineCat: overrides.get(g.id).cat, dramaHints: overrides.get(g.id).hints }
+        : g
     );
 
     return { recent: enrichedRecent, upcoming };
@@ -947,9 +932,14 @@ exports.handler = async function (event, context) {
       const idx = candidates.findIndex(c => c.id === g.id);
       if (idx === -1 || !summaries[idx]) return g;
       const result = categorizeNBAByTimeline(summaries[idx], g.h, g.a);
+      const hints = [];
+      if (result.hadComeback) hints.push('comeback');
+      if (result.hasOT)       hints.push('overtime');
+      if (result.leadChanges >= 10) hints.push('back-and-forth');
       return {
         ...g,
         timelineCat: result.cat || undefined,
+        dramaHints: hints,
         debug: {
           leadChanges: result.leadChanges,
           largestLead: result.largestLead,

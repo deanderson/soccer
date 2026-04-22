@@ -715,6 +715,7 @@
   // ── LAST UPDATED (feature #6) ──────────────────────────────────────────
   let loadedAt = null;
   let refreshCooldownUntil = 0;
+  let refreshCountdownTimer = null;
 
   function updateLastUpdatedText() {
     if (!loadedAt) return;
@@ -723,9 +724,22 @@
     const el = document.getElementById('last-updated-text');
     if (el) el.textContent = txt;
 
-    // Update refresh button state
+    // Update refresh button — show countdown if in cooldown
     const btn = document.getElementById('refresh-btn');
-    if (btn) btn.disabled = Date.now() < refreshCooldownUntil;
+    if (!btn) return;
+    const remaining = refreshCooldownUntil - Date.now();
+    if (remaining > 0) {
+      btn.disabled = true;
+      const secs = Math.ceil(remaining / 1000);
+      const minsLeft = Math.floor(secs / 60);
+      const secsLeft = secs % 60;
+      btn.textContent = minsLeft > 0 ? `${minsLeft}m` : `${secsLeft}s`;
+      btn.title = `Refresh available in ${minsLeft > 0 ? minsLeft + 'm ' : ''}${secsLeft}s`;
+    } else {
+      btn.disabled = false;
+      btn.textContent = '↻';
+      btn.title = 'Refresh scores';
+    }
   }
 
   async function refreshNow() {
@@ -774,12 +788,18 @@
   const TIMELINE_RANK = { scorefest:4, watchworthy:3, watchable:2, defensive:1, blowout:0 };
 
   function applyTimelineCat(g, scoreCat) {
-    if (!g.timelineCat) return scoreCat;
-    const override = TIMELINE_CAT_MAP[g.timelineCat];
-    if (!override) return scoreCat;
-    const scoreR = TIMELINE_RANK[scoreCat.cls] ?? 2;
-    const overR  = TIMELINE_RANK[g.timelineCat] ?? 2;
-    return overR > scoreR ? override : scoreCat;
+    if (!g.timelineCat) return scoreCat; // no timeline data — use score heuristic
+    const timelineCat = TIMELINE_CAT_MAP[g.timelineCat];
+    if (!timelineCat) return scoreCat;
+    // Timeline IS the primary signal — use it directly, with drama hints attached
+    const hints = g.dramaHints || [];
+    const badge = hints.length > 0
+      ? (hints.includes('comeback') ? '⚡ Comeback'
+       : hints.includes('late drama') ? '⚡ Late Drama'
+       : hints.includes('back-and-forth') ? '⚡ Back & Forth'
+       : timelineCat.badge || null)
+      : (timelineCat.badge || null);
+    return { ...timelineCat, badge };
   }
 
   function processSportData(data, sport) {
@@ -940,28 +960,19 @@
   // Priority order for picks: scorefest > watchworthy > watchable
   const CAT_RANK = { scorefest:3, watchworthy:2, watchable:1, defensive:0, blowout:0 };
 
-  // Sort games within a group by excitement:
-  // Priority: 1. Category rank  2. Closer margin  3. Higher scoring  4. Most recent
-  // Works for all sports — uses resultMargin for cricket, h/a diff for everything else
+  // Sort games by confidence score (primary) then category rank as fallback
   function sortByExcitement(games) {
     return [...games].sort((a, b) => {
+      // Category tier first — Must Watch before Watchable before Skip
       const rankDiff = (CAT_RANK[b.cat?.cls] ?? 0) - (CAT_RANK[a.cat?.cls] ?? 0);
       if (rankDiff !== 0) return rankDiff;
 
-      // Get margin — cricket uses resultMargin directly, others use score diff
-      const aMargin = a.resultMargin != null ? a.resultMargin
-                    : Math.abs((a.h ?? 0) - (a.a ?? 0));
-      const bMargin = b.resultMargin != null ? b.resultMargin
-                    : Math.abs((b.h ?? 0) - (b.a ?? 0));
+      // Within same tier: confidence score is the authority
+      const aScore = a.confidence?.score ?? 0;
+      const bScore = b.confidence?.score ?? 0;
+      if (bScore !== aScore) return bScore - aScore;
 
-      // Closer margin wins (ascending)
-      if (aMargin !== bMargin) return aMargin - bMargin;
-
-      // Higher scoring as tiebreaker (descending)
-      const aTotal = (a.h ?? 0) + (a.a ?? 0) + (a.maxInnings ?? 0);
-      const bTotal = (b.h ?? 0) + (b.a ?? 0) + (b.maxInnings ?? 0);
-      if (bTotal !== aTotal) return bTotal - aTotal;
-
+      // Final tiebreaker: most recent
       return b.ts - a.ts;
     });
   }
@@ -970,7 +981,6 @@
 
   function setTpWindow(w) {
     tpWindow = w;
-    // Always highlight the correct tab by data, not by which element was clicked
     document.querySelectorAll('.tp-tab').forEach(b => {
       b.classList.toggle('active', b.dataset.window === w);
     });
@@ -987,32 +997,30 @@
     const cutoff = now - windows[tpWindow];
 
     const games = allData[activeSport]?.recent || [];
+
+    // Filter to Must Watch only, sort by confidence score
     const candidates = games
-      .filter(g => g.ts >= cutoff && (g.cat?.cls === 'scorefest' || g.cat?.cls === 'watchworthy'))      .sort((a, b) => {
-        // For football, Tier 1 leagues rank above everything else
+      .filter(g => g.ts >= cutoff && (g.cat?.cls === 'scorefest' || g.cat?.cls === 'watchworthy'))
+      .sort((a, b) => {
+        // Football: Tier 1 leagues always bubble up first
         if (activeSport === 'football') {
           const aTier1 = FOOTBALL_TIER1.has(a.league) ? 1 : 0;
           const bTier1 = FOOTBALL_TIER1.has(b.league) ? 1 : 0;
           if (bTier1 !== aTier1) return bTier1 - aTier1;
         }
-        const rankDiff = (CAT_RANK[b.cat?.cls] ?? 0) - (CAT_RANK[a.cat?.cls] ?? 0);
-        if (rankDiff !== 0) return rankDiff;
-        const aDiff  = Math.abs((a.h ?? 0) - (a.a ?? 0));
-        const bDiff  = Math.abs((b.h ?? 0) - (b.a ?? 0));
-        const aTotal = (a.h ?? 0) + (a.a ?? 0) + (a.homeSets ?? 0) + (a.awaySets ?? 0);
-        const bTotal = (b.h ?? 0) + (b.a ?? 0) + (b.homeSets ?? 0) + (b.awaySets ?? 0);
-        if (b.cat?.cls === 'scorefest' && aDiff !== bDiff) return aDiff - bDiff;
-        if (bTotal !== aTotal) return bTotal - aTotal;
+        // Primary: confidence score
+        const aScore = a.confidence?.score ?? 0;
+        const bScore = b.confidence?.score ?? 0;
+        if (bScore !== aScore) return bScore - aScore;
+        // Fallback: recency
         return b.ts - a.ts;
       });
 
-    // One per league, but ensure at least 1-2 Tier 1 games if available
+    // One per league, Tier 1 football gets first 1-2 slots
     const seenLeagues = new Set();
     const picks = [];
     const tier1Games = candidates.filter(g => FOOTBALL_TIER1.has(g.league));
-    const otherGames = candidates.filter(g => !FOOTBALL_TIER1.has(g.league));
 
-    // Fill up to 2 Tier 1 slots first (if football)
     if (activeSport === 'football') {
       for (const g of tier1Games) {
         if (picks.length >= 2) break;
@@ -1022,7 +1030,6 @@
       }
     }
 
-    // Fill remaining slots from all games (one per league)
     for (const g of candidates) {
       if (picks.length >= 3) break;
       if (seenLeagues.has(g.league)) continue;
@@ -1083,6 +1090,7 @@
         const leagueLabel = g.league || g.leagueName || g.tournament || '';
         return `
           <div class="top-pick-card ${g.cat.cls}${i === 0 ? ' best-pick' : ''}" style="animation-delay:${i*0.06}s">
+            ${i === 0 ? '<div style="font-size:11px;font-weight:700;color:var(--green);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">⭐ Best Pick</div>' : ''}
             <div class="tp-sport">${leagueLabel}</div>
             <div class="tp-matchup">${g.home} vs ${g.away}</div>
             <div class="tp-meta">${dateLabel}</div>
@@ -1268,11 +1276,22 @@
     const gameId = makeGameId(g);
     const isWatched = watched.has(gameId);
     const safeId = gameId.replace(/'/g, "\\'");
+    const dramaHint = g.dramaHints?.length > 0
+      ? ' · <span style="color:var(--green);font-weight:600">' + (
+          g.dramaHints.includes('comeback')       ? '⚡ Comeback' :
+          g.dramaHints.includes('late drama')     ? '⚡ Late Drama' :
+          g.dramaHints.includes('back-and-forth') ? '⚡ Back & Forth' :
+          g.dramaHints.includes('overtime')       ? '⚡ OT' :
+          g.dramaHints.includes('Last-over finish')? '⚡ Last Over' :
+          g.dramaHints.includes('Close chase')    ? '⚡ Close Chase' :
+          g.dramaHints.includes('High scoring')   ? '🔥 High Scoring' :
+          g.dramaHints[0]
+        ) + '</span>' : '';
     return `
       <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${isBestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
         <div class="teams" style="flex:1;min-width:0;">
           <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
-          <div class="game-meta">${g.date} · ${g.league}${g.cat.badge ? ' · <span class="sub-badge">' + g.cat.badge + '</span>' : ''}</div>
+          <div class="game-meta">${g.date} · ${g.league}${dramaHint}${g.cat.badge && !dramaHint ? ' · <span class="sub-badge">' + g.cat.badge + '</span>' : ''}</div>
         </div>
         ${isBestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
         <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
