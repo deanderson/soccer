@@ -437,17 +437,17 @@
     const hasBreadstick = sets.some(s => (s.h === 6 && s.a === 1) || (s.a === 6 && s.h === 1));
 
     // Epic 5-setter (Grand Slam)
-    if (totalSets >= 5) return { ...makeCat('scorefest'), badge: '🎾 Epic 5-setter' };
+    if (totalSets >= 5) return makeCat('scorefest');
 
     // Any 3-setter is at least a Must Watch
-    if (totalSets >= 3 && loserSets >= 1) return { ...makeCat('watchworthy'), badge: '🎾 3-setter' };
+    if (totalSets >= 3 && loserSets >= 1) return makeCat('watchworthy');
 
     // Straight sets with tiebreak(s)
-    if (loserSets === 0 && hasTiebreak) return { ...makeCat('watchworthy'), badge: '🎾 Tiebreak' };
+    if (loserSets === 0 && hasTiebreak) return makeCat('watchworthy');
 
     // Dominant straight-set win — bagel or breadstick
     if (loserSets === 0 && (hasBagel || hasBreadstick) && !hasTiebreak)
-      return { ...makeCat('blowout'), badge: '🎯 Bagel' };
+      return makeCat('blowout');
 
     // Straight sets, close-ish
     if (loserSets === 0 && closeSets >= 2) return makeCat('watchable');
@@ -803,17 +803,14 @@
   const TIMELINE_RANK = { scorefest:4, watchworthy:3, watchable:2, defensive:1, blowout:0 };
 
   function applyTimelineCat(g, scoreCat) {
-    if (!g.timelineCat) return scoreCat; // no timeline data — use score heuristic
+    if (!g.timelineCat) return scoreCat;
     const timelineCat = TIMELINE_CAT_MAP[g.timelineCat];
     if (!timelineCat) return scoreCat;
-    // Timeline IS the primary signal — use it directly, with drama hints attached
     const hints = g.dramaHints || [];
-    const badge = hints.length > 0
-      ? (hints.includes('comeback') ? '⚡ Comeback'
-       : hints.includes('late drama') ? '⚡ Late Drama'
-       : hints.includes('back-and-forth') ? '⚡ Back & Forth'
-       : timelineCat.badge || null)
-      : (timelineCat.badge || null);
+    // Only vibe-based hints — no event-specific spoilers
+    const badge = hints.includes('back-and-forth') ? '🔁 Back & Forth'
+                : hints.includes('late drama')     ? '⚡ Tense Finish'
+                : null;
     return { ...timelineCat, badge };
   }
 
@@ -829,16 +826,11 @@
         // But we still need a badge from dramaHints
         const baseCat = makeCat(g.confidence.cls);
         const hints = g.dramaHints || [];
-        const badge = hints.length > 0
-          ? (hints.some(h => h.toLowerCase().includes('comeback'))       ? '⚡ Comeback'
-           : hints.some(h => h.toLowerCase().includes('late') || h.toLowerCase().includes('drama')) ? '⚡ Late Drama'
-           : hints.some(h => h.toLowerCase().includes('back') || h.toLowerCase().includes('lead'))  ? '⚡ Back & Forth'
-           : hints.some(h => h.toLowerCase().includes('overtime') || h.toLowerCase().includes('ot')) ? '⚡ OT'
-           : hints.some(h => h.toLowerCase().includes('over'))   ? '⚡ Last Over'
-           : hints.some(h => h.toLowerCase().includes('chase'))  ? '⚡ Close Chase'
-           : hints.some(h => h.toLowerCase().includes('scoring'))? '🔥 High Scoring'
-           : baseCat.badge || null)
-          : (baseCat.badge || null);
+        // Only vibe-based hints — no event-specific spoilers
+        const badge = hints.includes('back-and-forth') ? '🔁 Back & Forth'
+                    : hints.includes('late drama')     ? '⚡ Tense Finish'
+                    : hints.some(h => h.toLowerCase().includes('scoring')) ? '🔥 High Scoring'
+                    : baseCat.badge || null;
         return { ...baseCat, badge };
       }
       // Fallback: compute from frontend rules (should rarely happen)
@@ -1311,16 +1303,14 @@
     const gameId = makeGameId(g);
     const isWatched = watched.has(gameId);
     const safeId = gameId.replace(/'/g, "\\'");
-    const dramaHint = g.dramaHints?.length > 0
+
+    const isMustWatch = g.cat?.cls === 'scorefest' || g.cat?.cls === 'watchworthy';
+    const dramaHint = isMustWatch && g.dramaHints?.length > 0
       ? ' · <span style="color:var(--green);font-weight:600">' + (
-          g.dramaHints.includes('comeback')       ? '⚡ Comeback' :
-          g.dramaHints.includes('late drama')     ? '⚡ Late Drama' :
-          g.dramaHints.includes('back-and-forth') ? '⚡ Back & Forth' :
-          g.dramaHints.includes('overtime')       ? '⚡ OT' :
-          g.dramaHints.includes('Last-over finish')? '⚡ Last Over' :
-          g.dramaHints.includes('Close chase')    ? '⚡ Close Chase' :
-          g.dramaHints.includes('High scoring')   ? '🔥 High Scoring' :
-          g.dramaHints[0]
+          g.dramaHints.includes('back-and-forth') ? '🔁 Back & Forth' :
+          g.dramaHints.includes('late drama')     ? '⚡ Tense Finish' :
+          g.dramaHints.some(h => h.toLowerCase().includes('scoring')) ? '🔥 High Scoring' :
+          ''
         ) + '</span>' : '';
     return `
       <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${isBestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
@@ -1446,11 +1436,19 @@
           const gameId = makeGameId(g);
           const isWatched = watched.has(gameId);
           const safeId = gameId.replace(/'/g, "\\'");
+          const isMW = g.cat?.cls === 'scorefest' || g.cat?.cls === 'watchworthy';
+          const hint = isMW && g.dramaHints?.length > 0
+            ? ' · <span style="color:var(--green);font-weight:600">' + (
+                g.dramaHints.some(h => h.toLowerCase().includes('scoring')) ? '🔥 High Scoring' :
+                g.dramaHints.some(h => h.toLowerCase().includes('back'))    ? '🔁 Back & Forth' :
+                g.dramaHints.some(h => h.toLowerCase().includes('late') || h.toLowerCase().includes('drama')) ? '⚡ Tense Finish' :
+                ''
+              ) + '</span>' : '';
           html += `
             <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${g===bestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
               <div class="teams" style="flex:1;min-width:0;">
                 <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
-                <div class="game-meta">${g.dateStr} · ${g.league}</div>
+                <div class="game-meta">${g.dateStr} · ${g.league}${hint}</div>
               </div>
               ${g===bestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
               <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>

@@ -1,42 +1,43 @@
 // Scheduled function — runs every 15 minutes
-// Calls get-scores with _internal=1 to bypass cache and do a fresh fetch
-// get-scores writes the result to Netlify Blobs itself
+// Triggers get-scores?_internal=1 which does the live fetch and writes to blob itself
 
-const { connectLambda, getStore } = require('@netlify/blobs');
+const { connectLambda } = require('@netlify/blobs');
 
 exports.handler = async function(event, context) {
   connectLambda(event);
 
-  try {
-    const baseUrl = process.env.URL || 'https://spoilerfreescores.com';
-    console.log('fetch-scores-job: fetching from', baseUrl);
+  const start = Date.now();
+  const baseUrl = process.env.URL || 'https://spoilerfreescores.com';
+  console.log('fetch-scores-job: starting at', new Date().toISOString());
 
-    const res = await fetch(`${baseUrl}/.netlify/functions/get-scores?sport=all&_internal=1`, {
-      signal: AbortSignal.timeout(55000), // Netlify function limit is 60s
-    });
+  try {
+    const res = await fetch(
+      `${baseUrl}/.netlify/functions/get-scores?sport=all&_internal=1`,
+      { signal: AbortSignal.timeout(55000) }
+    );
+
+    const elapsed = Date.now() - start;
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`get-scores returned ${res.status}: ${text.slice(0, 200)}`);
+      console.error(`fetch-scores-job: get-scores returned ${res.status} after ${elapsed}ms:`, text.slice(0, 200));
+      return { statusCode: 500, body: JSON.stringify({ ok: false, error: `HTTP ${res.status}` }) };
     }
 
-    const data = await res.json();
+    // get-scores writes blob itself — just confirm it completed
+    const xCache = res.headers.get('X-Cache') || 'unknown';
+    const xFetchedAt = res.headers.get('X-Fetched-At') || 'unknown';
+    console.log(`fetch-scores-job: completed in ${elapsed}ms, X-Cache=${xCache}, fetchedAt=${xFetchedAt}`);
 
-    // Also write to blob here as a safety net in case get-scores blob write failed
-    const store = getStore('scores');
-    const fetchedAt = Date.now();
-    await store.setJSON('latest', {
-      data,
-      fetchedAt,
-      fetchedAtISO: new Date(fetchedAt).toISOString(),
-    });
-
-    console.log('fetch-scores-job: blob written at', new Date(fetchedAt).toISOString());
-    return { statusCode: 200, body: JSON.stringify({ ok: true, fetchedAt }) };
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ ok: true, elapsed, fetchedAt: xFetchedAt }),
+    };
 
   } catch (err) {
-    console.error('fetch-scores-job failed:', err.message);
-    return { statusCode: 500, body: JSON.stringify({ ok: false, error: err.message }) };
+    const elapsed = Date.now() - start;
+    console.error(`fetch-scores-job: failed after ${elapsed}ms:`, err.message);
+    return { statusCode: 500, body: JSON.stringify({ ok: false, error: err.message, elapsed }) };
   }
 };
 

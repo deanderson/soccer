@@ -254,12 +254,20 @@ exports.handler = async function (event, context) {
     const diff  = Math.abs(h - a);
     const total = h + a;
 
-    // Late goal detection — just needs clock, not score text
+    // Late goal detection — only meaningful late goals (changed or decided the result)
     const lateGoals = goals.filter(g => {
       const min = parseMinute(g.clock?.displayValue);
       return min !== null && min >= 80;
     });
-    const hasLateDrama = lateGoals.length > 0;
+
+    // A late goal "matters" if it was an equalizer or winner — not a consolation in a blowout
+    // We detect this by checking if the score was level or 1-apart AFTER the late goal
+    // Simple proxy: if the final margin is <=1 AND there was a late goal, it was decisive
+    // Also fires for dramatic late goals in high-scoring games (80+ min goal in 4-3 type)
+    const hasLateDrama = lateGoals.length > 0 && (
+      diff <= 1 ||                          // late goal decided or equalized
+      (diff === 2 && total >= 5)            // late goal in an already-high-scoring game
+    );
 
     // Score progression — try multiple text formats
     const scoreProgression = [];
@@ -1002,67 +1010,47 @@ exports.handler = async function (event, context) {
     const hasHighScoring = hints.some(h => h.toLowerCase().includes('scoring'));
 
     if (sport === 'football') {
-      // Goals scored — high scoring is elite
       if      (total >= 7) { factors.push({ label: `${total} goals`, points: 25 }); score += 25; }
       else if (total >= 5) { factors.push({ label: `${total} goals`, points: 18 }); score += 18; }
-      else if (total >= 3) { factors.push({ label: `${total} goals`, points: 10 }); score += 10; }
+      else if (total >= 3) { factors.push({ label: `${total} goals`, points: 12 }); score += 12; }
       else if (total <= 1) { factors.push({ label: 'Very low scoring', points: -12 }); score -= 12; }
-
-      // Margin — reduced to avoid compressing everything into "good"
-      if      (diff === 0) { factors.push({ label: 'Draw', points: 25 }); score += 25; }
+      if      (diff === 0) { factors.push({ label: 'Draw', points: 13 }); score += 13; }
       else if (diff === 1) { factors.push({ label: '1 goal margin', points: 16 }); score += 16; }
       else if (diff === 2) { factors.push({ label: '2 goal margin', points: 5  }); score += 5;  }
       else                 { factors.push({ label: 'Large margin', points: -40 }); score -= 40; }
-
-      // Timeline drama — these are the spike mechanics, must separate tiers
       if (hasComeback)  { factors.push({ label: '⚡ Comeback', points: 25 }); score += 25; }
       if (hasLateDrama) { factors.push({ label: '⚡ Late drama', points: 22 }); score += 22; }
       if (hasBackForth) { factors.push({ label: '⚡ Back & forth', points: 18 }); score += 18; }
-
-      // League tier — flavor, not dominant signal
       const leagueTier = { 'Champions League': 1, 'Premier League': 1, 'La Liga': 2, 'Bundesliga': 2, 'Serie A': 2 };
       const tier = leagueTier[g.league];
       if      (tier === 1) { factors.push({ label: g.league, points: 6 }); score += 6; }
       else if (tier === 2) { factors.push({ label: g.league, points: 3 }); score += 3; }
 
     } else if (sport === 'nhl') {
-      // Goals
       if      (total >= 8) { factors.push({ label: `${total} goals`, points: 25 }); score += 25; }
       else if (total >= 6) { factors.push({ label: `${total} goals`, points: 15 }); score += 15; }
       else if (total >= 4) { factors.push({ label: `${total} goals`, points: 8  }); score += 8;  }
       else if (total <= 2) { factors.push({ label: 'Low scoring', points: -10 }); score -= 10; }
-
-      // Margin
-      if      (diff === 0) { factors.push({ label: 'Tied/OT', points: 30 }); score += 30; }
+      if      (diff === 0) { factors.push({ label: 'Tied/OT', points: 20 }); score += 20; }
       else if (diff === 1) { factors.push({ label: '1 goal margin', points: 25 }); score += 25; }
       else if (diff === 2) { factors.push({ label: '2 goal margin', points: 10 }); score += 10; }
       else                 { factors.push({ label: 'Large margin', points: -40 }); score -= 40; }
-
-      // Timeline — these are strong signals for NHL
       if (hasOT)        { factors.push({ label: '⚡ Overtime', points: 25 }); score += 25; }
       if (hasComeback)  { factors.push({ label: '⚡ Comeback', points: 22 }); score += 22; }
       if (hasBackForth) { factors.push({ label: '⚡ Back & forth', points: 18 }); score += 18; }
       if (hasLateDrama) { factors.push({ label: '⚡ Late drama', points: 18 }); score += 18; }
-
-      // Also read from debug for lead changes
       const lc = g.debug?.leadChanges ?? 0;
       if (lc >= 2 && !hasBackForth) { factors.push({ label: `${lc} lead changes`, points: 12 }); score += 12; }
 
     } else if (sport === 'nba') {
-      // Points
       if      (total >= 230) { factors.push({ label: `${total} pts`, points: 15 }); score += 15; }
       else if (total >= 210) { factors.push({ label: `${total} pts`, points: 8  }); score += 8;  }
-
-      // Margin
       if      (diff <= 5)  { factors.push({ label: `${diff} pt margin`, points: 25 }); score += 25; }
       else if (diff <= 10) { factors.push({ label: `${diff} pt margin`, points: 15 }); score += 15; }
       else if (diff >= 20) { factors.push({ label: 'Blowout margin', points: -40 }); score -= 40; }
-      else if (diff >= 12) { factors.push({ label: 'Large margin', points: -20 }); score -= 20; }
-
-      // Timeline
+      else if (diff >= 12) { factors.push({ label: 'Large margin', points: -10 }); score -= 10; }
       if (hasOT)       { factors.push({ label: '⚡ Overtime', points: 20 }); score += 20; }
-      if (hasComeback) { factors.push({ label: `⚡ Comeback`, points: 20 }); score += 20; }
-
+      if (hasComeback) { factors.push({ label: '⚡ Comeback', points: 20 }); score += 20; }
       const lc = g.debug?.leadChanges ?? 0;
       if      (lc >= 15) { factors.push({ label: `${lc} lead changes`, points: 20 }); score += 20; }
       else if (lc >= 8)  { factors.push({ label: `${lc} lead changes`, points: 12 }); score += 12; }
@@ -1072,22 +1060,16 @@ exports.handler = async function (event, context) {
       if      (sets >= 5) { factors.push({ label: '5-set epic', points: 50 }); score += 50; }
       else if (sets >= 3) { factors.push({ label: '3-set match', points: 30 }); score += 30; }
       else                { factors.push({ label: 'Straight sets', points: -10 }); score -= 10; }
-
       if ((g.sets || []).some(s => s.h === 7 || s.a === 7)) {
         factors.push({ label: 'Tiebreak(s)', points: 20 }); score += 20;
       }
       const closeSets = (g.sets || []).filter(s => Math.abs(s.h - s.a) <= 2).length;
       if (closeSets >= 2) { factors.push({ label: `${closeSets} close sets`, points: 15 }); score += 15; }
-
-      // Bagel/breadstick penalty
       const hasBagel = (g.sets || []).some(s => s.h === 0 || s.a === 0);
       if (hasBagel) { factors.push({ label: 'Bagel set', points: -15 }); score -= 15; }
 
     } else if (sport === 'cricket') {
-      // Innings score
-      if (g.maxInnings >= 200) { factors.push({ label: `${g.maxInnings} run innings`, points: 20 }); score += 20; }
-
-      // Result margin
+      if (g.maxInnings >= 200) { factors.push({ label: `${g.maxInnings} run innings`, points: 25 }); score += 25; }
       if (g.resultType === 'wickets') {
         if      (g.resultMargin <= 2) { factors.push({ label: `Won by ${g.resultMargin} wkts`, points: 30 }); score += 30; }
         else if (g.resultMargin <= 4) { factors.push({ label: `Won by ${g.resultMargin} wkts`, points: 18 }); score += 18; }
@@ -1098,16 +1080,14 @@ exports.handler = async function (event, context) {
         else if (g.resultMargin >= 40) { factors.push({ label: 'Large margin', points: -40 }); score -= 40; }
         else                           { factors.push({ label: 'Won by runs', points: -10 }); score -= 10; }
       }
-
-      // Timeline drama
-      if (hasLastOver)   { factors.push({ label: '⚡ Last over finish', points: 20 }); score += 20; }
-      if (hasCloseChase) { factors.push({ label: '⚡ Close chase', points: 15 }); score += 15; }
-      if (hasHighScoring){ factors.push({ label: '⚡ High scoring', points: 12 }); score += 12; }
+      if (hasLastOver)    { factors.push({ label: '⚡ Last over finish', points: 20 }); score += 20; }
+      if (hasCloseChase)  { factors.push({ label: '⚡ Close chase', points: 15 }); score += 15; }
+      if (hasHighScoring) { factors.push({ label: '⚡ High scoring', points: 12 }); score += 12; }
 
     } else if (sport === 'mlb') {
       if      (total >= 12) { factors.push({ label: `${total} runs`, points: 20 }); score += 20; }
       else if (total >= 8)  { factors.push({ label: `${total} runs`, points: 12 }); score += 12; }
-      else if (total <= 3)  { factors.push({ label: 'Low scoring', points: -10 }); score -= 10; }
+      else if (total <= 3)  { factors.push({ label: 'Low scoring', points: -15 }); score -= 15; }
       if      (diff === 0 || diff === 1) { factors.push({ label: `${diff === 0 ? 'Tie' : '1 run margin'}`, points: 28 }); score += 28; }
       else if (diff === 2)               { factors.push({ label: '2 run margin', points: 14 }); score += 14; }
       else if (diff >= 5)                { factors.push({ label: 'Large margin', points: -40 }); score -= 40; }
@@ -1116,11 +1096,11 @@ exports.handler = async function (event, context) {
       if      (diff <= 3)  { factors.push({ label: `${diff} pt margin`, points: 30 }); score += 30; }
       else if (diff <= 7)  { factors.push({ label: `${diff} pt margin`, points: 20 }); score += 20; }
       else if (diff >= 17) { factors.push({ label: 'Blowout', points: -40 }); score -= 40; }
-      if      (total >= 50) { factors.push({ label: `${total} pts`, points: 15 }); score += 15; }
+      if      (total >= 50) { factors.push({ label: `${total} pts`, points: 20 }); score += 20; }
       else if (total <= 20) { factors.push({ label: 'Low scoring', points: -10 }); score -= 10; }
     }
 
-    // Recency bonus (small)
+        // Recency bonus (small)
     const daysAgo = (Date.now() - (g.ts ?? 0)) / 86400000;
     if      (daysAgo <= 1) { factors.push({ label: 'Today', points: 5 }); score += 5; }
     else if (daysAgo <= 3) { factors.push({ label: 'Last 3 days', points: 3 }); score += 3; }
@@ -1177,9 +1157,11 @@ exports.handler = async function (event, context) {
     };
 
     // Save full fetch to blob for future requests
+    const fetchedAt = Date.now();
     try {
       const store = getStore('scores');
-      await store.setJSON('latest', { data: body, fetchedAt: Date.now(), fetchedAtISO: new Date().toISOString() });
+      await store.setJSON('latest', { data: body, fetchedAt, fetchedAtISO: new Date(fetchedAt).toISOString() });
+      console.log('get-scores: blob written at', new Date(fetchedAt).toISOString());
     } catch (err) {
       console.error('Failed to save to blob:', err.message);
     }
@@ -1193,6 +1175,7 @@ exports.handler = async function (event, context) {
       "Content-Type": "application/json",
       "Cache-Control": "public, max-age=60",
       "X-Cache": "MISS",
+      "X-Fetched-At": new Date(fetchedAt || Date.now()).toISOString(),
     },
     body: JSON.stringify(body),
   };
