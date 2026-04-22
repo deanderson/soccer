@@ -119,6 +119,14 @@
   .matchup{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .matchup .vs{color:var(--muted);font-weight:400;margin:0 5px;}
   .game-meta{font-size:11px;color:var(--muted);margin-top:2px;}
+  @media(max-width:480px){
+    .game-card{padding:12px 14px;gap:10px;}
+    .matchup{font-size:14px;white-space:normal;overflow:visible;text-overflow:unset;line-height:1.3;}
+    .game-meta{font-size:12px;}
+    .cat-badge{font-size:12px;padding:5px 10px;}
+    .reveal-btn{font-size:12px;padding:5px 10px;}
+    .watched-btn{font-size:15px;}
+  }
 
   .cat-badge{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:7px;font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0;}
   .reveal-btn{background:transparent;border:1px solid rgba(255,255,255,0.08);border-radius:7px;padding:4px 10px;font-size:11px;font-weight:500;color:var(--muted);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background 0.15s,color 0.15s;font-family:'Outfit',sans-serif;}
@@ -822,15 +830,17 @@
     // Falls back to frontend categorize functions if no confidence data
     function buildCat(g) {
       if (g.confidence?.cls) {
-        // Backend already computed the category from score — use it
-        // But we still need a badge from dramaHints
+        // Backend already computed the category from score — always trust it
         const baseCat = makeCat(g.confidence.cls);
+        const isMW = g.confidence.cls === 'scorefest' || g.confidence.cls === 'watchworthy';
         const hints = g.dramaHints || [];
-        // Only vibe-based hints — no event-specific spoilers
-        const badge = hints.includes('back-and-forth') ? '🔁 Back & Forth'
-                    : hints.includes('late drama')     ? '⚡ Tense Finish'
-                    : hints.some(h => h.toLowerCase().includes('scoring')) ? '🔥 High Scoring'
-                    : baseCat.badge || null;
+        // Only show hint badges on Must Watch — vibe-based only, no spoilers
+        const badge = isMW
+          ? (hints.includes('back-and-forth') ? '🔁 Back & Forth'
+           : hints.includes('late drama')     ? '⚡ Tense Finish'
+           : hints.some(h => h.toLowerCase().includes('scoring')) ? '🔥 High Scoring'
+           : baseCat.badge || null)
+          : baseCat.badge || null;
         return { ...baseCat, badge };
       }
       // Fallback: compute from frontend rules (should rarely happen)

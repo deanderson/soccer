@@ -1,2 +1,9 @@
 [build]
-  functions = "netlify/functions"
+  publish = "."
+
+[functions]
+  directory = "."
+
+[[functions]]
+  path = "/fetch-scores-job"
+  schedule = "*/15 * * * *"

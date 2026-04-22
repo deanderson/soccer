@@ -1108,9 +1108,19 @@ exports.handler = async function (event, context) {
     const finalScore = Math.max(0, Math.min(100, Math.round(score)));
 
     // Derive category from score
-    const cls = finalScore >= SCORE_MUST_WATCH ? 'watchworthy'
-              : finalScore >= SCORE_WATCHABLE  ? 'watchable'
-              : 'blowout'; // Skip
+    // Distinguish defensive (boring low-scoring) from blowout (one-sided)
+    let cls;
+    if (finalScore >= SCORE_MUST_WATCH) {
+      cls = 'watchworthy';
+    } else if (finalScore >= SCORE_WATCHABLE) {
+      cls = 'watchable';
+    } else {
+      // Skip — use defensive for low-scoring/boring, blowout for large margins
+      const isLargeMargin = (g.h != null && g.a != null && Math.abs(g.h - g.a) >= 3) ||
+                            (g.resultType === 'wickets' && g.resultMargin >= 7) ||
+                            (g.resultType === 'runs' && g.resultMargin >= 40);
+      cls = isLargeMargin ? 'blowout' : 'defensive';
+    }
 
     return { score: finalScore, factors, cls };
   }
