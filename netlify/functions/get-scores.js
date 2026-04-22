@@ -398,16 +398,103 @@ exports.handler = async function (event, context) {
 
   async function fetchCricket() {
     try {
-      // Single call returns all active cricket series with scores
-      const data = await fetchESPN(
-        `https://site.api.espn.com/apis/personalized/v2/scoreboard/header?sport=cricket&region=us&lang=en`
-      );
+      // Priority T20 series with known ESPN IDs — fetch date-ranged history
+      const T20_SERIES = [
+        { id: '8048', name: 'IPL' },   // Indian Premier League
+        { id: '8679', name: 'PSL' },   // Pakistan Super League
+        { id: '8604', name: 'T20 World Cup' }, // ICC Men's T20 World Cup
+        { id: '12555',name: 'BBL' },   // Big Bash League
+      ];
 
-      const leagues = data?.sports?.[0]?.leagues || [];
+      // Only allow men's T20 series names — block women's and minor series
+      const BLOCKED_KEYWORDS = [
+        'women', 'qualifier', 'emerging', 'rising stars',
+        'in nepal', 'in cyprus', 'in greece', 'in portugal',
+        'central american', 'prime minister cup',
+      ];
+
+      function isAllowedSeries(name) {
+        const lower = (name || '').toLowerCase();
+        return !BLOCKED_KEYWORDS.some(k => lower.includes(k));
+      }
+
+      async function fetchSeriesHistory(seriesId, leagueName) {
+        try {
+          const today = espnDate(0);
+          const ago   = espnDate(-14);
+          const data = await fetchESPN(
+            `https://site.api.espn.com/apis/site/v2/sports/cricket/${seriesId}/scoreboard?dates=${ago}-${today}&limit=100`
+          );
+          const events = data?.events || [];
+          const results = [];
+          for (const ev of events) {
+            const comp = ev.competitions?.[0];
+            if (!comp) continue;
+            const competitors = comp.competitors || [];
+            const home = competitors.find(c => c.homeAway === 'home') || competitors[0];
+            const away = competitors.find(c => c.homeAway === 'away') || competitors[1];
+            if (!home || !away) continue;
+
+            const state = comp.status?.type?.state;
+            const isFinished = state === 'post' || comp.status?.type?.completed;
+            if (!isFinished) continue;
+
+            const date = new Date(comp.date || ev.date);
+            const dateStr = date.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
+            const timeStr = date.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit", timeZoneName:"short" });
+
+            const resultText = comp.status?.type?.shortDetail || comp.status?.type?.detail || '';
+            let resultMargin = null, resultType = null;
+            const runsMatch    = resultText.match(/won by (\d+) runs?/i);
+            const wicketsMatch = resultText.match(/won by (\d+) wkts?/i);
+            if (runsMatch)    { resultMargin = parseInt(runsMatch[1]);    resultType = 'runs';    }
+            if (wicketsMatch) { resultMargin = parseInt(wicketsMatch[1]); resultType = 'wickets'; }
+
+            const scoreNums = [home.score, away.score]
+              .map(s => parseInt((s || '').split('/')[0]))
+              .filter(n => !isNaN(n) && n > 0);
+            const maxInnings = Math.max(0, ...scoreNums);
+
+            results.push({
+              id: ev.id,
+              home: home.team?.displayName || home.team?.name || 'Home',
+              away: away.team?.displayName || away.team?.name || 'Away',
+              league: leagueName,
+              dateStr, timeStr,
+              ts: date.getTime(),
+              status: resultText,
+              resultMargin, resultType, maxInnings,
+            });
+          }
+          return results;
+        } catch (e) {
+          console.error(`Series ${seriesId} history failed:`, e.message);
+          return [];
+        }
+      }
+
+      // Fetch series history + header in parallel
+      const [headerData, ...seriesResults] = await Promise.all([
+        fetchESPN(`https://site.api.espn.com/apis/personalized/v2/scoreboard/header?sport=cricket&region=us&lang=en`),
+        ...T20_SERIES.map(s => fetchSeriesHistory(s.id, s.name)),
+      ]);
+
+      const seenIds = new Set();
       const recent = [], upcoming = [];
 
+      // Series history first (past 14 days finished matches)
+      for (const games of seriesResults) {
+        for (const g of games) {
+          if (!seenIds.has(g.id)) { seenIds.add(g.id); recent.push(g); }
+        }
+      }
+
+      // Header for today's results + live/upcoming — filtered to major men's series only
+      const leagues = headerData?.sports?.[0]?.leagues || [];
       for (const league of leagues) {
-        // Only T20 formats — filter by generalClassCard
+        const leagueName = league.shortName || league.name || '';
+        if (!isAllowedSeries(leagueName)) continue;
+
         for (const ev of (league.events || [])) {
           const classCard = ev.class?.generalClassCard || '';
           const eventType = ev.eventType || '';
@@ -415,6 +502,10 @@ exports.handler = async function (event, context) {
                         eventType === 'T20' ||
                         classCard === 'Twenty20';
           if (!isT20) continue;
+
+          // Block women's matches via class card
+          if (classCard.toLowerCase().includes('women')) continue;
+          if (leagueName.toLowerCase().includes('women')) continue;
 
           const competitors = ev.competitors || [];
           if (competitors.length < 2) continue;
@@ -426,28 +517,22 @@ exports.handler = async function (event, context) {
           const dateStr = date.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" });
           const timeStr = date.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit", timeZoneName:"short" });
 
-          const status = ev.status || '';
           const fullStatus = ev.fullStatus?.type;
           const isFinished = fullStatus?.state === 'post';
-          const isLive     = fullStatus?.state === 'in';
           const isPre      = fullStatus?.state === 'pre';
+          const isLive     = fullStatus?.state === 'in';
 
-          // Result text — ESPN puts it in fullStatus.longSummary
           const resultText = ev.fullStatus?.longSummary || ev.fullStatus?.summary || '';
-
           let resultMargin = null, resultType = null;
           const runsMatch    = resultText.match(/won by (\d+) runs?/i);
           const wicketsMatch = resultText.match(/won by (\d+) wkts?/i);
           if (runsMatch)    { resultMargin = parseInt(runsMatch[1]);    resultType = 'runs';    }
           if (wicketsMatch) { resultMargin = parseInt(wicketsMatch[1]); resultType = 'wickets'; }
 
-          // Parse max innings score from competitor score strings e.g. "156/9" or "160/5"
           const scoreNums = [home.score, away.score]
             .map(s => parseInt((s || '').split('/')[0]))
             .filter(n => !isNaN(n) && n > 0);
           const maxInnings = Math.max(0, ...scoreNums);
-
-          const leagueName = league.shortName || league.name || 'T20';
 
           const game = {
             id: ev.id,
@@ -460,9 +545,11 @@ exports.handler = async function (event, context) {
             resultMargin, resultType, maxInnings,
           };
 
-          if (isFinished) {
+          if (isFinished && !seenIds.has(ev.id)) {
+            seenIds.add(ev.id);
             recent.push(game);
-          } else if (isPre || isLive) {
+          } else if ((isPre || isLive) && !seenIds.has(ev.id)) {
+            seenIds.add(ev.id);
             upcoming.push({ ...game, time: timeStr });
           }
         }
@@ -486,7 +573,6 @@ exports.handler = async function (event, context) {
         const summaries = await Promise.all(
           candidates.map(g => fetchCricketSummary(g.id, '23694').catch(() => null))
         );
-
         const overrides = new Map();
         for (let i = 0; i < candidates.length; i++) {
           if (!summaries[i]) continue;
@@ -496,15 +582,12 @@ exports.handler = async function (event, context) {
           );
           if (result) overrides.set(candidates[i].id, result);
         }
-
-        const enrichedRecent = recentSorted.map(g => {
-          if (!g.id || !overrides.has(g.id)) return g;
-          const r = overrides.get(g.id);
-          return { ...g, timelineCat: r.cat, debug: { factors: r.factors } };
-        });
-
         return {
-          recent:   enrichedRecent,
+          recent: recentSorted.map(g => {
+            if (!g.id || !overrides.has(g.id)) return g;
+            const r = overrides.get(g.id);
+            return { ...g, timelineCat: r.cat, debug: { factors: r.factors } };
+          }),
           upcoming: upcoming.sort((a, b) => a.ts - b.ts).slice(0, 20),
         };
       }
@@ -518,6 +601,7 @@ exports.handler = async function (event, context) {
       return { recent: [], upcoming: [] };
     }
   }
+
 
   function parseCricketNotes(notes) {
     // Extract key match facts from ESPN cricket notes array

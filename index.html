@@ -101,6 +101,7 @@
   .debug-factor{display:flex;justify-content:space-between;color:var(--muted);padding:1px 0;}
   .debug-factor span:last-child{color:var(--green);}
   .game-card.best-pick{box-shadow:0 0 0 1px rgba(63,185,80,0.25),0 4px 20px rgba(63,185,80,0.1);}
+  .best-pick-badge{font-size:10px;font-weight:700;color:var(--green);background:var(--green-bg);border:1px solid rgba(63,185,80,0.25);border-radius:5px;padding:2px 6px;white-space:nowrap;flex-shrink:0;}
   .debug-toast{position:fixed;top:16px;right:16px;background:var(--card);border:1px solid var(--green);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;color:var(--green);z-index:300;opacity:0;transition:opacity 0.2s;pointer-events:none;}
   .debug-toast.show{opacity:1;}
 
@@ -1242,6 +1243,7 @@
           <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
           <div class="game-meta">${g.date} · ${g.league}</div>
         </div>
+        ${isBestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
         <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
         <button class="reveal-btn" onclick="toggleScore(this,${g.h},${g.a})">👁 Reveal</button>
         <div class="score-reveal"></div>
@@ -1362,6 +1364,7 @@
                 <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
                 <div class="game-meta">${g.dateStr} · ${g.league}</div>
               </div>
+              ${g===bestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
               <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
               <button class="reveal-btn" onclick="toggleCricketScore(this,'${safeStatus}')">👁 Reveal</button>
               <div class="score-reveal" style="font-family:'Outfit',sans-serif;font-size:11px;white-space:normal;max-width:160px;line-height:1.4;text-align:right;"></div>
@@ -1447,6 +1450,7 @@
                   <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
                   <div class="game-meta">${g.date} · ${g.league}</div>
                 </div>
+                ${g===bestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
                 <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
                 <button class="reveal-btn" onclick="toggleTennisScore(this,'${safeScore}')">👁 Reveal</button>
                 <div class="score-reveal" style="font-family:'Outfit',sans-serif;font-size:11px;white-space:normal;max-width:130px;line-height:1.4;text-align:right;"></div>
