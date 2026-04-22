@@ -4,6 +4,5 @@
 [functions]
   directory = "."
 
-[[functions]]
-  path = "/fetch-scores-job"
+[functions."fetch-scores-job"]
   schedule = "*/15 * * * *"
