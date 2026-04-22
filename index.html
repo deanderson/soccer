@@ -805,13 +805,38 @@
   function processSportData(data, sport) {
     try {
     const apiKey = API_KEY[sport];
+
+    // Helper: build cat object from confidence.cls (backend-derived from score)
+    // Falls back to frontend categorize functions if no confidence data
+    function buildCat(g) {
+      if (g.confidence?.cls) {
+        // Backend already computed the category from score — use it
+        // But we still need a badge from dramaHints
+        const baseCat = makeCat(g.confidence.cls);
+        const hints = g.dramaHints || [];
+        const badge = hints.length > 0
+          ? (hints.some(h => h.toLowerCase().includes('comeback'))       ? '⚡ Comeback'
+           : hints.some(h => h.toLowerCase().includes('late') || h.toLowerCase().includes('drama')) ? '⚡ Late Drama'
+           : hints.some(h => h.toLowerCase().includes('back') || h.toLowerCase().includes('lead'))  ? '⚡ Back & Forth'
+           : hints.some(h => h.toLowerCase().includes('overtime') || h.toLowerCase().includes('ot')) ? '⚡ OT'
+           : hints.some(h => h.toLowerCase().includes('over'))   ? '⚡ Last Over'
+           : hints.some(h => h.toLowerCase().includes('chase'))  ? '⚡ Close Chase'
+           : hints.some(h => h.toLowerCase().includes('scoring'))? '🔥 High Scoring'
+           : baseCat.badge || null)
+          : (baseCat.badge || null);
+        return { ...baseCat, badge };
+      }
+      // Fallback: compute from frontend rules (should rarely happen)
+      if (sport === 'cricket') return applyTimelineCat(g, categorizeCricket(g.resultMargin, g.resultType, g.maxInnings));
+      if (sport === 'tennis')  return categorizeTennis(g.homeSets, g.awaySets, g.sets || []);
+      if (SPORTS[sport]?.cat) return applyTimelineCat(g, SPORTS[sport].cat(g.h, g.a));
+      return makeCat('watchable');
+    }
+
     if (sport === 'cricket') {
       const raw = data.cricket || { recent:[], upcoming:[] };
       allData.cricket = {
-        recent: (raw.recent||[]).map(g => {
-          const scoreCat = categorizeCricket(g.resultMargin, g.resultType, g.maxInnings);
-          return { ...g, cat: applyTimelineCat(g, scoreCat) };
-        }),
+        recent:   (raw.recent||[]).map(g => ({ ...g, cat: buildCat(g) })),
         upcoming: raw.upcoming || [],
       };
       const el = document.getElementById('cricket-count');
@@ -821,7 +846,7 @@
     } else if (sport === 'tennis') {
       const raw = data.tennis || { recent:[], upcoming:[] };
       allData.tennis = {
-        recent:   (raw.recent||[]).map(g => ({ ...g, cat: categorizeTennis(g.homeSets, g.awaySets, g.sets||[]) })),
+        recent:   (raw.recent||[]).map(g => ({ ...g, cat: buildCat(g) })),
         upcoming: raw.upcoming || [],
       };
       const el = document.getElementById('tennis-count');
@@ -829,13 +854,8 @@
       buildFilters('tennis');
       renderTennis();
     } else {
-      // football and nhl get timeline override applied
-      const useTimeline = sport === 'football' || sport === 'nhl' || sport === 'nba';
       allData[sport] = {
-        recent: (data[apiKey]?.recent || []).map(g => {
-          const scoreCat = SPORTS[sport].cat(g.h, g.a);
-          return { ...g, cat: useTimeline ? applyTimelineCat(g, scoreCat) : scoreCat };
-        }),
+        recent:   (data[apiKey]?.recent || []).map(g => ({ ...g, cat: buildCat(g) })),
         upcoming: data[apiKey]?.upcoming || [],
       };
       const el = document.getElementById(`${sport}-count`);

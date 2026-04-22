@@ -952,8 +952,12 @@ exports.handler = async function (event, context) {
     return { recent: enrichedRecent, upcoming };
   }
 
-  // ── CONFIDENCE SCORING ────────────────────────────────────────────────
-  // Returns { score: 0-100, factors: [{label, points}] }
+  // ── UNIFIED SCORING ENGINE ────────────────────────────────────────────
+  // One score drives everything: category, ranking, Top Picks order.
+  // Thresholds: ≥70 = Must Watch, 40-69 = Watchable, <40 = Skip
+  const SCORE_MUST_WATCH = 70;
+  const SCORE_WATCHABLE  = 40;
+
   function computeConfidence(g, sport) {
     const factors = [];
     let score = 0;
@@ -962,97 +966,167 @@ exports.handler = async function (event, context) {
     const diff  = Math.abs(h - a);
     const total = h + a;
 
+    // Helper — dramaHints from any sport
+    const hints = g.dramaHints || [];
+    const hasComeback    = hints.some(h => h.toLowerCase().includes('comeback'));
+    const hasLateDrama   = hints.some(h => h.toLowerCase().includes('late') || h.toLowerCase().includes('drama'));
+    const hasBackForth   = hints.some(h => h.toLowerCase().includes('back') || h.toLowerCase().includes('lead'));
+    const hasOT          = hints.some(h => h.toLowerCase().includes('overtime') || h.toLowerCase().includes('ot'));
+    const hasLastOver    = hints.some(h => h.toLowerCase().includes('over'));
+    const hasCloseChase  = hints.some(h => h.toLowerCase().includes('chase'));
+    const hasHighScoring = hints.some(h => h.toLowerCase().includes('scoring'));
+
+    // ── BLOWOUT PENALTY (applied first — hard cap) ─────────────────────
+    // A big margin with no drama is always a Skip regardless of total
+    const bigBlowout = diff >= 3 && !hasComeback && !hasBackForth;
+
     if (sport === 'football') {
-      // Goals
-      if (total >= 7)      { factors.push({ label: `${total} total goals`, points: 30 }); score += 30; }
-      else if (total >= 5) { factors.push({ label: `${total} total goals`, points: 20 }); score += 20; }
-      else if (total >= 3) { factors.push({ label: `${total} total goals`, points: 10 }); score += 10; }
+      // Goals scored
+      if      (total >= 7) { factors.push({ label: `${total} goals`, points: 20 }); score += 20; }
+      else if (total >= 5) { factors.push({ label: `${total} goals`, points: 14 }); score += 14; }
+      else if (total >= 3) { factors.push({ label: `${total} goals`, points: 8  }); score += 8;  }
+      else if (total <= 1) { factors.push({ label: 'Very low scoring', points: -15 }); score -= 15; }
 
-      // Margin
-      if (diff === 0)      { factors.push({ label: 'Draw', points: 15 }); score += 15; }
-      else if (diff === 1) { factors.push({ label: '1 goal margin', points: 12 }); score += 12; }
-      else if (diff === 2) { factors.push({ label: '2 goal margin', points: 5 }); score += 5; }
+      // Margin (closeness)
+      if      (diff === 0) { factors.push({ label: 'Draw', points: 30 }); score += 30; }
+      else if (diff === 1) { factors.push({ label: '1 goal margin', points: 24 }); score += 24; }
+      else if (diff === 2) { factors.push({ label: '2 goal margin', points: 8  }); score += 8;  }
+      else                 { factors.push({ label: 'Large margin', points: -20 }); score -= 20; }
 
-      // Timeline factors
-      if (g.timelineCat) {
-        if (g.debug?.hasLateDrama)  { factors.push({ label: 'Late drama (80\'+)', points: 20 }); score += 20; }
-        if (g.debug?.hadComeback)   { factors.push({ label: 'Comeback from 2+ down', points: 20 }); score += 20; }
-        if (g.debug?.leadChanges >= 2) { factors.push({ label: `${g.debug.leadChanges} lead changes`, points: 15 }); score += 15; }
-      }
+      // Timeline drama (primary boosters)
+      if (hasComeback)  { factors.push({ label: '⚡ Comeback', points: 18 }); score += 18; }
+      if (hasLateDrama) { factors.push({ label: '⚡ Late drama', points: 16 }); score += 16; }
+      if (hasBackForth) { factors.push({ label: '⚡ Back & forth', points: 12 }); score += 12; }
 
-      // League tier
+      // League tier bonus
       const leagueTier = { 'Champions League': 1, 'Premier League': 1, 'La Liga': 2, 'Bundesliga': 2, 'Serie A': 2 };
       const tier = leagueTier[g.league];
-      if (tier === 1)      { factors.push({ label: `Tier 1 league (${g.league})`, points: 8 }); score += 8; }
-      else if (tier === 2) { factors.push({ label: `Tier 2 league (${g.league})`, points: 4 }); score += 4; }
+      if      (tier === 1) { factors.push({ label: g.league, points: 8 }); score += 8; }
+      else if (tier === 2) { factors.push({ label: g.league, points: 4 }); score += 4; }
 
     } else if (sport === 'nhl') {
-      if (total >= 8)      { factors.push({ label: `${total} goals`, points: 25 }); score += 25; }
-      else if (total >= 6) { factors.push({ label: `${total} goals`, points: 15 }); score += 15; }
-      if (diff <= 1)       { factors.push({ label: '1 goal margin', points: 15 }); score += 15; }
-      if (g.debug?.hasOT)        { factors.push({ label: 'Overtime/Shootout', points: 25 }); score += 25; }
-      if (g.debug?.hadComeback)  { factors.push({ label: 'Comeback from 2+ down', points: 20 }); score += 20; }
-      if ((g.debug?.leadChanges ?? 0) >= 2) { factors.push({ label: `${g.debug.leadChanges} lead changes`, points: 15 }); score += 15; }
+      // Goals
+      if      (total >= 8) { factors.push({ label: `${total} goals`, points: 20 }); score += 20; }
+      else if (total >= 6) { factors.push({ label: `${total} goals`, points: 12 }); score += 12; }
+      else if (total <= 3) { factors.push({ label: 'Low scoring', points: -10 }); score -= 10; }
+
+      // Margin
+      if      (diff <= 1) { factors.push({ label: '1 goal margin', points: 20 }); score += 20; }
+      else if (diff === 2) { factors.push({ label: '2 goal margin', points: 8 }); score += 8; }
+      else                 { factors.push({ label: 'Large margin', points: -15 }); score -= 15; }
+
+      // Timeline
+      if (hasOT)        { factors.push({ label: '⚡ Overtime', points: 25 }); score += 25; }
+      if (hasComeback)  { factors.push({ label: '⚡ Comeback', points: 20 }); score += 20; }
+      if (hasBackForth) { factors.push({ label: '⚡ Back & forth', points: 15 }); score += 15; }
+      if (hasLateDrama) { factors.push({ label: '⚡ Late drama', points: 12 }); score += 12; }
+
+      // Also read from debug for lead changes
+      const lc = g.debug?.leadChanges ?? 0;
+      if (lc >= 2 && !hasBackForth) { factors.push({ label: `${lc} lead changes`, points: 12 }); score += 12; }
 
     } else if (sport === 'nba') {
-      if (total >= 230)    { factors.push({ label: `${total} combined points`, points: 20 }); score += 20; }
-      else if (total >= 210) { factors.push({ label: `${total} combined points`, points: 10 }); score += 10; }
-      if (diff <= 5)       { factors.push({ label: `${diff} point margin`, points: 20 }); score += 20; }
-      else if (diff <= 10) { factors.push({ label: `${diff} point margin`, points: 10 }); score += 10; }
-      if (g.debug?.hasOT)        { factors.push({ label: 'Overtime', points: 20 }); score += 20; }
-      if (g.debug?.hadComeback)  { factors.push({ label: `Comeback (down ${g.debug?.largestLead})`, points: 20 }); score += 20; }
+      // Points
+      if      (total >= 230) { factors.push({ label: `${total} pts`, points: 15 }); score += 15; }
+      else if (total >= 210) { factors.push({ label: `${total} pts`, points: 8  }); score += 8;  }
+
+      // Margin
+      if      (diff <= 5)  { factors.push({ label: `${diff} pt margin`, points: 25 }); score += 25; }
+      else if (diff <= 10) { factors.push({ label: `${diff} pt margin`, points: 15 }); score += 15; }
+      else if (diff >= 20) { factors.push({ label: 'Blowout margin', points: -20 }); score -= 20; }
+
+      // Timeline
+      if (hasOT)       { factors.push({ label: '⚡ Overtime', points: 20 }); score += 20; }
+      if (hasComeback) { factors.push({ label: `⚡ Comeback`, points: 20 }); score += 20; }
+
       const lc = g.debug?.leadChanges ?? 0;
-      if (lc >= 15)        { factors.push({ label: `${lc} lead changes`, points: 20 }); score += 20; }
-      else if (lc >= 8)    { factors.push({ label: `${lc} lead changes`, points: 12 }); score += 12; }
+      if      (lc >= 15) { factors.push({ label: `${lc} lead changes`, points: 20 }); score += 20; }
+      else if (lc >= 8)  { factors.push({ label: `${lc} lead changes`, points: 12 }); score += 12; }
 
     } else if (sport === 'tennis') {
-      const sets = g.homeSets + g.awaySets;
-      if (sets >= 5)       { factors.push({ label: '5-set epic', points: 40 }); score += 40; }
-      else if (sets >= 3)  { factors.push({ label: '3-set match', points: 25 }); score += 25; }
-      if (g.sets?.some(s => s.h === 7 || s.a === 7)) { factors.push({ label: 'Tiebreak(s)', points: 20 }); score += 20; }
+      const sets = (g.homeSets ?? 0) + (g.awaySets ?? 0);
+      if      (sets >= 5) { factors.push({ label: '5-set epic', points: 50 }); score += 50; }
+      else if (sets >= 3) { factors.push({ label: '3-set match', points: 30 }); score += 30; }
+      else                { factors.push({ label: 'Straight sets', points: -10 }); score -= 10; }
+
+      if ((g.sets || []).some(s => s.h === 7 || s.a === 7)) {
+        factors.push({ label: 'Tiebreak(s)', points: 20 }); score += 20;
+      }
       const closeSets = (g.sets || []).filter(s => Math.abs(s.h - s.a) <= 2).length;
-      if (closeSets >= 2)  { factors.push({ label: `${closeSets} close sets`, points: 15 }); score += 15; }
+      if (closeSets >= 2) { factors.push({ label: `${closeSets} close sets`, points: 15 }); score += 15; }
+
+      // Bagel/breadstick penalty
+      const hasBagel = (g.sets || []).some(s => s.h === 0 || s.a === 0);
+      if (hasBagel) { factors.push({ label: 'Bagel set', points: -15 }); score -= 15; }
 
     } else if (sport === 'cricket') {
-      if (g.maxInnings >= 200)   { factors.push({ label: `${g.maxInnings} run innings`, points: 20 }); score += 20; }
-      if (g.resultType === 'wickets' && g.resultMargin <= 2) { factors.push({ label: `Won by ${g.resultMargin} wickets`, points: 35 }); score += 35; }
-      else if (g.resultType === 'runs' && g.resultMargin <= 10) { factors.push({ label: `Won by ${g.resultMargin} runs`, points: 30 }); score += 30; }
-      else if (g.resultType === 'wickets' && g.resultMargin <= 5) { factors.push({ label: `Won by ${g.resultMargin} wickets`, points: 20 }); score += 20; }
+      // Innings score
+      if (g.maxInnings >= 200) { factors.push({ label: `${g.maxInnings} run innings`, points: 20 }); score += 20; }
+
+      // Result margin
+      if (g.resultType === 'wickets') {
+        if      (g.resultMargin <= 2) { factors.push({ label: `Won by ${g.resultMargin} wkts`, points: 30 }); score += 30; }
+        else if (g.resultMargin <= 4) { factors.push({ label: `Won by ${g.resultMargin} wkts`, points: 18 }); score += 18; }
+        else if (g.resultMargin >= 7) { factors.push({ label: 'Comfortable win', points: -15 }); score -= 15; }
+      } else if (g.resultType === 'runs') {
+        if      (g.resultMargin <= 10) { factors.push({ label: `Won by ${g.resultMargin} runs`, points: 28 }); score += 28; }
+        else if (g.resultMargin <= 20) { factors.push({ label: `Won by ${g.resultMargin} runs`, points: 15 }); score += 15; }
+        else if (g.resultMargin >= 40) { factors.push({ label: 'Large margin', points: -15 }); score -= 15; }
+      }
+
+      // Timeline drama
+      if (hasLastOver)   { factors.push({ label: '⚡ Last over finish', points: 20 }); score += 20; }
+      if (hasCloseChase) { factors.push({ label: '⚡ Close chase', points: 15 }); score += 15; }
+      if (hasHighScoring){ factors.push({ label: '⚡ High scoring', points: 12 }); score += 12; }
+
+    } else if (sport === 'mlb') {
+      if      (total >= 12) { factors.push({ label: `${total} runs`, points: 20 }); score += 20; }
+      else if (total >= 8)  { factors.push({ label: `${total} runs`, points: 12 }); score += 12; }
+      else if (total <= 3)  { factors.push({ label: 'Low scoring', points: -10 }); score -= 10; }
+      if      (diff === 0 || diff === 1) { factors.push({ label: `${diff === 0 ? 'Tie' : '1 run margin'}`, points: 28 }); score += 28; }
+      else if (diff === 2)               { factors.push({ label: '2 run margin', points: 14 }); score += 14; }
+      else if (diff >= 5)                { factors.push({ label: 'Large margin', points: -15 }); score -= 15; }
+
+    } else if (sport === 'nfl') {
+      if      (diff <= 3)  { factors.push({ label: `${diff} pt margin`, points: 30 }); score += 30; }
+      else if (diff <= 7)  { factors.push({ label: `${diff} pt margin`, points: 20 }); score += 20; }
+      else if (diff >= 17) { factors.push({ label: 'Blowout', points: -20 }); score -= 20; }
+      if      (total >= 50) { factors.push({ label: `${total} pts`, points: 15 }); score += 15; }
+      else if (total <= 20) { factors.push({ label: 'Low scoring', points: -10 }); score -= 10; }
     }
 
-    // Recency bonus
-    const daysAgo = (Date.now() - g.ts) / 86400000;
-    if (daysAgo <= 1)      { factors.push({ label: 'Today', points: 5 }); score += 5; }
+    // Recency bonus (small)
+    const daysAgo = (Date.now() - (g.ts ?? 0)) / 86400000;
+    if      (daysAgo <= 1) { factors.push({ label: 'Today', points: 5 }); score += 5; }
     else if (daysAgo <= 3) { factors.push({ label: 'Last 3 days', points: 3 }); score += 3; }
 
-    return { score: Math.min(score, 100), factors };
+    const finalScore = Math.max(0, Math.min(100, Math.round(score)));
+
+    // Derive category from score
+    const cls = finalScore >= SCORE_MUST_WATCH ? 'watchworthy'
+              : finalScore >= SCORE_WATCHABLE  ? 'watchable'
+              : 'blowout'; // Skip
+
+    return { score: finalScore, factors, cls };
   }
 
-
-  // Attach confidence scores to all games in a result
-  function withConfidence(result, sport) {
-    const apiKey = { football:'soccer' }[sport] || sport;
-    const data = result[apiKey] || result[sport];
-    if (!data) return result;
-    return {
-      ...result,
-      [apiKey]: { ...data, recent: attachConfidence(data.recent || [], sport) }
-    };
-  }
-
+  // Attach confidence + derived category to all games
   function attachConfidence(games, sport) {
-    return games.map(g => ({ ...g, confidence: computeConfidence(g, sport) }));
+    return games.map(g => {
+      const confidence = computeConfidence(g, sport);
+      return { ...g, confidence };
+    });
   }
 
   // Route to the appropriate fetcher
   const SPORT_FETCHERS = {
-    football: async () => withConfidence({ soccer: await fetchAllSoccer() }, 'football'),
-    nhl:      async () => withConfidence({ nhl:    await fetchNHLWithTimeline() }, 'nhl'),
-    mlb:      async () => withConfidence({ mlb:    await fetchSport(`${BASE}/baseball/mlb/scoreboard`, "MLB", 15) }, 'mlb'),
-    nba:      async () => withConfidence({ nba:    await fetchNBAWithTimeline() }, 'nba'),
-    nfl:      async () => withConfidence({ nfl:    await fetchSport(`${BASE}/football/nfl/scoreboard`, "NFL") }, 'nfl'),
-    cricket:  async () => withConfidence({ cricket: await fetchCricket() }, 'cricket'),
-    tennis:   async () => withConfidence({ tennis:  await fetchTennis() }, 'tennis'),
+    football: async () => { const r = await fetchAllSoccer();        return { soccer:  { ...r, recent: attachConfidence(r.recent,  'football') } }; },
+    nhl:      async () => { const r = await fetchNHLWithTimeline();   return { nhl:     { ...r, recent: attachConfidence(r.recent,  'nhl')      } }; },
+    mlb:      async () => { const r = await fetchSport(`${BASE}/baseball/mlb/scoreboard`, "MLB", 15); return { mlb: { ...r, recent: attachConfidence(r.recent, 'mlb') } }; },
+    nba:      async () => { const r = await fetchNBAWithTimeline();   return { nba:     { ...r, recent: attachConfidence(r.recent,  'nba')      } }; },
+    nfl:      async () => { const r = await fetchSport(`${BASE}/football/nfl/scoreboard`, "NFL");     return { nfl: { ...r, recent: attachConfidence(r.recent, 'nfl') } }; },
+    cricket:  async () => { const r = await fetchCricket();           return { cricket: { ...r, recent: attachConfidence(r.recent,  'cricket')  } }; },
+    tennis:   async () => { const r = await fetchTennis();            return { tennis:  { ...r, recent: attachConfidence(r.recent,  'tennis')   } }; },
   };
 
   let body;
