@@ -1,55 +1,51 @@
 // Scheduled function — runs every 15 minutes
-// Uses DEPLOY_URL to bypass Cloudflare on the custom domain
 
-const { connectLambda } = require('@netlify/blobs');
+const { connectLambda, getStore } = require('@netlify/blobs');
 
 exports.handler = async function(event, context) {
   connectLambda(event);
 
   const start = Date.now();
-
-  // DEPLOY_URL is Netlify's own CDN URL (e.g. https://abc123.netlify.app)
-  // This bypasses Cloudflare which blocks requests to the custom domain
-  const baseUrl = process.env.DEPLOY_URL
-                || process.env.NETLIFY_FUNCTION_SITE_URL
-                || process.env.URL
-                || 'https://spoilerfreescores.com';
-
-  console.log('fetch-scores-job: starting at', new Date().toISOString(), 'via', baseUrl);
+  console.log('fetch-scores-job: starting at', new Date().toISOString());
 
   try {
+    // Use the Netlify site URL — try multiple env vars
+    const siteUrl = process.env.URL || 'https://spoilerfreescores.com';
+    console.log('fetch-scores-job: using URL', siteUrl);
+
     const res = await fetch(
-      `${baseUrl}/.netlify/functions/get-scores?sport=all&_internal=1`,
+      `${siteUrl}/.netlify/functions/get-scores?sport=all&_internal=1`,
       {
         signal: AbortSignal.timeout(55000),
         headers: {
-          'User-Agent': 'Netlify-Scheduled-Function/1.0',
-          'X-Netlify-Internal': '1',
+          'User-Agent': 'Mozilla/5.0 (compatible; Netlify-Function/1.0)',
         }
       }
     );
 
     const elapsed = Date.now() - start;
+    console.log(`fetch-scores-job: response ${res.status} after ${elapsed}ms`);
 
     if (!res.ok) {
       const text = await res.text();
-      console.error(`fetch-scores-job: get-scores returned ${res.status} after ${elapsed}ms:`, text.slice(0, 200));
-      return { statusCode: 500, body: JSON.stringify({ ok: false, error: `HTTP ${res.status}` }) };
+      console.error('fetch-scores-job: error body:', text.slice(0, 300));
+      return { statusCode: 500, body: JSON.stringify({ ok: false, status: res.status }) };
     }
 
-    const xCache = res.headers.get('X-Cache') || 'unknown';
-    const xFetchedAt = res.headers.get('X-Fetched-At') || 'unknown';
-    console.log(`fetch-scores-job: completed in ${elapsed}ms, X-Cache=${xCache}, fetchedAt=${xFetchedAt}`);
+    const data = await res.json();
 
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ ok: true, elapsed, fetchedAt: xFetchedAt }),
-    };
+    // Write to blob ourselves as safety net
+    const store = getStore('scores');
+    const fetchedAt = Date.now();
+    await store.setJSON('latest', { data, fetchedAt, fetchedAtISO: new Date(fetchedAt).toISOString() });
+    console.log('fetch-scores-job: blob written at', new Date(fetchedAt).toISOString());
+
+    return { statusCode: 200, body: JSON.stringify({ ok: true, elapsed }) };
 
   } catch (err) {
     const elapsed = Date.now() - start;
-    console.error(`fetch-scores-job: failed after ${elapsed}ms:`, err.message);
-    return { statusCode: 500, body: JSON.stringify({ ok: false, error: err.message, elapsed }) };
+    console.error('fetch-scores-job: exception after', elapsed, 'ms:', err.message);
+    return { statusCode: 500, body: JSON.stringify({ ok: false, error: err.message }) };
   }
 };
 
