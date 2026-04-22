@@ -156,7 +156,7 @@ exports.handler = async function (event, context) {
     { slug: "uefa.europa",    name: "Europa League",    tier: 3 },
     { slug: "usa.1",          name: "MLS",              tier: 3 },
   ];
-  const SOCCER_TIMELINE_CAP = { 1: 7, 2: 5, 3: 2 };
+  const SOCCER_TIMELINE_CAP = { 1: 999, 2: 999, 3: 999 }; // all games
 
   // ESPN soccer scoreboard only accepts a single date (not a range).
   // Fetch 9 days back + 4 ahead = 13 requests per league (down from 15)
@@ -233,52 +233,60 @@ exports.handler = async function (event, context) {
     return parseInt(m[1], 10) + (m[2] ? parseInt(m[2], 10) : 0);
   }
 
-  // Given keyEvents from the summary endpoint, derive timeline-based category override
-  // Returns a category string like "watchworthy", "scorefest", etc. or null to keep existing
   function categorizeSoccerByTimeline(keyEvents, h, a) {
     const goals = keyEvents.filter(e =>
       e.type?.type === "goal" ||
-      (typeof e.type?.text === "string" && e.type.text.toLowerCase().includes("goal"))
+      e.type?.id === "goal" ||
+      (typeof e.type?.text === "string" && e.type.text.toLowerCase().includes("goal")) ||
+      (typeof e.text === "string" && e.text.toLowerCase().includes("goal"))
     );
 
     if (goals.length === 0) return null;
 
+    const diff  = Math.abs(h - a);
+    const total = h + a;
+
+    // Late goal detection — just needs clock, not score text
+    const lateGoals = goals.filter(g => {
+      const min = parseMinute(g.clock?.displayValue);
+      return min !== null && min >= 80;
+    });
+    const hasLateDrama = lateGoals.length > 0;
+
+    // Score progression — try multiple text formats
     const scoreProgression = [];
     for (const g of goals) {
       const minute = parseMinute(g.clock?.displayValue);
       if (minute === null) continue;
-      const m = g.text?.match(/Goal!\s+.+?\s+(\d+),\s+.+?\s+(\d+)\./);
-      if (!m) continue;
-      scoreProgression.push({
-        minute,
-        s1: parseInt(m[1], 10),
-        s2: parseInt(m[2], 10),
-        team: g.team?.displayName,
-      });
+
+      // Try various ESPN goal text formats:
+      // "Goal! Arsenal 2, Chelsea 1."
+      // "Goal scored. Arsenal 2 - Chelsea 1"
+      // Just extract two numbers that look like a scoreline
+      const text = g.text || g.shortText || '';
+      let s1 = null, s2 = null;
+
+      const m1 = text.match(/(\d+)[,\s\-]+(\d+)/);
+      if (m1) {
+        s1 = parseInt(m1[1], 10);
+        s2 = parseInt(m1[2], 10);
+      }
+
+      if (s1 !== null && s2 !== null && (s1 + s2) <= total) {
+        scoreProgression.push({ minute, s1, s2 });
+      }
     }
 
-    if (scoreProgression.length === 0) return null;
-
-    const diff  = Math.abs(h - a);
-    const total = h + a;
-
-    // Late drama: final goal after 80'
-    const lateGoals = scoreProgression.filter(g => g.minute >= 80);
-    let hasLateDrama = false;
-    if (lateGoals.length > 0) {
-      const lastScore = scoreProgression[scoreProgression.length - 1];
-      const lastLate  = lateGoals[lateGoals.length - 1];
-      if (lastLate === lastScore) hasLateDrama = true;
-    }
-
-    // Comeback: down 2+ and ended level or 1 apart
+    // Comeback detection from score progression
     let maxDeficit = 0;
     let hadComeback = false;
-    for (const { s1, s2 } of scoreProgression) {
-      const deficit = Math.abs(s1 - s2);
-      if (deficit > maxDeficit) maxDeficit = deficit;
+    if (scoreProgression.length >= 2) {
+      for (const { s1, s2 } of scoreProgression) {
+        const deficit = Math.abs(s1 - s2);
+        if (deficit > maxDeficit) maxDeficit = deficit;
+      }
+      if (maxDeficit >= 2 && diff <= 1) hadComeback = true;
     }
-    if (maxDeficit >= 2 && diff <= 1) hadComeback = true;
 
     // Lead changes
     let leadChanges = 0;
@@ -289,24 +297,23 @@ exports.handler = async function (event, context) {
       prevLeader = leader;
     }
 
-    // Build drama hint for display
+    // Build hints
     const hints = [];
     if (hadComeback)         hints.push('comeback');
     if (hasLateDrama)        hints.push('late drama');
     if (leadChanges >= 2)    hints.push('back-and-forth');
 
-    // Drama-first categorization — timeline IS the primary signal
+    // Always return a result for enriched games — even if just late drama
     if (total >= 6)                                        return { cat: 'scorefest',   hints };
     if (hadComeback)                                       return { cat: 'watchworthy', hints };
     if (leadChanges >= 2)                                  return { cat: 'watchworthy', hints };
-    if (hasLateDrama && diff <= 1)                         return { cat: 'watchworthy', hints };
-    if (hasLateDrama && diff <= 2)                         return { cat: 'watchworthy', hints }; // 2-0 with late goal still interesting
-    if (total >= 4 && diff <= 1)                           return { cat: 'watchworthy', hints }; // 3-2, 2-1 with high scoring
-    if (diff >= 3 && !hasLateDrama && leadChanges === 0)   return { cat: 'blowout',     hints }; // no drama at all
-    if (total <= 1)                                        return { cat: 'defensive',   hints }; // 0-0 or 1-0 with no late goal
+    if (hasLateDrama && diff <= 2)                         return { cat: 'watchworthy', hints };
+    if (total >= 4 && diff <= 1)                           return { cat: 'watchworthy', hints };
+    if (diff >= 3 && !hasLateDrama && leadChanges === 0)   return { cat: 'blowout',     hints };
+    if (total <= 1)                                        return { cat: 'defensive',   hints };
     if (diff <= 1)                                         return { cat: 'watchable',   hints };
 
-    return null; // fall back to score heuristics
+    return { cat: null, hints }; // return hints even if no category override
   }
 
   async function enrichSoccerWithTimeline(games, slug, cap) {
@@ -331,7 +338,7 @@ exports.handler = async function (event, context) {
       const summary = summaries[i];
       if (!summary?.keyEvents) continue;
       const result = categorizeSoccerByTimeline(summary.keyEvents, candidates[i].h, candidates[i].a);
-      if (result) overrides.set(candidates[i].id, result);
+      if (result) overrides.set(candidates[i].id, result); // store even if cat is null — hints still useful
     }
 
     if (overrides.size === 0) return games;
@@ -339,7 +346,9 @@ exports.handler = async function (event, context) {
     return games.map(g => {
       if (!g.id || !overrides.has(g.id)) return g;
       const r = overrides.get(g.id);
-      return { ...g, timelineCat: r.cat, dramaHints: r.hints };
+      const enriched = { ...g, dramaHints: r.hints || [] };
+      if (r.cat) enriched.timelineCat = r.cat;
+      return enriched;
     });
   }
 
@@ -493,7 +502,7 @@ exports.handler = async function (event, context) {
           (g.resultType === 'runs'    && g.resultMargin <= 20) ||
           g.maxInnings >= 180
         )
-      ).slice(0, 5);
+      ).slice(0, 20);
 
       if (candidates.length > 0) {
         const summaries = await Promise.all(
@@ -836,8 +845,8 @@ exports.handler = async function (event, context) {
     const recent = events.filter(g => g.status === "final" && g.ts >= twoWeeksAgo).sort((a, b) => b.ts - a.ts);
     const upcoming = events.filter(g => g.status === "upcoming" && g.ts >= now).sort((a, b) => a.ts - b.ts).slice(0, 50);
 
-    // Expand to all recent games — timeline is primary signal now
-    const candidates = recent.filter(g => g.id).slice(0, 7);
+    // Analyze all games except clear blowouts — skip diff>=4 with low total
+    const candidates = recent.filter(g => g.id && !(Math.abs(g.h - g.a) >= 4 && g.h + g.a < 8)).slice(0, 30);
 
     if (candidates.length === 0) return { recent, upcoming };
 
@@ -914,8 +923,8 @@ exports.handler = async function (event, context) {
     const recent = events.filter(g => g.status === "final" && g.ts >= twoWeeksAgo).sort((a, b) => b.ts - a.ts);
     const upcoming = events.filter(g => g.status === "upcoming" && g.ts >= now).sort((a, b) => a.ts - b.ts).slice(0, 50);
 
-    // Enrich close games — cap at 7
-    const candidates = recent.filter(g => g.id && Math.abs(g.h - g.a) <= 10).slice(0, 7);
+    // Analyze all games except clear blowouts — skip diff>=20
+    const candidates = recent.filter(g => g.id && Math.abs(g.h - g.a) < 20).slice(0, 30);
 
     if (candidates.length === 0) return { recent, upcoming };
 
