@@ -1,8 +1,5 @@
 [build]
   publish = "."
 
-[functions]
-  directory = "."
-
 [functions."fetch-scores-job"]
   schedule = "*/15 * * * *"
