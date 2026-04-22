@@ -97,6 +97,11 @@
 
   /* DEBUG MODE */
   .debug-panel{display:none;width:100%;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:11px;font-family:monospace;}
+  .debug-mode .debug-panel{display:block;}
+  .debug-score{font-weight:700;margin-bottom:6px;color:var(--green);}
+  .debug-factor{display:flex;justify-content:space-between;color:var(--muted);padding:1px 0;}
+  .debug-factor .pos{color:var(--green);}
+  .debug-factor .neg{color:var(--red);}
   .debug-score{font-size:13px;font-weight:700;color:var(--green);margin-bottom:6px;}
   .debug-factor{display:flex;justify-content:space-between;color:var(--muted);padding:1px 0;}
   .debug-factor span:last-child{color:var(--green);}
@@ -1276,18 +1281,18 @@
 
   function debugPanelHTML(g) {
     if (!g.confidence) return '';
-    const { score, factors } = g.confidence;
+    const { score, factors, cls } = g.confidence;
     const bar = '█'.repeat(Math.round(score / 10)) + '░'.repeat(10 - Math.round(score / 10));
     return `
       <div class="debug-panel">
-        <div class="debug-score">Confidence: ${score}/100 ${bar}</div>
-        ${factors.map(f => `
+        <div class="debug-score">Score: ${score}/100 ${bar} → ${cls}</div>
+        ${(factors||[]).map(f => `
           <div class="debug-factor">
             <span>${f.label}</span>
-            <span>+${f.points}</span>
+            <span class="${f.points >= 0 ? 'pos' : 'neg'}">${f.points >= 0 ? '+' : ''}${f.points}</span>
           </div>`).join('')}
         ${g.debug ? `<div class="debug-factor" style="margin-top:4px;color:var(--blue)">
-          <span>Lead changes: ${g.debug.leadChanges ?? '—'} · Largest lead: ${g.debug.largestLead ?? '—'}${g.debug.hasOT ? ' · OT' : ''}${g.debug.hadComeback ? ' · Comeback' : ''}</span>
+          <span>LC:${g.debug.leadChanges ?? '—'} · Lead:${g.debug.largestLead ?? '—'}${g.debug.hasOT ? ' · OT' : ''}${g.debug.hadComeback ? ' · Comeback' : ''}</span>
         </div>` : ''}
       </div>`;
   }
