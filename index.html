@@ -131,6 +131,11 @@
   .cat-badge{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:7px;font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0;}
   .reveal-btn{background:transparent;border:1px solid rgba(255,255,255,0.08);border-radius:7px;padding:4px 10px;font-size:11px;font-weight:500;color:var(--muted);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background 0.15s,color 0.15s;font-family:'Outfit',sans-serif;}
   .reveal-btn:hover{background:rgba(255,255,255,0.06);color:var(--text);}
+  /* Watch Now button — visible only on Must Watch cards. Slightly more
+     prominent than reveal-btn so the user notices the action, but not so
+     loud that it overpowers the reveal flow. */
+  .watch-btn{display:inline-flex;align-items:center;gap:4px;background:var(--green-bg);border:1px solid rgba(63,185,80,0.35);border-radius:7px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--green);text-decoration:none;white-space:nowrap;flex-shrink:0;transition:background 0.15s,border-color 0.15s;font-family:'Outfit',sans-serif;}
+  .watch-btn:hover{background:rgba(63,185,80,0.2);border-color:var(--green);}
   .score-reveal{font-size:16px;font-weight:700;font-family:'Bebas Neue',sans-serif;letter-spacing:0.05em;display:none;flex-shrink:0;min-width:52px;text-align:center;}
 
   /* Must Watch — green (scorefest + watchworthy both show green) */
@@ -367,6 +372,12 @@
       <div id="tennis-games"></div>
     </div>
 
+    <!-- DARTS -->
+    <div class="sport-panel" id="panel-darts">
+      <div class="filters" id="darts-filters"></div>
+      <div id="darts-games"></div>
+    </div>
+
 <script>
   // ── CATEGORY DISPLAY MAPPING ──────────────────────────────────────────
   // cls values drive sorting/filtering internally — labels are what users see
@@ -471,15 +482,14 @@
     "Ligue 1","Champions League","Europa League","MLS"
   ];
 
-  const FILTER_DEFS        = ['all','mustwatch','watchable','skip'];
-  const CRICKET_FILTER_DEFS = ['all','mustwatch','watchable','skip'];
-  const TENNIS_FILTER_DEFS  = ['all','mustwatch','watchable','skip'];
+  const FILTER_DEFS        = ['all','mustwatch','watchable'];
+  const CRICKET_FILTER_DEFS = ['all','mustwatch','watchable'];
+  const TENNIS_FILTER_DEFS  = ['all','mustwatch','watchable'];
 
-  // Map filter keys to cls values for filtering
+  // Cumulative filter — each level includes everything above it
   const FILTER_CLS_MAP = {
-    mustwatch: ['scorefest','watchworthy'],
-    watchable: ['watchable'],
-    skip:      ['blowout','defensive'],
+    mustwatch: ['scorefest','watchworthy'],               // only Must Watch
+    watchable: ['scorefest','watchworthy','watchable'],   // Must Watch + Watchable (no Skip)
   };
 
   // Cricket categorize — works on result margin text, not scores
@@ -506,19 +516,18 @@
     nfl:      { cat: (h,a) => categorizeNFL(h,a),      filterDefs: FILTER_DEFS },
     cricket:  { filterDefs: CRICKET_FILTER_DEFS }, // cricket uses its own render path
     tennis:   { filterDefs: TENNIS_FILTER_DEFS  }, // tennis uses its own render path
+    darts:    { filterDefs: STD_FILTER_LABELS  }, // darts uses its own render path
   };
 
   const FILTER_LABELS = {
     all:'All Matches',
     mustwatch:'👀 Must Watch',
-    watchable:'😐 Watchable',
-    skip:'⏭ Skip',
+    watchable:'😐 Worth Watching',
   };
   const STD_FILTER_LABELS = {
     all:'All Games',
     mustwatch:'👀 Must Watch',
-    watchable:'😐 Watchable',
-    skip:'⏭ Skip',
+    watchable:'😐 Worth Watching',
   };
 
   const STAT_DEFS = {
@@ -568,6 +577,12 @@
       {key:'watchworthy', label:'Thrillers',       color:'var(--green)',  icon:'👀'},
       {key:'blowout',     label:'Bagelled',        color:'var(--red)',    icon:'🎯'},
       {key:'watchable',   label:'Watchable',       color:'var(--muted)',  icon:'😐'},
+    ],
+    darts: [
+      {key:'watchworthy', label:'Must Watch',    color:'var(--green)',  icon:'👀'},
+      {key:'watchable',   label:'Watchable',     color:'var(--muted)',  icon:'😐'},
+      {key:'blowout',     label:'Skip',          color:'var(--red)',    icon:'🎯'},
+      {key:'defensive',   label:'Skip',          color:'var(--blue)',   icon:'🧱'},
     ],
   };
 
@@ -630,6 +645,7 @@
     nfl:      { cat: 'all' },
     cricket:  { cat: 'all' },
     tennis:   { cat: 'all', tour: 'all' },
+    darts:    { cat: 'all' },
   };
   let allData = {};
 
@@ -637,6 +653,7 @@
   const ALL_SPORTS = [
     { key:'football', label:'⚽ Football'    },
     { key:'cricket',  label:'🏏 Cricket (T20)' },
+    { key:'darts',    label:'🎯 Darts'       },
     { key:'nba',      label:'🏀 NBA'         },
     { key:'nfl',      label:'🏈 NFL'         },
     { key:'mlb',      label:'⚾ MLB'         },
@@ -799,7 +816,7 @@
 
   // ── LOAD ───────────────────────────────────────────────────────────────
   // Map from frontend sport key to API response key
-  const API_KEY = { football:'soccer', nhl:'nhl', mlb:'mlb', nba:'nba', nfl:'nfl', cricket:'cricket', tennis:'tennis' };
+  const API_KEY = { football:'soccer', nhl:'nhl', mlb:'mlb', nba:'nba', nfl:'nfl', cricket:'cricket', tennis:'tennis', darts:'darts' };
 
   const TIMELINE_CAT_MAP = {
     scorefest:   makeCat('scorefest'),
@@ -856,6 +873,16 @@
       if (el) el.textContent = allData.tennis.recent.length;
       buildFilters('tennis');
       renderTennis();
+    } else if (sport === 'darts') {
+      const raw = data.darts || { recent:[], upcoming:[] };
+      allData.darts = {
+        recent:   (raw.recent||[]).map(g => ({ ...g, cat: buildCat(g) })),
+        upcoming: raw.upcoming || [],
+      };
+      const el = document.getElementById('darts-count');
+      if (el) el.textContent = allData.darts.recent.length;
+      buildFilters('darts');
+      renderDarts();
     } else {
       allData[sport] = {
         recent:   (data[apiKey]?.recent || []).map(g => ({ ...g, cat: buildCat(g) })),
@@ -962,6 +989,7 @@
     btn.classList.add('active');
     if (sport === 'cricket') renderCricket();
     else if (sport === 'tennis') renderTennis();
+    else if (sport === 'darts') renderDarts();
     else renderGames(sport);
   }
 
@@ -1010,57 +1038,65 @@
     renderTopPicks();
   }
 
-  // Tier 1 leagues always get priority slots in football Top Picks
-  const FOOTBALL_TIER1 = new Set(['Champions League', 'Premier League']);
-
   function getTopPicksGames() {
     const now = Date.now();
     const DAY  = 86400000;
     const windows = { today: 1*DAY, recent: 7*DAY, week: 10*DAY };
     const cutoff = now - windows[tpWindow];
+    const SCORE_FLOOR = 45; // minimum score to appear in Top Picks
 
     const games = allData[activeSport]?.recent || [];
 
-    // Filter to Must Watch only, sort by confidence score
-    const candidates = games
-      .filter(g => g.ts >= cutoff && (g.cat?.cls === 'scorefest' || g.cat?.cls === 'watchworthy'))
-      .sort((a, b) => {
-        // Football: Tier 1 leagues always bubble up first
+    function sortCandidates(list) {
+      return list.sort((a, b) => {
         if (activeSport === 'football') {
           const aTier1 = FOOTBALL_TIER1.has(a.league) ? 1 : 0;
           const bTier1 = FOOTBALL_TIER1.has(b.league) ? 1 : 0;
           if (bTier1 !== aTier1) return bTier1 - aTier1;
         }
-        // Primary: confidence score
         const aScore = a.confidence?.score ?? 0;
         const bScore = b.confidence?.score ?? 0;
         if (bScore !== aScore) return bScore - aScore;
-        // Fallback: recency
         return b.ts - a.ts;
       });
+    }
 
-    // One per league, Tier 1 football gets first 1-2 slots
-    const seenLeagues = new Set();
-    const picks = [];
-    const tier1Games = candidates.filter(g => FOOTBALL_TIER1.has(g.league));
-
-    if (activeSport === 'football') {
-      for (const g of tier1Games) {
-        if (picks.length >= 2) break;
+    function pickFrom(candidates, max) {
+      const seenLeagues = new Set();
+      const picks = [];
+      const tier1Games = candidates.filter(g => FOOTBALL_TIER1.has(g.league));
+      if (activeSport === 'football') {
+        for (const g of tier1Games) {
+          if (picks.length >= 2) break;
+          if (seenLeagues.has(g.league)) continue;
+          seenLeagues.add(g.league);
+          picks.push(g);
+        }
+      }
+      for (const g of candidates) {
+        if (picks.length >= max) break;
         if (seenLeagues.has(g.league)) continue;
         seenLeagues.add(g.league);
         picks.push(g);
       }
+      return picks;
     }
 
-    for (const g of candidates) {
-      if (picks.length >= 3) break;
-      if (seenLeagues.has(g.league)) continue;
-      seenLeagues.add(g.league);
-      picks.push(g);
+    const maxPicks = tpWindow === 'week' ? 5 : 3;
+
+    const eligible = games.filter(g => g.ts >= cutoff && (g.confidence?.score ?? 0) >= SCORE_FLOOR);
+    const mustWatch = sortCandidates(eligible.filter(g => g.cat?.cls === 'scorefest' || g.cat?.cls === 'watchworthy'));
+    const watchable = sortCandidates(eligible.filter(g => g.cat?.cls === 'watchable'));
+
+    const mustWatchPicks = pickFrom(mustWatch, maxPicks);
+
+    if (mustWatchPicks.length > 0) {
+      // Have Must Watch — show up to maxPicks
+      return mustWatchPicks.map(g => ({ ...g, sport: activeSport, isFallback: false }));
     }
 
-    return picks.slice(0, 3).map(g => ({ ...g, sport: activeSport }));
+    // No Must Watch at all — show max 1 Watchable fallback regardless of window
+    return pickFrom(watchable, 1).map(g => ({ ...g, sport: activeSport, isFallback: true }));
   }
 
   function tpScoreStr(g) {
@@ -1082,7 +1118,7 @@
 
     const suggestionHTML = nextWindow
       ? `<div class="tp-empty-suggestion" style="margin-top:10px">
-           <span>${picks.length === 1 ? 'That\'s the one worth watching today.' : `Nothing worth your time ${tpWindow === 'today' ? 'today' : 'in this window'}. Check`} ${picks.length !== 1 ? nextLabel + '.' : ''}</span>
+           <span>${picks.length === 1 && !picks[0]?.isFallback ? 'That\'s the one worth watching today.' : picks.length === 1 && picks[0]?.isFallback ? 'No elite games — this is the best available.' : `Nothing worth your time ${tpWindow === 'today' ? 'today' : 'in this window'}. Check`} ${picks.length !== 1 ? nextLabel + '.' : ''}</span>
            ${picks.length !== 1 ? `<button class="tp-suggest-btn" onclick="setTpWindow('${nextWindow}')">${nextLabel} →</button>` : ''}
          </div>`
       : '';
@@ -1109,13 +1145,17 @@
             : `data-h="${g.h}" data-a="${g.a}"`;
         const dateLabel = g.date || g.dateStr || '';
         const leagueLabel = g.league || g.leagueName || g.tournament || '';
+        const watchBtn = (g.watch && g.cat.cls === 'watchworthy')
+          ? `<a class="watch-btn" style="margin-top:8px;display:inline-flex;" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
+          : '';
         return `
           <div class="top-pick-card ${g.cat.cls}${i === 0 ? ' best-pick' : ''}" style="animation-delay:${i*0.06}s">
-            ${i === 0 ? '<div style="font-size:11px;font-weight:700;color:var(--green);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">⭐ Best Pick</div>' : ''}
+            ${i === 0 ? `<div style="font-size:11px;font-weight:700;color:${g.isFallback ? 'var(--muted)' : 'var(--green)'};letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">${g.isFallback ? '😐 Best Available' : '⭐ Best Pick'}</div>` : ''}
             <div class="tp-sport">${leagueLabel}</div>
             <div class="tp-matchup">${g.home} vs ${g.away}</div>
             <div class="tp-meta">${dateLabel}</div>
             <div class="tp-badge">${g.cat.icon} ${g.cat.label}${g.cat.badge ? ' · ' + g.cat.badge : ''}</div>
+            ${watchBtn}
             <button class="tp-reveal" ${revealAttr} onclick="revealTpCard(this)">👁 Reveal</button>
             <div class="tp-score"></div>
           </div>`;
@@ -1297,6 +1337,9 @@
     const gameId = makeGameId(g);
     const isWatched = watched.has(gameId);
     const safeId = gameId.replace(/'/g, "\\'");
+    const watchBtn = (g.watch && g.cat.cls === 'watchworthy')
+      ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
+      : '';
     return `
       <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${isBestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
         <div class="teams" style="flex:1;min-width:0;">
@@ -1305,6 +1348,7 @@
         </div>
         ${isBestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
         <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
+        ${watchBtn}
         <button class="reveal-btn" onclick="toggleScore(this,${g.h},${g.a})">👁 Reveal</button>
         <div class="score-reveal"></div>
         <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
@@ -1555,7 +1599,110 @@
     container.innerHTML = html;
   }
 
+  function toggleDartsScore(btn, h, a) {
+    if (spoilerBlocked(btn)) return;
+    const el = btn.nextElementSibling;
+    if (el.style.display === 'block') { el.style.display='none'; btn.textContent='👁 Reveal'; }
+    else { el.textContent = `${h} – ${a}`; el.style.display='block'; btn.textContent='🙈 Hide'; }
+  }
+
+  // Darts uses player-vs-player cards. We deliberately hide round (QF/SF/F)
+  // and per-player averages — both would spoil the result for someone who
+  // already knows the bracket / who's in the final.
+  function renderDarts() {
+    const { recent, upcoming } = allData.darts;
+    const container = document.getElementById('darts-games');
+    if (!container) return;
+    const filter = state.darts?.cat || 'all';
+
+    let filtered = filter === 'all' ? recent : recent.filter(g => {
+      const allowed = FILTER_CLS_MAP[filter] || [];
+      return allowed.includes(g.cat.cls);
+    });
+
+    const bestPick = sortByExcitement(filtered)[0];
+    let html = '';
+
+    if (filtered.length === 0) {
+      html += '<p class="no-games">No darts matches found for this category.</p>';
+    } else {
+      // Group by tournament (e.g. "Premier League Darts"), then by date so
+      // the seven matches of a single night cluster together visually.
+      const byLeague = {};
+      filtered.forEach(g => {
+        if (!byLeague[g.league]) byLeague[g.league] = [];
+        byLeague[g.league].push(g);
+      });
+
+      Object.entries(byLeague).forEach(([league, games]) => {
+        html += `<div class="league-heading">🎯 ${league}</div>`;
+
+        // Group by date within the tournament
+        const byDate = {};
+        games.forEach(g => {
+          if (!byDate[g.date]) byDate[g.date] = [];
+          byDate[g.date].push(g);
+        });
+
+        Object.entries(byDate).forEach(([date, dGames]) => {
+          html += `<div class="section-label">${date}</div>`;
+          dGames.forEach((g, i) => {
+            const gameId = makeGameId(g);
+            const isWatched = watched.has(gameId);
+            const safeId = gameId.replace(/'/g, "\\'");
+            const watchBtn = (g.watch && g.cat.cls === 'watchworthy')
+              ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
+              : '';
+            html += `
+              <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${g===bestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
+                <div class="teams" style="flex:1;min-width:0;">
+                  <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
+                  <div class="game-meta">${g.league}</div>
+                </div>
+                ${g===bestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
+                <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
+                ${watchBtn}
+                <button class="reveal-btn" onclick="toggleDartsScore(this,${g.h},${g.a})">👁 Reveal</button>
+                <div class="score-reveal"></div>
+                <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
+                ${debugPanelHTML(g)}
+              </div>`;
+          });
+        });
+      });
+    }
+
+    // Upcoming — show by date, no scores to reveal
+    if (upcoming && upcoming.length > 0) {
+      html += `<div class="upcoming-divider">📅 Coming Up</div>`;
+      const byDate = {};
+      upcoming.forEach(g => {
+        if (!byDate[g.date]) byDate[g.date] = [];
+        byDate[g.date].push(g);
+      });
+      Object.entries(byDate).forEach(([date, dGames]) => {
+        html += `<div class="section-label">${date}</div>`;
+        html += dGames.map((g, i) => `
+          <div class="upcoming-card" style="animation-delay:${i*0.04}s">
+            <div class="teams">
+              <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
+              <div class="game-meta">${g.league}</div>
+              <div class="kickoff-time">🕐 ${g.time}</div>
+            </div>
+            <div class="upcoming-badge">📅 Upcoming</div>
+          </div>`).join('');
+      });
+    }
+
+    container.innerHTML = html;
+  }
+
   let activeSport = localStorage.getItem('activeSport') || 'football';
+
+  // Hash routing — spoilerfreescores.com/#cricket lands on cricket tab
+  const hashSport = window.location.hash.replace('#', '').toLowerCase();
+  const validSports = ['football','cricket','darts','tennis','nhl','nba','mlb','nfl'];
+  if (hashSport && validSports.includes(hashSport)) activeSport = hashSport;
 
   function switchSport(sport, tabEl) {
     if (hiddenSports.has(sport)) return;

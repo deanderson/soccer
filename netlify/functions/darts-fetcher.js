@@ -68,12 +68,29 @@ function fetchWikitext(pageTitle) {
 
 function parsePDCFlag(cellText) {
   if (!cellText) return { name: 'TBD', avg: null };
-  const m = cellText.match(/\{\{PDCFlag\|([^|}]+)(?:\|avg=([\d.]+))?/i);
-  if (m) return { name: m[1].trim(), avg: m[2] ? parseFloat(m[2]) : null };
-  return {
-    name: cellText.replace(/\{\{[^}]*\}\}/g, '').replace(/[\[\]']/g, '').trim() || 'TBD',
-    avg: null,
-  };
+  const trimmed = cellText.trim();
+
+  // Reject anything that looks like a stray bracket field (pipes mid-string,
+  // "RD2-..." markers, etc.) — these only appear when the slot is upcoming
+  // and our row scan ran into placeholder gunk.
+  if (/RD\d-(team|score|seed)/.test(trimmed)) return { name: 'TBD', avg: null };
+  if (trimmed.startsWith('|')) return { name: 'TBD', avg: null };
+
+  // Standard form: {{PDCFlag|Name}} or {{PDCFlag|Name|avg=X.XX}}
+  const m = trimmed.match(/\{\{PDCFlag\|([^|}]+)(?:\|avg=([\d.]*))?/i);
+  if (m) {
+    const name = m[1].trim();
+    const avg = m[2] && m[2].length ? parseFloat(m[2]) : null;
+    return { name: name || 'TBD', avg };
+  }
+
+  // Flag-only template ({{flagicon|WAL}}) is a placeholder during the live
+  // night — treat as TBD rather than showing "WAL" as a player name.
+  if (/^\{\{flagicon\|/i.test(trimmed)) return { name: 'TBD', avg: null };
+
+  // Final fallback: strip residual markup and use what's left, or TBD.
+  const cleaned = trimmed.replace(/\{\{[^}]*\}\}/g, '').replace(/[\[\]']/g, '').trim();
+  return { name: cleaned || 'TBD', avg: null };
 }
 
 function parseScoreText(str) {
@@ -111,14 +128,17 @@ function parseBracket(nightText) {
 
   for (const [rd, label] of Object.entries(rounds)) {
     const slots = {};
-    const teamRe  = new RegExp(`\\|\\s*${rd}-team(\\d+)\\s*=\\s*([^\\n]*)`,  'g');
-    const scoreRe = new RegExp(`\\|\\s*${rd}-score(\\d+)\\s*=\\s*([^\\n|]*)`, 'g');
+    // Use [^\S\n]* (whitespace excluding newline) after = so the regex stops
+    // at end of line and doesn't bleed into the next field on empty rows.
+    const teamRe  = new RegExp(`\\|[^\\S\\n]*${rd}-team(\\d+)[^\\S\\n]*=[^\\S\\n]*([^\\n]*)`,  'g');
+    const scoreRe = new RegExp(`\\|[^\\S\\n]*${rd}-score(\\d+)[^\\S\\n]*=[^\\S\\n]*([^\\n|]*)`, 'g');
 
     let t;
     while ((t = teamRe.exec(nightText)) !== null) {
       const slot = parseInt(t[1], 10);
+      const raw = t[2].trim();
       slots[slot] = slots[slot] || {};
-      slots[slot].team = t[2].trim();
+      slots[slot].team = raw;
     }
     let s;
     while ((s = scoreRe.exec(nightText)) !== null) {
@@ -268,9 +288,9 @@ async function fetchDarts() {
     }
   }
 
-  // Trim recent to last ~15 days (matches other sports' 14-day window with
-  // a small buffer so we don't lose matches by hours due to UTC rounding)
-  const cutoff = now - 15 * 86400000;
+  // Trim recent to last ~21 days (darts has fewer events than other sports;
+  // a wider window keeps two-three Premier League nights visible)
+  const cutoff = now - 21 * 86400000;
   const recent = allRecent
     .filter(g => g.ts >= cutoff)
     .sort((a, b) => a.ts - b.ts);

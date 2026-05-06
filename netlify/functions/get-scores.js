@@ -3,6 +3,7 @@
 
 const { connectLambda, getStore } = require('@netlify/blobs');
 const { fetchDarts } = require('./darts-fetcher');
+const { lookupProvider } = require('./watch-providers');
 
 exports.handler = async function (event, context) {
   connectLambda(event);
@@ -10,6 +11,13 @@ exports.handler = async function (event, context) {
   // If called internally by the scheduler, skip blob and do live fetch
   const isInternal = event.queryStringParameters?._internal === '1';
   const sportParam = event.queryStringParameters?.sport || 'all';
+
+  // Detect user country from Netlify edge headers (no third-party API).
+  // Header is lowercase per Netlify Functions v2 norms; check both for safety.
+  const userCountry = (event.headers?.['x-country']
+                    || event.headers?.['X-Country']
+                    || event.headers?.['x-nf-country']
+                    || '').toUpperCase() || null;
 
   // For user-facing requests, try to serve from blob first
   if (!isInternal) {
@@ -21,9 +29,10 @@ exports.handler = async function (event, context) {
         // Serve from cache if less than 20 minutes old (gives buffer for 15min schedule)
         if (ageMs < 20 * 60 * 1000) {
           // If sport-specific request, return just that sport's data
-          const body = sportParam !== 'all' && sportParam !== undefined
+          const subsetBody = sportParam !== 'all' && sportParam !== undefined
             ? buildSportSubset(cached.data, sportParam)
             : cached.data;
+          const body = { ...subsetBody, _meta: { userCountry, fetchedAt: cached.fetchedAt } };
           return {
             statusCode: 200,
             headers: {
@@ -1185,16 +1194,40 @@ exports.handler = async function (event, context) {
     });
   }
 
+  // Attach a `watch` field { name, url } to Must Watch games where we have a
+  // provider mapping. Hidden entirely otherwise — a button that goes nowhere
+  // useful is worse than no button.
+  //
+  // Note on caching: in v1 the only provider is PDC TV (worldwide), so baking
+  // the watch link into the blob is fine — every user gets the same link.
+  // When we add country-varying providers (EPL on Peacock-US vs Sky-UK), the
+  // scheduler-written blob will have whichever country the scheduler runs in,
+  // which is wrong for everyone else. At that point switch to attaching watch
+  // per-request: strip on blob serve, reattach using the requester's country.
+  function attachWatch(games) {
+    return games.map(g => {
+      if (g.confidence?.cls !== 'watchworthy') return g;
+      const provider = lookupProvider(g.league, userCountry);
+      if (!provider) return g;
+      return { ...g, watch: provider };
+    });
+  }
+
+  // Convenience: run both in sequence.
+  function enrich(games, sport) {
+    return attachWatch(attachConfidence(games, sport));
+  }
+
   // Route to the appropriate fetcher
   const SPORT_FETCHERS = {
-    football: async () => { const r = await fetchAllSoccer();        return { soccer:  { ...r, recent: attachConfidence(r.recent,  'football') } }; },
-    nhl:      async () => { const r = await fetchNHLWithTimeline();   return { nhl:     { ...r, recent: attachConfidence(r.recent,  'nhl')      } }; },
-    mlb:      async () => { const r = await fetchSport(`${BASE}/baseball/mlb/scoreboard`, "MLB", 15); return { mlb: { ...r, recent: attachConfidence(r.recent, 'mlb') } }; },
-    nba:      async () => { const r = await fetchNBAWithTimeline();   return { nba:     { ...r, recent: attachConfidence(r.recent,  'nba')      } }; },
-    nfl:      async () => { const r = await fetchSport(`${BASE}/football/nfl/scoreboard`, "NFL");     return { nfl: { ...r, recent: attachConfidence(r.recent, 'nfl') } }; },
-    cricket:  async () => { const r = await fetchCricket();           return { cricket: { ...r, recent: attachConfidence(r.recent,  'cricket')  } }; },
-    tennis:   async () => { const r = await fetchTennis();            return { tennis:  { ...r, recent: attachConfidence(r.recent,  'tennis')   } }; },
-    darts:    async () => { const r = await fetchDarts();             return { darts:   { ...r, recent: attachConfidence(r.recent,  'darts')    } }; },
+    football: async () => { const r = await fetchAllSoccer();        return { soccer:  { ...r, recent: enrich(r.recent,  'football') } }; },
+    nhl:      async () => { const r = await fetchNHLWithTimeline();   return { nhl:     { ...r, recent: enrich(r.recent,  'nhl')      } }; },
+    mlb:      async () => { const r = await fetchSport(`${BASE}/baseball/mlb/scoreboard`, "MLB", 15); return { mlb: { ...r, recent: enrich(r.recent, 'mlb') } }; },
+    nba:      async () => { const r = await fetchNBAWithTimeline();   return { nba:     { ...r, recent: enrich(r.recent,  'nba')      } }; },
+    nfl:      async () => { const r = await fetchSport(`${BASE}/football/nfl/scoreboard`, "NFL");     return { nfl: { ...r, recent: enrich(r.recent, 'nfl') } }; },
+    cricket:  async () => { const r = await fetchCricket();           return { cricket: { ...r, recent: enrich(r.recent,  'cricket')  } }; },
+    tennis:   async () => { const r = await fetchTennis();            return { tennis:  { ...r, recent: enrich(r.recent,  'tennis')   } }; },
+    darts:    async () => { const r = await fetchDarts();             return { darts:   { ...r, recent: enrich(r.recent,  'darts')    } }; },
   };
 
   let body;
@@ -1212,14 +1245,14 @@ exports.handler = async function (event, context) {
       fetchDarts(),
     ]);
     body = {
-      soccer:  { ...soccer,  recent: attachConfidence(soccer.recent,  'football') },
-      nhl:     { ...nhl,     recent: attachConfidence(nhl.recent,     'nhl')      },
-      mlb:     { ...mlb,     recent: attachConfidence(mlb.recent,     'mlb')      },
-      nba:     { ...nba,     recent: attachConfidence(nba.recent,     'nba')      },
-      nfl:     { ...nfl,     recent: attachConfidence(nfl.recent,     'nfl')      },
-      cricket: { ...cricket, recent: attachConfidence(cricket.recent, 'cricket')  },
-      tennis:  { ...tennis,  recent: attachConfidence(tennis.recent,  'tennis')   },
-      darts:   { ...darts,   recent: attachConfidence(darts.recent,   'darts')    },
+      soccer:  { ...soccer,  recent: enrich(soccer.recent,  'football') },
+      nhl:     { ...nhl,     recent: enrich(nhl.recent,     'nhl')      },
+      mlb:     { ...mlb,     recent: enrich(mlb.recent,     'mlb')      },
+      nba:     { ...nba,     recent: enrich(nba.recent,     'nba')      },
+      nfl:     { ...nfl,     recent: enrich(nfl.recent,     'nfl')      },
+      cricket: { ...cricket, recent: enrich(cricket.recent, 'cricket')  },
+      tennis:  { ...tennis,  recent: enrich(tennis.recent,  'tennis')   },
+      darts:   { ...darts,   recent: enrich(darts.recent,   'darts')    },
     };
 
     // Save full fetch to blob for future requests
@@ -1243,6 +1276,6 @@ exports.handler = async function (event, context) {
       "X-Cache": "MISS",
       "X-Fetched-At": new Date(fetchedAt || Date.now()).toISOString(),
     },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ ...body, _meta: { userCountry, fetchedAt } }),
   };
 };
