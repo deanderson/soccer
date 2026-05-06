@@ -2,6 +2,7 @@
 // ESPN Unofficial API — no API key required (all sports including cricket)
 
 const { connectLambda, getStore } = require('@netlify/blobs');
+const { fetchDarts } = require('./darts-fetcher');
 
 exports.handler = async function (event, context) {
   connectLambda(event);
@@ -512,7 +513,7 @@ exports.handler = async function (event, context) {
         .slice(0, 25);
 
       // Timeline enrichment — only last 5 days to avoid ESPN 502s on older events
-      const fiveDaysAgo = now - 5 * 86400000;
+      const fiveDaysAgo = now - 7 * 86400000;
       const candidates = recentSorted.filter(g =>
         g.id && g.ts >= fiveDaysAgo && g.resultMargin !== null && (
           (g.resultType === 'wickets' && g.resultMargin <= 3) ||
@@ -1052,19 +1053,27 @@ exports.handler = async function (event, context) {
       if (hasOT)       { factors.push({ label: '⚡ Overtime', points: 20 }); score += 20; }
       if (hasComeback) { factors.push({ label: '⚡ Comeback', points: 20 }); score += 20; }
       const lc = g.debug?.leadChanges ?? 0;
-      if      (lc >= 15) { factors.push({ label: `${lc} lead changes`, points: 20 }); score += 20; }
+      if      (lc >= 15) { factors.push({ label: `${lc} lead changes`, points: 25 }); score += 25; }
       else if (lc >= 8)  { factors.push({ label: `${lc} lead changes`, points: 12 }); score += 12; }
 
     } else if (sport === 'tennis') {
       const sets = (g.homeSets ?? 0) + (g.awaySets ?? 0);
       if      (sets >= 5) { factors.push({ label: '5-set epic', points: 50 }); score += 50; }
-      else if (sets >= 3) { factors.push({ label: '3-set match', points: 30 }); score += 30; }
+      else if (sets >= 3) { factors.push({ label: '3-set match', points: 25 }); score += 25; }
       else                { factors.push({ label: 'Straight sets', points: -10 }); score -= 10; }
-      if ((g.sets || []).some(s => s.h === 7 || s.a === 7)) {
-        factors.push({ label: 'Tiebreak(s)', points: 20 }); score += 20;
-      }
+
+      const hasTiebreak = (g.sets || []).some(s => s.h === 7 || s.a === 7);
       const closeSets = (g.sets || []).filter(s => Math.abs(s.h - s.a) <= 2).length;
-      if (closeSets >= 2) { factors.push({ label: `${closeSets} close sets`, points: 15 }); score += 15; }
+
+      // Cap stacking — tiebreak + close sets together give +20 not +35
+      if (hasTiebreak && closeSets >= 2) {
+        factors.push({ label: 'Tiebreak + close sets', points: 20 }); score += 20;
+      } else if (hasTiebreak) {
+        factors.push({ label: 'Tiebreak(s)', points: 15 }); score += 15;
+      } else if (closeSets >= 2) {
+        factors.push({ label: `${closeSets} close sets`, points: 12 }); score += 12;
+      }
+
       const hasBagel = (g.sets || []).some(s => s.h === 0 || s.a === 0);
       if (hasBagel) { factors.push({ label: 'Bagel set', points: -15 }); score -= 15; }
 
@@ -1099,6 +1108,32 @@ exports.handler = async function (event, context) {
       else if (diff >= 17) { factors.push({ label: 'Blowout', points: -40 }); score -= 40; }
       if      (total >= 50) { factors.push({ label: `${total} pts`, points: 20 }); score += 20; }
       else if (total <= 20) { factors.push({ label: 'Low scoring', points: -10 }); score -= 10; }
+
+    } else if (sport === 'darts') {
+      // Premier League Darts is best-of-11 legs (first to 6).
+      // h/a are legs won; debug.avg1/avg2 are 3-dart averages per player.
+      const winner = Math.max(h, a);
+      const loser  = Math.min(h, a);
+      const margin = Math.abs(h - a);
+      if (winner === 6 && loser === 5)      { factors.push({ label: 'Deciding leg',     points: 35 }); score += 35; }
+      else if (margin === 1)                { factors.push({ label: '1-leg margin',     points: 28 }); score += 28; }
+      else if (margin === 2)                { factors.push({ label: '2-leg margin',     points: 12 }); score += 12; }
+      else if (margin === 3)                { factors.push({ label: '3-leg margin',     points: -10 }); score -= 10; }
+      else if (margin >= 4)                 { factors.push({ label: 'Large margin',     points: -30 }); score -= 30; }
+      if (loser === 0)                      { factors.push({ label: 'Whitewash',        points: -15 }); score -= 15; }
+
+      const av1 = g.debug?.avg1, av2 = g.debug?.avg2;
+      if (av1 != null && av2 != null) {
+        if (av1 >= 100 && av2 >= 100)      { factors.push({ label: 'Both 100+ avg',    points: 20 }); score += 20; }
+        else if (av1 >= 100 || av2 >= 100) { factors.push({ label: 'One 100+ avg',     points: 8  }); score += 8;  }
+        if (av1 < 90 && av2 < 90)          { factors.push({ label: 'Both sub-90 avg',  points: -10 }); score -= 10; }
+      }
+
+      const round = g.debug?.round;
+      if (round === 'SF') { factors.push({ label: 'Semi-final', points: 5  }); score += 5;  }
+      if (round === 'F')  { factors.push({ label: 'Final',      points: 10 }); score += 10; }
+
+      if (g.debug?.nineDart) { factors.push({ label: '⚡ 9-darter on night', points: 8 }); score += 8; }
     }
 
         // Recency bonus (small)
@@ -1111,10 +1146,11 @@ exports.handler = async function (event, context) {
     // Sport-specific thresholds — different sports have different score ranges
     const mustWatch = sport === 'football' ? 60
                     : sport === 'nhl'      ? 48
-                    : sport === 'nba'      ? 45
+                    : sport === 'nba'      ? 65
                     : sport === 'cricket'  ? 38
                     : sport === 'mlb'      ? 45
-                    : sport === 'tennis'   ? 50
+                    : sport === 'tennis'   ? 65
+                    : sport === 'darts'    ? 50
                     : 60;
     const watchable = sport === 'football' ? 38
                     : sport === 'nhl'      ? 30
@@ -1122,6 +1158,7 @@ exports.handler = async function (event, context) {
                     : sport === 'cricket'  ? 22
                     : sport === 'mlb'      ? 28
                     : sport === 'tennis'   ? 35
+                    : sport === 'darts'    ? 25
                     : 38;
 
     // Derive category from score
@@ -1157,13 +1194,14 @@ exports.handler = async function (event, context) {
     nfl:      async () => { const r = await fetchSport(`${BASE}/football/nfl/scoreboard`, "NFL");     return { nfl: { ...r, recent: attachConfidence(r.recent, 'nfl') } }; },
     cricket:  async () => { const r = await fetchCricket();           return { cricket: { ...r, recent: attachConfidence(r.recent,  'cricket')  } }; },
     tennis:   async () => { const r = await fetchTennis();            return { tennis:  { ...r, recent: attachConfidence(r.recent,  'tennis')   } }; },
+    darts:    async () => { const r = await fetchDarts();             return { darts:   { ...r, recent: attachConfidence(r.recent,  'darts')    } }; },
   };
 
   let body;
   let fetchedAt = Date.now();
 
   if (sportParam === 'all' || !SPORT_FETCHERS[sportParam]) {
-    const [soccer, nhl, mlb, nba, nfl, cricket, tennis] = await Promise.all([
+    const [soccer, nhl, mlb, nba, nfl, cricket, tennis, darts] = await Promise.all([
       fetchAllSoccer(),
       fetchNHLWithTimeline(),
       fetchSport(`${BASE}/baseball/mlb/scoreboard`,   "MLB", 15),
@@ -1171,6 +1209,7 @@ exports.handler = async function (event, context) {
       fetchSport(`${BASE}/football/nfl/scoreboard`,   "NFL"),
       fetchCricket(),
       fetchTennis(),
+      fetchDarts(),
     ]);
     body = {
       soccer:  { ...soccer,  recent: attachConfidence(soccer.recent,  'football') },
@@ -1180,6 +1219,7 @@ exports.handler = async function (event, context) {
       nfl:     { ...nfl,     recent: attachConfidence(nfl.recent,     'nfl')      },
       cricket: { ...cricket, recent: attachConfidence(cricket.recent, 'cricket')  },
       tennis:  { ...tennis,  recent: attachConfidence(tennis.recent,  'tennis')   },
+      darts:   { ...darts,   recent: attachConfidence(darts.recent,   'darts')    },
     };
 
     // Save full fetch to blob for future requests
