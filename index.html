@@ -1065,20 +1065,27 @@
     function pickFrom(candidates, max) {
       const seenLeagues = new Set();
       const picks = [];
+      // Only dedup by league when there's actual variety. For single-league
+      // sports (NBA, MLB, NHL, NFL, IPL-only cricket, Premier League Darts)
+      // every game shares one league name and dedup would cap the result at 1.
+      const leagueCount = new Set(candidates.map(g => g.league)).size;
+      const dedupByLeague = leagueCount > 1;
+
       // FOOTBALL_TIER1 is only relevant when football is active. Guard the
       // reference so this function works for every sport.
       if (activeSport === 'football' && typeof FOOTBALL_TIER1 !== 'undefined') {
         const tier1Games = candidates.filter(g => FOOTBALL_TIER1.has(g.league));
         for (const g of tier1Games) {
           if (picks.length >= 2) break;
-          if (seenLeagues.has(g.league)) continue;
+          if (dedupByLeague && seenLeagues.has(g.league)) continue;
           seenLeagues.add(g.league);
           picks.push(g);
         }
       }
       for (const g of candidates) {
         if (picks.length >= max) break;
-        if (seenLeagues.has(g.league)) continue;
+        if (dedupByLeague && seenLeagues.has(g.league)) continue;
+        if (picks.includes(g)) continue;   // tier1 might have already picked it
         seenLeagues.add(g.league);
         picks.push(g);
       }
@@ -1091,9 +1098,17 @@
     // Recent and Week backfill from Watchable so they always feel populated.
     const minPicks = tpWindow === 'week' ? 3 : tpWindow === 'recent' ? 2 : 0;
 
-    const eligible = games.filter(g => g.ts >= cutoff && (g.confidence?.score ?? 0) >= SCORE_FLOOR);
-    const mustWatch = sortCandidates(eligible.filter(g => g.cat?.cls === 'scorefest' || g.cat?.cls === 'watchworthy'));
-    const watchable = sortCandidates(eligible.filter(g => g.cat?.cls === 'watchable'));
+    // Two eligibility pools with different floors:
+    // - Must Watch needs to clear SCORE_FLOOR (high-quality recommendation)
+    // - Watchable just needs to be in the time window — its `watchable` class
+    //   was already a deliberate categorization in the scoring engine, so
+    //   double-flooring it here would prevent backfill from ever working.
+    const inWindow   = games.filter(g => g.ts >= cutoff);
+    const mustWatch  = sortCandidates(inWindow.filter(g =>
+      (g.confidence?.score ?? 0) >= SCORE_FLOOR &&
+      (g.cat?.cls === 'scorefest' || g.cat?.cls === 'watchworthy')
+    ));
+    const watchable  = sortCandidates(inWindow.filter(g => g.cat?.cls === 'watchable'));
 
     const mustWatchPicks = pickFrom(mustWatch, maxPicks);
 
