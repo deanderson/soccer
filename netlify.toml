@@ -3,3 +3,6 @@
 
 [functions."fetch-scores-job"]
   schedule = "*/15 * * * *"
+
+[functions."archive-scores-job"]
+  schedule = "0 * * * *"

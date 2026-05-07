@@ -131,10 +131,11 @@
   .cat-badge{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:7px;font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0;}
   .reveal-btn{background:transparent;border:1px solid rgba(255,255,255,0.08);border-radius:7px;padding:4px 10px;font-size:11px;font-weight:500;color:var(--muted);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background 0.15s,color 0.15s;font-family:'Outfit',sans-serif;}
   .reveal-btn:hover{background:rgba(255,255,255,0.06);color:var(--text);}
-  /* Watch Now button — visible only on Must Watch cards. Slightly more
-     prominent than reveal-btn so the user notices the action, but not so
-     loud that it overpowers the reveal flow. */
-  .watch-btn{display:inline-flex;align-items:center;gap:4px;background:var(--green-bg);border:1px solid rgba(63,185,80,0.35);border-radius:7px;padding:4px 10px;font-size:11px;font-weight:600;color:var(--green);text-decoration:none;white-space:nowrap;flex-shrink:0;transition:background 0.15s,border-color 0.15s;font-family:'Outfit',sans-serif;}
+  /* Watch Now button — visible only on Must Watch cards. Takes its own full
+     row inside the card (flex-basis:100% forces a wrap), making the action
+     read as a clear "here's where to watch" callout rather than competing
+     with the reveal button for horizontal space. */
+  .watch-btn{display:flex;align-items:center;justify-content:center;gap:6px;flex-basis:100%;order:99;background:var(--green-bg);border:1px solid rgba(63,185,80,0.35);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;color:var(--green);text-decoration:none;white-space:nowrap;transition:background 0.15s,border-color 0.15s;font-family:'Outfit',sans-serif;margin-top:4px;}
   .watch-btn:hover{background:rgba(63,185,80,0.2);border-color:var(--green);}
   .score-reveal{font-size:16px;font-weight:700;font-family:'Bebas Neue',sans-serif;letter-spacing:0.05em;display:none;flex-shrink:0;min-width:52px;text-align:center;}
 
@@ -1049,7 +1050,7 @@
 
     function sortCandidates(list) {
       return list.sort((a, b) => {
-        if (activeSport === 'football') {
+        if (activeSport === 'football' && typeof FOOTBALL_TIER1 !== 'undefined') {
           const aTier1 = FOOTBALL_TIER1.has(a.league) ? 1 : 0;
           const bTier1 = FOOTBALL_TIER1.has(b.league) ? 1 : 0;
           if (bTier1 !== aTier1) return bTier1 - aTier1;
@@ -1064,8 +1065,10 @@
     function pickFrom(candidates, max) {
       const seenLeagues = new Set();
       const picks = [];
-      const tier1Games = candidates.filter(g => FOOTBALL_TIER1.has(g.league));
-      if (activeSport === 'football') {
+      // FOOTBALL_TIER1 is only relevant when football is active. Guard the
+      // reference so this function works for every sport.
+      if (activeSport === 'football' && typeof FOOTBALL_TIER1 !== 'undefined') {
+        const tier1Games = candidates.filter(g => FOOTBALL_TIER1.has(g.league));
         for (const g of tier1Games) {
           if (picks.length >= 2) break;
           if (seenLeagues.has(g.league)) continue;
@@ -1146,7 +1149,7 @@
         const dateLabel = g.date || g.dateStr || '';
         const leagueLabel = g.league || g.leagueName || g.tournament || '';
         const watchBtn = (g.watch && g.cat.cls === 'watchworthy')
-          ? `<a class="watch-btn" style="margin-top:8px;display:inline-flex;" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
+          ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
           : '';
         return `
           <div class="top-pick-card ${g.cat.cls}${i === 0 ? ' best-pick' : ''}" style="animation-delay:${i*0.06}s">
@@ -1465,6 +1468,9 @@
           const gameId = makeGameId(g);
           const isWatched = watched.has(gameId);
           const safeId = gameId.replace(/'/g, "\\'");
+          const watchBtn = (g.watch && g.cat.cls === 'watchworthy')
+            ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
+            : '';
           html += `
             <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${g===bestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
               <div class="teams" style="flex:1;min-width:0;">
@@ -1473,6 +1479,7 @@
               </div>
               ${g===bestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
               <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
+              ${watchBtn}
               <button class="reveal-btn" onclick="toggleCricketScore(this,'${safeStatus}')">👁 Reveal</button>
               <div class="score-reveal" style="font-family:'Outfit',sans-serif;font-size:11px;white-space:normal;max-width:160px;line-height:1.4;text-align:right;"></div>
               <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
