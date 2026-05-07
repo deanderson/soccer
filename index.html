@@ -1086,6 +1086,10 @@
     }
 
     const maxPicks = tpWindow === 'week' ? 5 : 3;
+    // Minimum picks per window. Today stays pure Must Watch — empty Today is
+    // the message ("nothing electric is happening, broaden your window").
+    // Recent and Week backfill from Watchable so they always feel populated.
+    const minPicks = tpWindow === 'week' ? 3 : tpWindow === 'recent' ? 2 : 0;
 
     const eligible = games.filter(g => g.ts >= cutoff && (g.confidence?.score ?? 0) >= SCORE_FLOOR);
     const mustWatch = sortCandidates(eligible.filter(g => g.cat?.cls === 'scorefest' || g.cat?.cls === 'watchworthy'));
@@ -1093,13 +1097,24 @@
 
     const mustWatchPicks = pickFrom(mustWatch, maxPicks);
 
+    // Have Must Watch — show what we have, optionally backfill with Watchable
+    // up to the window minimum so the bar feels populated (Recent/Week only).
     if (mustWatchPicks.length > 0) {
-      // Have Must Watch — show up to maxPicks
-      return mustWatchPicks.map(g => ({ ...g, sport: activeSport, isFallback: false }));
+      const picks = mustWatchPicks.map(g => ({ ...g, sport: activeSport, isFallback: false }));
+      if (picks.length < minPicks) {
+        const seenIds = new Set(picks.map(g => g.id));
+        const fillNeeded = minPicks - picks.length;
+        const fill = pickFrom(watchable.filter(g => !seenIds.has(g.id)), fillNeeded)
+          .map(g => ({ ...g, sport: activeSport, isFallback: true }));
+        picks.push(...fill);
+      }
+      return picks;
     }
 
-    // No Must Watch at all — show max 1 Watchable fallback regardless of window
-    return pickFrom(watchable, 1).map(g => ({ ...g, sport: activeSport, isFallback: true }));
+    // No Must Watch. For Today, return empty — the empty state is the signal.
+    // For Recent/Week, show the minimum from Watchable so the user has options.
+    if (minPicks === 0) return [];
+    return pickFrom(watchable, minPicks).map(g => ({ ...g, sport: activeSport, isFallback: true }));
   }
 
   function tpScoreStr(g) {
