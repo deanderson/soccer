@@ -1043,6 +1043,52 @@
 
     const games = allData[activeSport]?.recent || [];
 
+    // Darts is structurally different: a "pick" is a session/night, not an
+    // individual match. Showing "Littler vs Humphries" as Top Pick reveals
+    // who made the final, busting the spoiler-free promise. So for darts we
+    // group by (league, date) and return night-level summaries instead.
+    if (activeSport === 'darts') {
+      const inWindow = games.filter(g => g.ts >= cutoff);
+      const byNight = {};
+      inWindow.forEach(g => {
+        const key = `${g.league}::${g.date}`;
+        if (!byNight[key]) byNight[key] = { league: g.league, date: g.date, ts: g.ts, games: [] };
+        byNight[key].games.push(g);
+        if (g.ts > byNight[key].ts) byNight[key].ts = g.ts;
+      });
+
+      // Score each night by its summary. Must Watch nights win, then Watchable.
+      // Within a tier, more recent nights first.
+      const tierRank = { watchworthy: 3, watchable: 2, blowout: 1 };
+      const ranked = Object.values(byNight)
+        .map(n => ({ ...n, summary: summarizeNight(n.games) }))
+        .filter(n => tpWindow !== 'today' || n.summary.cls !== 'blowout')
+        .sort((a, b) => {
+          const tierDiff = (tierRank[b.summary.cls] || 0) - (tierRank[a.summary.cls] || 0);
+          if (tierDiff !== 0) return tierDiff;
+          return b.ts - a.ts;
+        });
+
+      const maxNights = tpWindow === 'week' ? 5 : 3;
+      // Don't show "Skip" nights as Top Picks, ever — it'd be the opposite
+      // of a recommendation. Filter to Must Watch + Watchable.
+      const recommended = ranked.filter(n => n.summary.cls !== 'blowout').slice(0, maxNights);
+
+      // Wrap each as a "pick" object with a darts-specific shape that
+      // renderTopPicks can recognize and render differently.
+      return recommended.map(n => ({
+        sport: 'darts',
+        isDartsNight: true,
+        league: n.league,
+        date: n.date,
+        ts: n.ts,
+        cat: { cls: n.summary.cls, icon: n.summary.icon, label: n.summary.label },
+        summary: n.summary,
+        watch: n.summary.watch,
+        isFallback: n.summary.cls === 'watchable',
+      }));
+    }
+
     function sortCandidates(list) {
       return list.sort((a, b) => {
         if (activeSport === 'football' && typeof FOOTBALL_TIER1 !== 'undefined') {
@@ -1163,6 +1209,23 @@
 
     container.innerHTML = `<div class="top-picks-grid">
       ${picks.map((g, i) => {
+        // Darts night cards: no matchup, no score reveal, just verdict.
+        // The whole point is to recommend the night without naming players.
+        if (g.isDartsNight) {
+          const watchBtn = g.watch
+            ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
+            : '';
+          return `
+            <div class="top-pick-card ${g.cat.cls}${i === 0 ? ' best-pick' : ''}" style="animation-delay:${i*0.06}s">
+              ${i === 0 ? `<div style="font-size:11px;font-weight:700;color:${g.isFallback ? 'var(--muted)' : 'var(--green)'};letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">${g.isFallback ? '😐 Best Available' : '⭐ Top Session'}</div>` : ''}
+              <div class="tp-sport">${g.league}</div>
+              <div class="tp-matchup">${g.date}</div>
+              <div class="tp-meta">${g.summary.hint}</div>
+              <div class="tp-badge">${g.cat.icon} ${g.cat.label}</div>
+              ${watchBtn}
+            </div>`;
+        }
+
         const scoreStr = tpScoreStr(g).replace(/"/g, '&quot;');
         const isTennis  = g.sport === 'tennis';
         const isCricket = g.sport === 'cricket';
@@ -1619,27 +1682,69 @@
   // Darts uses player-vs-player cards. We deliberately hide round (QF/SF/F)
   // and per-player averages — both would spoil the result for someone who
   // already knows the bracket / who's in the final.
+  // Summarize a darts night (or any group of matches) into a single verdict
+  // card. Hides individual matchups so users don't see which players advanced
+  // through the bracket — that's a structural spoiler the score-reveal can't
+  // hide. Returns { cls, label, icon, hint, watch } where watch is the
+  // provider info from any match that has it (all matches in a night share
+  // the same league, so the provider is the same for all).
+  function summarizeNight(games) {
+    const mustWatch = games.filter(g => g.cat?.cls === 'scorefest' || g.cat?.cls === 'watchworthy');
+    const watchable = games.filter(g => g.cat?.cls === 'watchable');
+
+    // Drama signals at the night level — additive flair that doesn't reveal
+    // who did what, just that *something* happened on this night.
+    const addons = [];
+    const has9Darter = games.some(g => g.debug?.nineDart);
+    if (has9Darter) addons.push('9-darter happened');
+
+    const nightAvg = games[0]?.debug?.nightAvg;
+    if (nightAvg && nightAvg >= 100) addons.push('high-scoring throughout');
+
+    let cls, icon, label, hint;
+
+    if (mustWatch.length >= 2) {
+      cls = 'watchworthy'; icon = '👀'; label = 'Must Watch';
+      hint = 'Strong night — multiple matches worth watching';
+    } else if (mustWatch.length === 1) {
+      cls = 'watchworthy'; icon = '👀'; label = 'Must Watch';
+      hint = 'Worth your time — at least one match delivered';
+    } else if (watchable.length >= 3) {
+      cls = 'watchable'; icon = '😐'; label = 'Watchable';
+      hint = 'Solid scoring across the card';
+    } else if (watchable.length >= 1) {
+      cls = 'watchable'; icon = '😐'; label = 'Watchable';
+      hint = 'One or two competitive matches, rest one-sided';
+    } else {
+      cls = 'blowout'; icon = '⏭'; label = 'Skip';
+      hint = 'One-sided across the board';
+    }
+
+    if (addons.length > 0) hint += ` (${addons.join(', ')})`;
+
+    // All matches in a night share the same league, so any g.watch will do.
+    const watch = games.find(g => g.watch)?.watch || null;
+
+    return { cls, icon, label, hint, watch };
+  }
+
   function renderDarts() {
     const { recent, upcoming } = allData.darts;
     const container = document.getElementById('darts-games');
     if (!container) return;
     const filter = state.darts?.cat || 'all';
 
-    let filtered = filter === 'all' ? recent : recent.filter(g => {
-      const allowed = FILTER_CLS_MAP[filter] || [];
-      return allowed.includes(g.cat.cls);
-    });
-
-    const bestPick = sortByExcitement(filtered)[0];
     let html = '';
 
-    if (filtered.length === 0) {
-      html += '<p class="no-games">No darts matches found for this category.</p>';
+    if (recent.length === 0) {
+      html += '<p class="no-games">No darts matches found.</p>';
     } else {
-      // Group by tournament (e.g. "Premier League Darts"), then by date so
-      // the seven matches of a single night cluster together visually.
+      // Group by tournament → date. Each (tournament, date) pair is a night
+      // that gets summarized to a single card. We deliberately don't show
+      // individual match list — seeing the same player name in QF, SF, and F
+      // rows would reveal who made the final without any score reveal.
       const byLeague = {};
-      filtered.forEach(g => {
+      recent.forEach(g => {
         if (!byLeague[g.league]) byLeague[g.league] = [];
         byLeague[g.league].push(g);
       });
@@ -1647,37 +1752,52 @@
       Object.entries(byLeague).forEach(([league, games]) => {
         html += `<div class="league-heading">🎯 ${league}</div>`;
 
-        // Group by date within the tournament
         const byDate = {};
         games.forEach(g => {
           if (!byDate[g.date]) byDate[g.date] = [];
           byDate[g.date].push(g);
         });
 
-        Object.entries(byDate).forEach(([date, dGames]) => {
-          html += `<div class="section-label">${date}</div>`;
-          dGames.forEach((g, i) => {
-            const gameId = makeGameId(g);
-            const isWatched = watched.has(gameId);
-            const safeId = gameId.replace(/'/g, "\\'");
-            const watchBtn = (g.watch && g.cat.cls === 'watchworthy')
-              ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
-              : '';
-            html += `
-              <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${g===bestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
-                <div class="teams" style="flex:1;min-width:0;">
-                  <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
-                  <div class="game-meta">${g.league}</div>
-                </div>
-                ${g===bestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
-                <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
-                ${watchBtn}
-                <button class="reveal-btn" onclick="toggleDartsScore(this,${g.h},${g.a})">👁 Reveal</button>
-                <div class="score-reveal"></div>
-                <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
-                ${debugPanelHTML(g)}
-              </div>`;
-          });
+        // Most recent night first.
+        const sortedDates = Object.keys(byDate).sort(
+          (a, b) => byDate[b][0].ts - byDate[a][0].ts
+        );
+
+        // Build a list of nights with their summaries, then apply the
+        // category filter at the night level (Must Watch nights, Watchable
+        // nights, etc.) instead of at the match level.
+        const nights = sortedDates.map(date => ({
+          date,
+          games: byDate[date],
+          summary: summarizeNight(byDate[date]),
+        }));
+
+        const visibleNights = filter === 'all'
+          ? nights
+          : nights.filter(n => {
+              const allowed = FILTER_CLS_MAP[filter] || [];
+              return allowed.includes(n.summary.cls);
+            });
+
+        if (visibleNights.length === 0) {
+          html += '<p class="no-games">No nights match this filter.</p>';
+          return;
+        }
+
+        visibleNights.forEach((n, i) => {
+          const s = n.summary;
+          const watchBtn = (s.cls === 'watchworthy' && s.watch)
+            ? `<a class="watch-btn" href="${s.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${s.watch.name}</a>`
+            : '';
+          html += `
+            <div class="game-card ${s.cls}" style="animation-delay:${i*0.06}s;flex-wrap:wrap;">
+              <div class="teams" style="flex:1;min-width:0;">
+                <div class="matchup">${n.date}</div>
+                <div class="game-meta">${s.hint}</div>
+              </div>
+              <div class="cat-badge">${s.icon} ${s.label}</div>
+              ${watchBtn}
+            </div>`;
         });
       });
     }

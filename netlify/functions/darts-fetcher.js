@@ -36,8 +36,19 @@ const TOURNAMENTS = [
       17: '2026-05-28',  // play-offs
     },
   },
-  // Future:
-  // { wikiPage: '2026_World_Matchplay', league: 'World Matchplay', format: 'knockout', ... }
+  // TEST CONFIG: 2025 Matchplay is finished; included to validate the
+  // multi-session knockout parser against complete historical data.
+  // Once verified, replace with 2026 Matchplay (July) before deploying for
+  // live use.
+  {
+    wikiPage: '2025_World_Matchplay',
+    league:   'World Matchplay',
+    format:   'knockout-multi-session',
+    startDate:'2025-07-19',
+    endDate:  '2025-07-27',
+    year:     2025,
+    forceActive: true,  // bypass the date-window filter for testing
+  },
 ];
 
 // -------------------- fetch --------------------
@@ -253,6 +264,201 @@ async function fetchPremierLeagueNight(tournament) {
   return { recent, upcoming };
 }
 
+// -------------------- knockout multi-session parser --------------------
+//
+// World Matchplay-style tournaments: knockout bracket spread across a week+,
+// with one or two sessions per day. The wiki page has a "Schedule" section
+// containing one subsection per date, each holding a table of matches:
+//   Match # | Round | Player1Avg | Score | Player2Avg | Break checkpoints...
+//
+// We don't extract player names — those are in a separate bracket section
+// and we deliberately don't show them (they'd reveal who advanced). We use
+// the schedule data alone since it has everything we need for night/session
+// summaries: scores, averages, round, date.
+//
+// Session detection: a single date with >4 matches probably means
+// afternoon + evening sessions. We split a date's matches into sessions
+// based on match-count threshold rather than try to parse times (which
+// aren't reliably present in wikitext).
+
+function parseScoreCell(text) {
+  // Wiki cells use en-dash, hyphen, or various spacings: "10 – 3", "10-3", "13 - 11"
+  const m = text.match(/(\d+)\s*[–\-]\s*(\d+)/);
+  if (!m) return null;
+  return { s1: parseInt(m[1], 10), s2: parseInt(m[2], 10) };
+}
+
+function parseAvgCell(text) {
+  const m = text.match(/(\d+\.\d+)/);
+  return m ? parseFloat(m[1]) : null;
+}
+
+// Map round labels we might see to canonical short labels.
+function normalizeRound(label) {
+  const t = String(label).trim().toUpperCase();
+  if (t === 'F' || t === 'FINAL')                       return 'F';
+  if (t === 'SF' || t === 'SEMI' || t === 'SEMIFINAL')  return 'SF';
+  if (t === 'QF' || t === 'QUARTER')                    return 'QF';
+  if (/^\d+$/.test(t))                                   return `R${t}`;
+  return t;
+}
+
+// Parse the Schedule section into match rows. Returns an array of:
+//   { matchNum, round, avg1, score, avg2, dateStr, year }
+function parseSchedule(wikitext, year) {
+  const out = [];
+
+  // The Schedule section ends at the next ==Header== of equal level.
+  const start = wikitext.search(/==\s*Schedule\s*==/i);
+  if (start < 0) return out;
+
+  // Search forward for the next ==Top-Level== heading (not ===subsection===).
+  const rest = wikitext.slice(start);
+  const endMatch = rest.slice(2).match(/\n==[^=]/);
+  const sectionText = endMatch
+    ? rest.slice(0, 2 + endMatch.index)
+    : rest;
+
+  // Find each date subsection: ===Saturday, 19 July===  (English month, day).
+  const dateRe = /===\s*([A-Za-z]+,\s*\d{1,2}\s+[A-Za-z]+)\s*===/g;
+  const marks = [];
+  let m;
+  while ((m = dateRe.exec(sectionText)) !== null) {
+    marks.push({ dateStr: m[1].trim(), index: m.index });
+  }
+
+  for (let i = 0; i < marks.length; i++) {
+    const startIdx = marks[i].index;
+    const endIdx   = i + 1 < marks.length ? marks[i + 1].index : sectionText.length;
+    const block    = sectionText.slice(startIdx, endIdx);
+    const dateStr  = marks[i].dateStr;
+
+    // Each row in the table starts with `|-` and the cells are pipe-separated.
+    // Use both `||` (inline) and `|` at line-start (block form).
+    // Strategy: find every `| nn ||` pattern at the start of a row.
+    const rowRe = /\|\s*(\d{1,2})\s*\|\|\s*([^|\n]+?)\s*\|\|\s*([^|\n]+?)\s*\|\|\s*([^|\n]+?)\s*\|\|\s*([^|\n]+?)(?:\s*\|\||$)/g;
+    let r;
+    while ((r = rowRe.exec(block)) !== null) {
+      const matchNum = parseInt(r[1], 10);
+      const round    = normalizeRound(r[2]);
+      const avg1     = parseAvgCell(r[3]);
+      const score    = parseScoreCell(r[4]);
+      const avg2     = parseAvgCell(r[5]);
+      if (!score) continue;
+      out.push({
+        matchNum, round, avg1, avg2,
+        s1: score.s1, s2: score.s2,
+        dateStr, year,
+      });
+    }
+  }
+
+  return out;
+}
+
+// Group matches into sessions. With ≤4 matches on a date it's a single
+// session; with >4 we infer afternoon/evening split at match 4 (the
+// standard PDC schedule pattern for Matchplay).
+function groupIntoSessions(matches) {
+  const byDate = {};
+  for (const m of matches) {
+    if (!byDate[m.dateStr]) byDate[m.dateStr] = [];
+    byDate[m.dateStr].push(m);
+  }
+
+  const sessions = [];
+  for (const [dateStr, dayMatches] of Object.entries(byDate)) {
+    dayMatches.sort((a, b) => a.matchNum - b.matchNum);
+    if (dayMatches.length <= 4) {
+      sessions.push({ dateStr, label: dateStr, matches: dayMatches });
+    } else {
+      // Split: first 4 = afternoon, rest = evening
+      sessions.push({
+        dateStr,
+        label: `${dateStr} (Afternoon)`,
+        matches: dayMatches.slice(0, 4),
+      });
+      sessions.push({
+        dateStr,
+        label: `${dateStr} (Evening)`,
+        matches: dayMatches.slice(4),
+      });
+    }
+  }
+  return sessions;
+}
+
+// Parse "Saturday, 19 July" + year into a UTC Date at session-typical hour.
+function parseSessionDate(dateStr, year, isEvening) {
+  const m = dateStr.match(/(\d{1,2})\s+([A-Za-z]+)/);
+  if (!m) return null;
+  const day = parseInt(m[1], 10);
+  const months = { January:0, February:1, March:2, April:3, May:4, June:5,
+                   July:6, August:7, September:8, October:9, November:10, December:11 };
+  const monthIdx = months[m[2]];
+  if (monthIdx == null) return null;
+  // Afternoon sessions ~13:00 UK = 12:00 UTC. Evening ~19:00 UK = 18:00 UTC.
+  const hour = isEvening ? 18 : 12;
+  return new Date(Date.UTC(year, monthIdx, day, hour, 0, 0));
+}
+
+// Convert a session's matches into game objects in the canonical shape.
+// Player names are blanked deliberately — the night-summary view never
+// shows them, and exposing them would defeat the spoiler-protection goal.
+function sessionToGames(session, tournament) {
+  const isEvening = /Evening/.test(session.label);
+  const dt = parseSessionDate(session.dateStr, tournament.year, isEvening) || new Date(tournament.startDate);
+  const utcDate = `${dt.getUTCFullYear()}-${String(dt.getUTCMonth()+1).padStart(2,'0')}-${String(dt.getUTCDate()).padStart(2,'0')}`;
+
+  // Average across the session — used by the night-summary commentary
+  // engine to detect "high-scoring throughout" days.
+  const avgs = session.matches.flatMap(m => [m.avg1, m.avg2]).filter(v => v != null);
+  const sessionAvg = avgs.length ? avgs.reduce((a,b)=>a+b,0) / avgs.length : null;
+
+  // Note: we don't have nine-darter data from the schedule alone. That info
+  // lives in the page's narrative and isn't reliably extractable. We omit it
+  // for Matchplay; the summary will still tier the session correctly based
+  // on score margins and round.
+  return session.matches.map((m, idx) => ({
+    id: `darts-mp-${tournament.wikiPage}-${session.label.replace(/\s+/g,'_')}-${m.matchNum}`,
+    home: '',                         // intentionally blank
+    away: '',                         // intentionally blank
+    h: m.s1,
+    a: m.s2,
+    date: dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+    dateKey: utcDate,
+    time: '',
+    league: tournament.league,
+    status: 'final',
+    ts: dt.getTime() + idx,           // small offset preserves match order within session
+    dramaHints: [],
+    debug: {
+      round:      m.round,
+      session:    session.label,
+      avg1:       m.avg1,
+      avg2:       m.avg2,
+      tournament: tournament.wikiPage,
+      sessionAvg,
+      // Reused by summarizeNight as "nightAvg" — same meaning, different unit.
+      nightAvg:   sessionAvg,
+      nineDart:   false,
+    },
+  }));
+}
+
+async function fetchKnockoutMultiSession(tournament) {
+  const wikitext = await fetchWikitext(tournament.wikiPage);
+  const matches  = parseSchedule(wikitext, tournament.year);
+  const sessions = groupIntoSessions(matches);
+
+  const recent = [];
+  for (const s of sessions) {
+    recent.push(...sessionToGames(s, tournament));
+  }
+  recent.sort((a, b) => a.ts - b.ts);
+  return { recent, upcoming: [] };
+}
+
 // -------------------- main entry point --------------------
 
 async function fetchDarts() {
@@ -260,9 +466,12 @@ async function fetchDarts() {
   const allRecent = [];
   const allUpcoming = [];
 
-  // Filter to tournaments active or recently ended (within 14 days of endDate)
+  // Filter to tournaments active or recently ended (within 14 days of endDate).
+  // `forceActive: true` bypasses the date filter for testing against complete
+  // historical wiki pages.
   const ACTIVE_WINDOW_MS = 14 * 86400000;
   const activeTournaments = TOURNAMENTS.filter(t => {
+    if (t.forceActive) return true;
     const end = new Date(t.endDate).getTime();
     const start = new Date(t.startDate).getTime();
     return now >= start - 7 * 86400000 && now <= end + ACTIVE_WINDOW_MS;
@@ -273,9 +482,8 @@ async function fetchDarts() {
   }
 
   const results = await Promise.allSettled(activeTournaments.map(t => {
-    if (t.format === 'premier-league-night') return fetchPremierLeagueNight(t);
-    // Future formats:
-    // if (t.format === 'knockout') return fetchKnockout(t);
+    if (t.format === 'premier-league-night')   return fetchPremierLeagueNight(t);
+    if (t.format === 'knockout-multi-session') return fetchKnockoutMultiSession(t);
     return Promise.resolve({ recent: [], upcoming: [] });
   }));
 
