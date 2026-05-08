@@ -300,11 +300,7 @@
     <div class="top-picks-hero">
       <div class="top-picks-header">
         <div class="top-picks-title">TOP <span>PICKS</span></div>
-        <div class="tp-tabs">
-          <button class="tp-tab active" data-window="today" onclick="setTpWindow('today')">Today</button>
-          <button class="tp-tab" data-window="recent" onclick="setTpWindow('recent')">Recent</button>
-          <button class="tp-tab" data-window="week" onclick="setTpWindow('week')">This Week</button>
-        </div>
+        <div class="tp-tabs" id="tp-tabs"></div>
       </div>
       <div id="top-picks-container"></div>
     </div>
@@ -876,7 +872,12 @@
         upcoming: raw.upcoming || [],
       };
       const el = document.getElementById('darts-count');
-      if (el) el.textContent = allData.darts.recent.length;
+      // Darts tab badge counts NIGHTS (league + date pairs), not matches.
+      // Visible UI is night-summary cards, so the count should match.
+      if (el) {
+        const nights = new Set(allData.darts.recent.map(g => `${g.league}::${g.date}`));
+        el.textContent = nights.size;
+      }
       buildFilters('darts');
       renderDarts();
     } else {
@@ -1024,21 +1025,65 @@
     });
   }
 
-  let tpWindow = 'today'; // today | recent | week
+  // Top Picks window state — tracked per-sport so switching tabs keeps each
+  // sport's chosen window. Darts uses different options ('recent', 'all')
+  // because tournament/Premier-League cadence doesn't map to today/this-week.
+  const TP_WINDOW_OPTIONS = {
+    darts: [
+      { key: 'recent', label: 'Recent',  ms: 3 * 86400000 },
+      { key: 'all',    label: 'All',     ms: 14 * 86400000 },
+    ],
+    default: [
+      { key: 'today',  label: 'Today',     ms: 1 * 86400000 },
+      { key: 'recent', label: 'Recent',    ms: 7 * 86400000 },
+      { key: 'week',   label: 'This Week', ms: 10 * 86400000 },
+    ],
+  };
+
+  function tpOptionsFor(sport) {
+    return TP_WINDOW_OPTIONS[sport] || TP_WINDOW_OPTIONS.default;
+  }
+
+  // Per-sport selected window. Default = first option in that sport's list.
+  const tpWindowBySport = {};
+  function getTpWindow() {
+    const opts = tpOptionsFor(activeSport);
+    if (!tpWindowBySport[activeSport]) tpWindowBySport[activeSport] = opts[0].key;
+    return tpWindowBySport[activeSport];
+  }
+  function tpWindowMs() {
+    const opts = tpOptionsFor(activeSport);
+    const w = getTpWindow();
+    return (opts.find(o => o.key === w) || opts[0]).ms;
+  }
+
+  // Backwards-compat alias — code below still reads `tpWindow` as if it were a
+  // simple string. Routed through the per-sport getter so existing logic
+  // (which compares to 'today' / 'recent' / 'week' / 'all') keeps working.
+  let tpWindow;
+
+  function renderTpTabs() {
+    const container = document.getElementById('tp-tabs');
+    if (!container) return;
+    const opts = tpOptionsFor(activeSport);
+    const current = getTpWindow();
+    container.innerHTML = opts.map(o =>
+      `<button class="tp-tab${o.key === current ? ' active' : ''}" data-window="${o.key}" onclick="setTpWindow('${o.key}')">${o.label}</button>`
+    ).join('');
+  }
 
   function setTpWindow(w) {
+    tpWindowBySport[activeSport] = w;
     tpWindow = w;
-    document.querySelectorAll('.tp-tab').forEach(b => {
-      b.classList.toggle('active', b.dataset.window === w);
-    });
+    renderTpTabs();
     renderTopPicks();
   }
 
   function getTopPicksGames() {
     const now = Date.now();
     const DAY  = 86400000;
-    const windows = { today: 1*DAY, recent: 7*DAY, week: 10*DAY };
-    const cutoff = now - windows[tpWindow];
+    const cutoff = now - tpWindowMs();
+    tpWindow = getTpWindow(); // sync the legacy string for downstream comparisons
     const SCORE_FLOOR = 45; // minimum score to appear in Top Picks
 
     const games = allData[activeSport]?.recent || [];
@@ -1069,7 +1114,8 @@
           return b.ts - a.ts;
         });
 
-      const maxNights = tpWindow === 'week' ? 5 : 3;
+      // Recent window = 3 picks max; All window = up to 5 since it covers more ground.
+      const maxNights = tpWindow === 'all' ? 5 : 3;
       // Don't show "Skip" nights as Top Picks, ever — it'd be the opposite
       // of a recommendation. Filter to Must Watch + Watchable.
       const recommended = ranked.filter(n => n.summary.cls !== 'blowout').slice(0, maxNights);
@@ -1186,13 +1232,38 @@
     const container = document.getElementById('top-picks-container');
     if (!container) return;
 
+    renderTpTabs();
     const picks = getTopPicksGames();
-    const nextWindow = tpWindow === 'today' ? 'recent' : tpWindow === 'recent' ? 'week' : null;
-    const nextLabel  = tpWindow === 'today' ? 'Recent' : 'This Week';
+    // Suggestion engine: when this window is sparse, point to a wider one.
+    // For non-darts the chain is today → recent → week. For darts: recent → all.
+    let nextWindow, nextLabel;
+    if (activeSport === 'darts') {
+      if (tpWindow === 'recent') { nextWindow = 'all';    nextLabel = 'All'; }
+      else                       { nextWindow = null;     nextLabel = ''; }
+    } else {
+      nextWindow = tpWindow === 'today' ? 'recent' : tpWindow === 'recent' ? 'week' : null;
+      nextLabel  = tpWindow === 'today' ? 'Recent' : 'This Week';
+    }
+    const isNarrowWindow = (activeSport === 'darts')
+      ? tpWindow === 'recent'
+      : tpWindow === 'today';
+
+    const onePickCopy = (() => {
+      if (picks.length !== 1) return '';
+      const isFallback = !!picks[0]?.isFallback;
+      if (activeSport === 'darts') {
+        return isFallback
+          ? 'No must-watch sessions — this is the best available.'
+          : 'That\'s the session worth watching.';
+      }
+      return isFallback
+        ? 'No elite games — this is the best available.'
+        : 'That\'s the one worth watching today.';
+    })();
 
     const suggestionHTML = nextWindow
       ? `<div class="tp-empty-suggestion" style="margin-top:10px">
-           <span>${picks.length === 1 && !picks[0]?.isFallback ? 'That\'s the one worth watching today.' : picks.length === 1 && picks[0]?.isFallback ? 'No elite games — this is the best available.' : `Nothing worth your time ${tpWindow === 'today' ? 'today' : 'in this window'}. Check`} ${picks.length !== 1 ? nextLabel + '.' : ''}</span>
+           <span>${picks.length === 1 ? onePickCopy : `Nothing worth your time ${isNarrowWindow ? (activeSport === 'darts' ? 'in this window' : 'today') : 'in this window'}. Check ${nextLabel}.`}</span>
            ${picks.length !== 1 ? `<button class="tp-suggest-btn" onclick="setTpWindow('${nextWindow}')">${nextLabel} →</button>` : ''}
          </div>`
       : '';
@@ -1200,10 +1271,10 @@
     if (picks.length === 0) {
       container.innerHTML = nextWindow
         ? `<div class="tp-empty-suggestion">
-             <span>No standout games ${tpWindow === 'today' ? 'today' : 'in this window'}.</span>
+             <span>No standout ${activeSport === 'darts' ? 'sessions' : 'games'} ${isNarrowWindow && activeSport !== 'darts' ? 'today' : 'in this window'}.</span>
              <button class="tp-suggest-btn" onclick="setTpWindow('${nextWindow}')">Check ${nextLabel} →</button>
            </div>`
-        : `<div class="tp-empty">No standout games this week.</div>`;
+        : `<div class="tp-empty">No standout ${activeSport === 'darts' ? 'sessions' : 'games this week'}.</div>`;
       return;
     }
 
