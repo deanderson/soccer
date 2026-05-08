@@ -872,11 +872,13 @@
         upcoming: raw.upcoming || [],
       };
       const el = document.getElementById('darts-count');
-      // Darts tab badge counts NIGHTS (league + date pairs), not matches.
-      // Visible UI is night-summary cards, so the count should match.
+      // Tab badge counts SESSIONS (or nights for single-session tournaments).
+      // Visible UI shows session-summary cards, so the count matches.
       if (el) {
-        const nights = new Set(allData.darts.recent.map(g => `${g.league}::${g.date}`));
-        el.textContent = nights.size;
+        const sessions = new Set(allData.darts.recent.map(g =>
+          `${g.league}::${g.debug?.session || g.date}`
+        ));
+        el.textContent = sessions.size;
       }
       buildFilters('darts');
       renderDarts();
@@ -1091,13 +1093,15 @@
     // Darts is structurally different: a "pick" is a session/night, not an
     // individual match. Showing "Littler vs Humphries" as Top Pick reveals
     // who made the final, busting the spoiler-free promise. So for darts we
-    // group by (league, date) and return night-level summaries instead.
+    // group by (league, session) — falling back to date for single-session
+    // tournaments like Premier League — and return session-level summaries.
     if (activeSport === 'darts') {
       const inWindow = games.filter(g => g.ts >= cutoff);
       const byNight = {};
       inWindow.forEach(g => {
-        const key = `${g.league}::${g.date}`;
-        if (!byNight[key]) byNight[key] = { league: g.league, date: g.date, ts: g.ts, games: [] };
+        const sessionKey = g.debug?.session || g.date;
+        const key = `${g.league}::${sessionKey}`;
+        if (!byNight[key]) byNight[key] = { league: g.league, date: sessionKey, ts: g.ts, games: [] };
         byNight[key].games.push(g);
         if (g.ts > byNight[key].ts) byNight[key].ts = g.ts;
       });
@@ -1823,24 +1827,29 @@
       Object.entries(byLeague).forEach(([league, games]) => {
         html += `<div class="league-heading">🎯 ${league}</div>`;
 
-        const byDate = {};
+        // Group by session if present, else by date. Multi-session days
+        // (e.g. World Matchplay's afternoon + evening) need to render as
+        // separate cards. The fetcher tags each game with debug.session;
+        // if absent (e.g. Premier League — one session per night), fall
+        // back to the date string as the bucket key.
+        const byBucket = {};
         games.forEach(g => {
-          if (!byDate[g.date]) byDate[g.date] = [];
-          byDate[g.date].push(g);
+          const key = g.debug?.session || g.date;
+          if (!byBucket[key]) byBucket[key] = { label: key, games: [] };
+          byBucket[key].games.push(g);
         });
 
-        // Most recent night first.
-        const sortedDates = Object.keys(byDate).sort(
-          (a, b) => byDate[b][0].ts - byDate[a][0].ts
+        // Most recent first. Use the latest ts in each bucket.
+        const sortedBuckets = Object.values(byBucket).sort(
+          (a, b) => Math.max(...b.games.map(g => g.ts)) - Math.max(...a.games.map(g => g.ts))
         );
 
-        // Build a list of nights with their summaries, then apply the
-        // category filter at the night level (Must Watch nights, Watchable
-        // nights, etc.) instead of at the match level.
-        const nights = sortedDates.map(date => ({
-          date,
-          games: byDate[date],
-          summary: summarizeNight(byDate[date]),
+        // Build a list of sessions/nights with their summaries, then apply the
+        // category filter at the session level (Must Watch sessions, etc.).
+        const nights = sortedBuckets.map(b => ({
+          date: b.label,
+          games: b.games,
+          summary: summarizeNight(b.games),
         }));
 
         const visibleNights = filter === 'all'

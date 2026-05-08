@@ -13,6 +13,34 @@
 
 ## Features filed
 
+### Finals/championship tier (cross-sport)
+Some matches transcend the "is it close?" question — finals, championship
+games, deciders. Users watch them because of what they ARE, not because
+of confidence-engine score. A 13-18 Matchplay final blowout is still THE
+final. A Super Bowl blowout still gets watched.
+
+Apply to:
+- **Darts**: Tournament finals (F round). Maybe semifinals too.
+- **NFL**: Super Bowl, conference championships, playoff games
+- **MLB**: World Series, LCS games, wild card
+- **NBA**: Finals, conference finals, playoff games
+- **NHL**: Stanley Cup Final, conference finals, playoff games
+- **Football**: Champions League final, FA Cup final, World Cup knockout
+- **Cricket**: World Cup final, IPL final, T20 World Cup knockouts
+- **Tennis**: Grand Slam finals, possibly semifinals
+
+UX shape: separate visual treatment from regular Must Watch. Maybe a
+trophy emoji 🏆, special label like "The Final" or "Championship", no
+"was it close" commentary. Watch button still applies.
+
+Implementation: detection logic per sport (round=F for darts, playoff
+flag from API for NFL, etc.). Probably a `isMarquee` flag on games
+that overrides normal tiering in display.
+
+Distinct from but adjacent to the marquee/favorites bonus — that
+boosts confidence scoring for star players. This is a separate
+override at the rendering layer.
+
 ### Threshold tuning pass (after 1 week of DB data)
 Use the `games` table to look at `confidence_score` distribution by
 `confidence_class` per sport. See if our class boundaries match the

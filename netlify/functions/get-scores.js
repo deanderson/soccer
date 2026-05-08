@@ -1123,17 +1123,38 @@ exports.handler = async function (event, context) {
       else if (total <= 20) { factors.push({ label: 'Low scoring', points: -10 }); score -= 10; }
 
     } else if (sport === 'darts') {
-      // Premier League Darts is best-of-11 legs (first to 6).
-      // h/a are legs won; debug.avg1/avg2 are 3-dart averages per player.
+      // Darts has variable formats: Premier League is best-of-11 (first to 6),
+      // World Matchplay R1 is first-to-10, finals can go to 18+, etc. Score
+      // margins must be evaluated relative to the format. We use g.debug.firstTo
+      // when present (set by the parser); fall back to inferring from total legs.
       const winner = Math.max(h, a);
       const loser  = Math.min(h, a);
       const margin = Math.abs(h - a);
-      if (winner === 6 && loser === 5)      { factors.push({ label: 'Deciding leg',     points: 35 }); score += 35; }
-      else if (margin === 1)                { factors.push({ label: '1-leg margin',     points: 28 }); score += 28; }
-      else if (margin === 2)                { factors.push({ label: '2-leg margin',     points: 12 }); score += 12; }
-      else if (margin === 3)                { factors.push({ label: '3-leg margin',     points: -10 }); score -= 10; }
-      else if (margin >= 4)                 { factors.push({ label: 'Large margin',     points: -30 }); score -= 30; }
-      if (loser === 0)                      { factors.push({ label: 'Whitewash',        points: -15 }); score -= 15; }
+      const firstTo = g.debug?.firstTo || Math.max(winner, 6);
+
+      // Define non-overlapping margin bands:
+      //   decider:  match went to the brink (loser was one leg from winning, or tiebreaker fired)
+      //   close:    margin within ~15% of firstTo (e.g. 1-2 in PL, 2-3 in Matchplay R1)
+      //   medium:   margin between close and blowout
+      //   blowout:  margin >= 50% of firstTo (e.g. 3+ in PL, 5+ in Matchplay R1)
+      const closeMargin   = Math.max(2, Math.round(firstTo * 0.15));
+      const blowoutMargin = Math.max(3, Math.round(firstTo * 0.5));
+      const wentToDecider = (loser === firstTo - 1) || (winner > firstTo);
+      const wasClose      = !wentToDecider && margin <= closeMargin;
+      const wasBlowout    = margin >= blowoutMargin;
+      const wasMedium     = !wentToDecider && !wasClose && !wasBlowout;
+      const wasWhitewash  = loser === 0;
+
+      if (wentToDecider) {
+        factors.push({ label: 'Deciding leg', points: 35 }); score += 35;
+      } else if (wasClose) {
+        factors.push({ label: 'Close match',  points: 25 }); score += 25;
+      } else if (wasMedium) {
+        factors.push({ label: 'Competitive',  points: 8  }); score += 8;
+      } else if (wasBlowout) {
+        factors.push({ label: 'Lopsided',     points: -25 }); score -= 25;
+      }
+      if (wasWhitewash) { factors.push({ label: 'Whitewash', points: -15 }); score -= 15; }
 
       const av1 = g.debug?.avg1, av2 = g.debug?.avg2;
       if (av1 != null && av2 != null) {
@@ -1143,8 +1164,9 @@ exports.handler = async function (event, context) {
       }
 
       const round = g.debug?.round;
-      if (round === 'SF') { factors.push({ label: 'Semi-final', points: 5  }); score += 5;  }
-      if (round === 'F')  { factors.push({ label: 'Final',      points: 10 }); score += 10; }
+      if (round === 'QF') { factors.push({ label: 'Quarter-final', points: 5  }); score += 5;  }
+      if (round === 'SF') { factors.push({ label: 'Semi-final',    points: 8  }); score += 8;  }
+      if (round === 'F')  { factors.push({ label: 'Final',         points: 12 }); score += 12; }
 
       if (g.debug?.nineDart) { factors.push({ label: '⚡ 9-darter on night', points: 8 }); score += 8; }
     }

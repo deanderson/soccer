@@ -231,6 +231,7 @@ function buildGame(match, tournament, night, nightStats, slotIdx) {
     debug: {
       round:      match.round,
       night,
+      firstTo:    6,                          // PL is best-of-11 every match
       avg1:       match.avg1,
       avg2:       match.avg2,
       tournament: tournament.wikiPage,
@@ -482,6 +483,16 @@ function parseSessionDate(dateStr, year, isEvening) {
   return new Date(Date.UTC(year, monthIdx, day, hour, 0, 0));
 }
 
+// World Matchplay format: legs to win increases each round.
+// Source: 2025 Wikipedia page format section.
+const MATCHPLAY_FIRST_TO = {
+  R1: 10,
+  R2: 11,
+  QF: 16,
+  SF: 17,
+  F:  18,
+};
+
 // Convert a session's matches into game objects in the canonical shape.
 // Player names are blanked deliberately — the night-summary view never
 // shows them, and exposing them would defeat the spoiler-protection goal.
@@ -515,6 +526,7 @@ function sessionToGames(session, tournament) {
     debug: {
       round:      m.round,
       session:    session.label,
+      firstTo:    MATCHPLAY_FIRST_TO[m.round] || null,
       avg1:       m.avg1,
       avg2:       m.avg2,
       tournament: tournament.wikiPage,
