@@ -1,0 +1,1850 @@
+{{Short description|Darts tournament}}
+{{Use British English|date=October 2024}}
+{{Use dmy dates|date=October 2024}}
+{{Infobox individual darts tournament
+|tournament_name = 2024/25 Paddy Power World Darts Championship
+|dates           = 15 December 2024 – {{nowrap|3 January 2025}}
+|venue           = [[Alexandra Palace]]
+|location        = London, England
+|organisation    = [[Professional Darts Corporation]] (PDC)
+|format          = [[Set (darts)|Sets]]<br/>Final – first to 7 sets
+|prize_fund      = £2,500,000
+|winners_share   = £500,000
+|high_checkout   = {{ubl|'''170'''|[[Nick Kenny (darts player)|Nick Kenny]]|[[Joe Cullen (darts player)|Joe Cullen]]|[[Kevin Doets]]|[[Chris Dobey]]|[[Luke Littler]]}}
+|nine_dart       = [[Christian Kist]]<br/>[[Damon Heta]]
+|winner          = '''{{flagathlete|[[Luke Littler]]|ENG}}'''
+|prev            = [[2024 PDC World Darts Championship|2024]]
+|next            = [[2026 PDC World Darts Championship|2026]]
+}}
+
+{{multiple image
+ | align = right
+ | total_width = 310
+ | image1 = Luke Littler in 2025.png
+ | alt1 = Luke Littler
+ | image2 = 2022-06-13 Play-offs (2022 Premier League Darts) by Sandro Halank–168.jpg
+ | alt2 = Michael van Gerwen
+ | footer = [[Luke Littler]] won the world championship for the first time in his career, defeating 3-time champion [[Michael van Gerwen]] in the final.
+}}
+
+The '''2025 PDC World Darts Championship''' (known for sponsorship reasons as the '''2024/25 Paddy Power World Darts Championship''') was a professional [[darts]] tournament that was held from 15 December 2024 to 3 January 2025 at [[Alexandra Palace]] in London, England. It was the thirty-second [[PDC World Darts Championship|World Darts Championship]] to be organised by the [[Professional Darts Corporation]] and the eighteenth to be held at Alexandra Palace. The winner received £500,000 from a total prize fund of £2,500,000.
+
+The tournament featured 96 players, with the top 32 highest ranked players on the [[PDC Order of Merit]] being [[Seeding (sports)|seeded]] through to the second round. [[Luke Humphries]] was the defending champion, having defeated [[Luke Littler]] 7–4 in the [[2024 PDC World Darts Championship|2024]] final.<ref name=HumphriesGuardian24WCH>{{Cite web |last=Liew |first=Jonathan |date=3 January 2024 |title=Luke Humphries ends Luke Littler's fairytale in epic PDC world darts final |url=https://www.theguardian.com/sport/2024/jan/03/luke-humphries-luke-littler-pdc-world-darts-championship-final |access-date=18 October 2024 |work=The Guardian}}</ref> However, Humphries lost 4–1 to [[Peter Wright (darts player)|Peter Wright]] in the fourth round.
+
+In his 3–1 second-round victory over [[Ryan Meikle]], Littler set a new record for the highest [[High dart average|three-dart set average]] in a World Championship match, with 140.91 in the final set. Littler went on to beat [[Nathan Aspinall]] 5–2 in the quarter-finals and [[Stephen Bunting]] 6–1 in the semi-finals to reach a second consecutive final, where he defeated [[Michael van Gerwen]] 7–3 to win his first world title. Aged 17 years and 347 days, Littler became the youngest world champion in darts history. He also won the ''Ballon d'Art'' trophy for scoring the most 180s in the tournament, with 76.
+
+[[Christian Kist]] and [[Damon Heta]] both hit [[nine-dart finish]]es at the tournament, with both players earning a £60,000 bonus.
+
+==Overview==
+The 2025 PDC World Darts Championship was the 32nd [[World Darts Championship]] organised by the Professional Darts Corporation, and the 18th to be held at [[Alexandra Palace]] in London, England. It took place from 15 December 2024 to 3 January 2025. The championship featured 96 participants, with the top 32 highest ranked players on the [[PDC Order of Merit]] being [[seeding (sports)|seeded]] through to the second round. The 32 qualifiers from the Pro Tour Order of Merit and the 32 other players from various qualifiers start in the first round.<ref name=SLifeFormat>{{cite web |date=4 January 2025 |title=PDC World Darts Championship 2025: Draw, schedule, betting odds, results & live Sky Sports TV coverage |url=https://www.sportinglife.com/darts/news/pdc-world-darts-championship-2025-draw-schedule-betting-odds-results-and-live-sky-sports-tv-coverage/221287 |access-date=7 December 2024 |work=SportingLife}}</ref><ref name=SkySpFormat>{{cite web |last=Chiu |first=Nigel |date=5 December 2024 |title=World Darts Championship: Schedule, format, previous winners and nine darters at Alexandra Palace |url=https://www.skysports.com/darts/news/12288/13267430/world-darts-championship-schedule-format-previous-winners-and-nine-darters-at-alexandra-palace |access-date=7 December 2024 |work=[[Sky Sports]]}}</ref>
+
+Irish gambling company [[Paddy Power]] continued their sponsorship of the event, having agreed a three-year contract with the PDC ahead of the 2024 edition.<ref>{{cite web |last=Mullen |first=Archie |url=https://www.sportspromedia.com/news/world-darts-championship-pdc-paddy-power-title-sponsorship/?zephr_sso_ott=OxbGQl |title=World Darts Championship agrees Paddy Power title sponsorship |date=11 July 2023 |access-date=18 October 2024 |work=[[SportsPro]]}}</ref> As part of its promotion of the event, Paddy Power announced 'The Bigger 180' campaign, for which the bookmaker would, as last year, donate £1,000 to charity [[Prostate Cancer UK]] for every maximum score of 180 achieved during the tournament, while also introducing a £180,000 bonus for a [[nine-dart finish]] hit at the tournament, shared equally between the charity, the player, and a fan in the [[Alexandra Palace]] crowd.<ref name=PDCBigger180>{{cite web |date=25 November 2024 |title=Paddy Power launches 'The BIGGER 180' campaign |url=https://www.pdc.tv/news/2024/november/25/paddy-power-launches-bigger-180-campaign |work=[[Professional Darts Corporation|PDC]] |access-date=9 December 2024}}</ref><ref name=ODBigger180>{{cite web |last=Barrs |first=Phill |date=30 November 2024 |title=Paddy Power £180,000 bonus pledge for a nine-darter at the World Championship |url=https://onlinedarts.com/paddy-power-180000-bonus-pledge-for-a-nine-darter-at-the-world-championship/ |website=Online Darts |access-date=9 December 2024}}</ref>
+
+Going into the event, the previous year's finalists were viewed by bookmakers as the tournament favourites with [[Luke Littler]] having won the [[2024 Premier League Darts|Premier League]],<ref name=LittlerPLBBC>{{Cite web |last=Colman |first=Jonty |date=23 May 2024 |title=Littler beats Humphries to win Premier League Darts title |url=https://www.bbc.co.uk/sport/darts/articles/cn00rmpex5no |access-date=18 October 2024 |website=BBC Sport}}</ref><ref name=LittlerPLSky>{{cite web |last=Wellens |first=Megan |date=24 May 2024 |title=Premier League Darts: Luke Littler hits nine-darter on way to victory over Luke Humphries in final |url=https://www.skysports.com/darts/news/12288/13141984/premier-league-darts-luke-littler-hits-nine-darter-on-way-to-victory-over-luke-humphries-in-final |work=Sky Sports |access-date=23 May 2024}}</ref><ref name=LittlerPLGuardian>{{cite web |last=Liew |first=Jonathan |date=24 May 2024 |title=Luke Littler powers to Premier League Darts title with nine-dart delight |url=https://www.theguardian.com/sport/article/2024/may/23/luke-littler-luke-humphries-premier-league-darts-final |work=[[The Guardian]] |access-date=23 May 2024}}</ref> the [[2024 World Series of Darts Finals|World Series Finals]],<ref name=LittlerWSODFBBC>{{cite web |date=15 September 2024 |title=Littler wins maiden World Series of Darts Finals |url=https://www.bbc.co.uk/sport/darts/articles/cwy99gzqwnwo |work=BBC Sport}}</ref> and the [[2024 Grand Slam of Darts|Grand Slam of Darts]],<ref name=LittlerSlamBBC>{{cite web |last=Matthews |first=Callum |date=17 November 2024 |title=Littler wins Grand Slam to go fifth in world rankings |url=https://www.bbc.co.uk/sport/darts/articles/c4g72n4d1kno |access-date=17 November 2024 |work=BBC Sport}}</ref><ref>{{cite web |last=Gorton |first=Josh |date=17 November 2024 |url=https://www.pdc.tv/news/2024/november/17/astonishing-littler-storms-mr-vegas-grand-slam-darts-glory |title=Astonishing Littler storms to Mr Vegas Grand Slam of Darts glory |website=www.pdc.tv |access-date=17 November 2024}}</ref> and defending champion [[Luke Humphries]] having won the [[2024 World Matchplay|World Matchplay]]<ref name=HumphriesWMPGuardian>{{cite news |date=21 July 2024 |title=Humphries beats Van Gerwen in World Matchplay final to seal darts double |url=https://www.theguardian.com/sport/article/2024/jul/21/luke-humphries-michael-van-gerwen-world-matchplay-final-darts |work=PA Sport |publisher=The Guardian}}</ref><ref name=HumphriesWMPBBC>{{cite web |url=https://www.bbc.co.uk/sport/darts/articles/cxr2x131rn5o |title=Humphries beats Van Gerwen to win Matchplay title |date=21 July 2024 |work=BBC Sport |access-date=22 July 2024}}</ref> and the [[2024 Players Championship Finals|Players Championship Finals]].<ref name=HumphriesPCFSky>{{cite web |date=25 November 2024 |title=Players Championship Finals: Luke Humphries beats Luke Littler in thrilling final to retain title |url=https://www.skysports.com/darts/news/12288/13260297/players-championship-finals-luke-humphries-beats-luke-littler-in-thrilling-final-to-retain-title |work=Sky Sports |access-date=25 November 2024}}</ref>
+
+===Format===
+
+All matches were played as straight in (player begins scoring with their first throw no matter what section is hit), double out (a segment on the outer ring or the [[Bullseye (target)|bullseye]]), requiring the players to score 501 points to win a [[Leg (darts)|leg]], finishing on a double. The matches were played in the [[Set (darts)|set]] format, with a minimum of three sets required to win a match.<ref>{{Cite web |last=Jenkins |first=Keith |date=3 January 2025 |title=PDC World Darts Championship: Format, rules, schedule, more |url=https://www.espn.co.uk/darts/story/_/id/42935593/world-darts-championship-101-format-rules-schedule-more |access-date=5 January 2025 |website=ESPN}}</ref> The following rules are observed:
+
+* All sets were played to the best of five legs in the first round, and also in non-deciding sets of subsequent rounds.
+
+* In the deciding set of all but the first round, the first player to win at least three legs and be leading by two or more won the set and the match. If the set reached a 5–5 tie without a winner, it was decided by a sudden-death leg with no throw for the bull.<ref name=SLifeFormat/>
+
+{|class="wikitable" style="text-align:center"
+!Round
+!Best of (sets)
+!First to (sets)
+|-
+|First & Second || 5 || 3
+|-
+|Third & Fourth || 7 || 4
+|-
+|Quarter-finals || 9 || 5
+|-
+|Semi-finals || 11 || 6
+|-
+|Final || 13 || 7
+|}
+<ref name="SkySpFormat" />
+
+===Ranking===
+The rankings on the [[PDC Order of Merit]] are calculated on a two-year basis. Players who participated in the [[2023 PDC World Darts Championship]] were defending their prize money from that event on their ranking. At the end of the tournament, the PDC Order of Merit prize money from that event was deleted from their ranking. After the tournament, the top 64 in the PDC Order of Merit received a one-year extension on their tour card. Players in the final year of their tour card, or that do not hold a tour card for the 2024 season, who finished the tournament outside the top 64 lost their tour card, unless players inside the top 64 resign their tour card, which [[Steve Beaton]] did when he retired from the professional game.<ref>{{cite web |title=PDC Rankings |url=http://globaldarts.de/globalDartsEN/global/Rankingpdc.html |website=Global Darts |access-date=18 October 2024}}</ref>
+
+===Prize money===
+The total prize pool for the tournament remained at £2.5 million in total for the seventh year in a row.<ref name=SLifeFormat/><ref name=SkySpFormat/> Tournament sponsors [[Paddy Power]] pledged a £60,000 bonus for a [[nine-dart finish]] hit during the tournament to each of the players, [[Prostate Cancer UK]], and a fan in the [[Alexandra Palace]] crowd during the match it was hit.<ref name=PDCBigger180/><ref name=ODBigger180/> [[Christian Kist]] hit a nine-darter in his first round match against [[Madars Razma]].<ref>{{cite web |last=Wood |first=Kieran |date=18 December 2024 |title=VIDEO {{!}} Christian Kist throws first nine-darter at World Darts Championship 2025 and collects £60,000 mega bonus |url=https://dartsnews.com/pdc/video-christian-kist-throws-first-nine-darter-at-world-darts-championship-2025-and-collects-60000-mega-bonus |publisher=Darts News |access-date=18 December 2024}}</ref><ref>{{cite web |url=https://www.theguardian.com/sport/2024/dec/18/darts-pdc-worlds-christian-kist-nine-darter-nathan-aspinall |title=Christian Kist hits nine-darter at PDC world championship but loses match |work=The Guardian |date=18 December 2024 |access-date=18 December 2024}}</ref> [[Damon Heta]] hit the second nine-darter of the tournament in his third round match against [[Luke Woodhouse]].
+
+{|class="wikitable" style="text-align:center"
+!colspan=2|Position <small>(no. of players)</small>
+!Prize money<br /><small>(Total: £2,500,000)</small>
+|-
+|style="text-align:center"|'''Winner''' ||<small>(1)</small> ||£500,000
+|-
+|style="text-align:center"|'''Runner-up''' ||<small>(1)</small> ||£200,000
+|-
+|style="text-align:center"|'''Semi-finalists''' ||<small>(2)</small> ||£100,000
+|-
+|style="text-align:center"|'''Quarter-finalists''' ||<small>(4)</small> ||£50,000
+|-
+|style="text-align:center"|'''Fourth round losers''' ||<small>(8)</small> ||£35,000
+|-
+|style="text-align:center"|'''Third round losers''' ||<small>(16)</small> ||£25,000
+|-
+|style="text-align:center"|'''Second round losers''' ||<small>(32)</small> ||£15,000
+|-
+|style="text-align:center"|'''First round losers''' ||<small>(32)</small> ||£7,500
+|-
+! colspan=3 |
+|-
+|'''[[Nine-dart finish]]'''
+| <small>(2)</small>
+| style="text-align:center" | £60,000
+|-
+
+|}
+
+==Qualification==
+[[File:The Prime Minister welcomes Luke Humphries to Downing Street (53444857015) (cropped).jpg|thumb|[[Luke Humphries]] was defending champion and number one seed going in to the tournament.]]
+96 players competed in the event, with the thirty-two highest ranked players on the [[PDC Order of Merit]] being [[Single-elimination tournament#Seeding|seeded]] to the second round. The top 32 not yet qualified players from the [[2024 PDC Pro Tour]] Order of Merit and the 32 international qualifiers entered in the first round.<ref name=SLifeFormat/><ref name=SkySpFormat/><ref name="DTWCRace">{{cite web |url=https://www.dartsrankings.com/wch2024 |title=World Championship Race 2024/2025 |website=DartsRankings |date=25 November 2024}}</ref><ref name=Field>{{cite web |date=24 November 2024 |title=2024/25 Paddy Power World Darts Championship field confirmed |url=https://www.pdc.tv/news/2024/november/24/202425-paddy-power-world-darts-championship-field-confirmed |website=[[Professional Darts Corporation|PDC]] |access-date=25 November 2024}}</ref>
+
+===Seeds===
+[[Luke Humphries]], the reigning [[2024 PDC World Darts Championship|2024 PDC World Champion]],<ref name=HumphriesGuardian24WCH/> the [[2024 World Matchplay|World Matchplay]],<ref name=HumphriesWMPGuardian/> and [[2024 Players Championship Finals|Players Championship Finals]] champion,<ref name=HumphriesPCFSky/> and the [[2024 Premier League Darts|Premier League]],<ref name=LittlerPLBBC/><ref name=LittlerPLSky/><ref name=LittlerPLGuardian/> [[2024 UK Open|UK Open]],<ref name=PDCUKOpen24/> and [[2024 World Grand Prix (darts)|World Grand Prix]] runner-up<ref name=SkyWGPFinal/> was top of the two-year Order of Merit and number one seed going into the tournament. The [[2023 PDC World Darts Championship|2023]] world champion and [[2024 World Series of Darts Finals|2024 World Series Finals]]<ref name=LittlerWSODFBBC/> runner-up [[Michael Smith (darts player)|Michael Smith]] was the second seed. [[Michael van Gerwen]], the [[2014 PDC World Darts Championship|2014]], [[2017 PDC World Darts Championship|2017]] and [[2019 PDC World Darts Championship|2019]] [[PDC World Darts Championship|PDC World Champion]] and [[2024 Masters (darts)|2024 Masters]]<ref name=BuntingMastersBBC>{{cite web |date=5 February 2024 |title=Cazoo Masters: Stephen Bunting beats Michael van Gerwen to win maiden televised PDC title |url=https://www.bbc.co.uk/sport/darts/68202432 |work=BBC Sport |access-date=4 January 2025}}</ref> and World Matchplay runner-up<ref name=HumphriesWMPGuardian/><ref name=HumphriesWMPBBC/> was the third seed. [[Luke Littler]], the 2024 Premier League,<ref name=LittlerPLBBC/><ref name=LittlerPLSky/><ref name=LittlerPLGuardian/> [[2024 Grand Slam of Darts|Grand Slam]]<ref name=LittlerSlamBBC/> and World Series Finals champion,<ref name=LittlerWSODFBBC/> and the runner-up at the 2024 PDC World Championship<ref name=HumphriesGuardian24WCH/> and Players Championship Finals<ref name=HumphriesPCFSky/> was the fourth seed. [[2018 PDC World Darts Championship|2018]] world champion,<ref>{{cite web|url=https://www.theguardian.com/sport/live/2018/jan/01/rob-cross-v-phil-taylor-pdc-world-darts-championship-final-live|title=Rob Cross beats Phil Taylor 7–2 to win PDC World Darts Championship – as it happened|date=1 January 2018|work=Guardian|access-date=4 January 2025}}</ref> [[Rob Cross]], was the fifth seed.<ref name="RecordSeeds"/>
+
+As well as Humphries, Smith, van Gerwen and Cross, four other previous PDC world champions qualified as seeds: [[2021 PDC World Darts Championship|2021]] world champion<ref>{{cite web|last=Liew |first=Jonathan |date=3 January 2021 |url=https://www.theguardian.com/sport/2021/jan/03/gerwyn-price-sweeps-gary-anderson-aside-to-clinch-first-world-title-pdc-world-championships|title=Gerwyn Price sweeps Gary Anderson aside to clinch first PDC world darts title|work=The Guardian|access-date=4 January 2025}}</ref><ref>{{Cite web|date=4 January 2021|title=Gerwyn Price becomes first Welshman to win PDC World Championship|url=https://www.itv.com/news/wales/2021-01-04/gerwyn-price-becomes-first-welshman-to-win-pdc-world-darts-championship|access-date=4 January 2025 |website=ITV News}}</ref> [[Gerwyn Price]] was the tenth seed, [[2015 PDC World Darts Championship|2015]]<ref>{{cite web |last=Jones |first=Lewis |date=5 January 2015 |title=PDC World Darts Championship final: Gary Anderson beats Phil Taylor to win his first world title |url=https://www.skysports.com/darts/news/9632563/pdc-world-darts-championship-final-gary-anderson-beats-phil-taylor-to-win-his-first-world-title |publisher=[[Sky Sports]] |access-date=4 January 2025}}</ref> and [[2016 PDC World Darts Championship|2016]]<ref>{{cite web |last=McVeigh |first=Niall |date=4 January 2016 |url=https://www.theguardian.com/sport/live/2016/jan/03/adrian-lewis-v-gary-anderson-pdc-world-darts-championship-final-live|title=Gary Anderson wins the PDC World Darts Championship – as it happened! |work=The Guardian |access-date=4 January 2025}}</ref><ref>{{cite web |date=4 January 2016 |url=https://www.bbc.co.uk/sport/darts/35218458|title=Gary Anderson beats Adrian Lewis to win PDC World Darts Championship |publisher=BBC Sport |access-date=4 January 2025}}</ref> world champion [[Gary Anderson (darts player)|Gary Anderson]] was seeded fourteenth, [[2020 PDC World Darts Championship|2020]]<ref>{{cite web |last=Oscroft |first=Tim |date=1 January 2020 |title=Wright beats Van Gerwen to win his first PDC World Darts title |url=https://www.bbc.co.uk/sport/live/darts/50870528 |publisher=[[BBC Sport]] |access-date=4 January 2025 |archive-url=https://web.archive.org/web/20200101211014/https://www.bbc.co.uk/sport/live/darts/50870528 |archive-date=1 January 2020 |url-status=live}}</ref> and [[2022 PDC World Darts Championship|2022]]<ref>{{cite web |last=McLaughlin |first=Luke |date=3 January 2022 |title=Peter Wright beats Michael Smith to PDC World Darts title – as it happened |url=https://www.theguardian.com/sport/live/2022/jan/03/darts-pdc-world-championship-final-michael-smith-peter-wright-live-updates |work=The Guardian |access-date=4 January 2025}}</ref><ref>{{cite news |last=Beardmore |first=Michael |date=3 January 2022 |title=PDC World Darts Championship final – Wright beats Smith to win title in thriller |url=https://www.bbc.co.uk/sport/live/darts/59858980 |publisher=[[BBC Sport]] |access-date=4 January 2025}}</ref> world champion [[Peter Wright (darts player)|Peter Wright]] was the seventeenth seed, and [[2007 PDC World Darts Championship|2007]] world champion<ref>{{cite news |date=1 January 2007 |title=Set-by-set: Taylor 6–7 Barneveld |url=https://news.bbc.co.uk/sport2/hi/other_sports/darts/6223633.stm |work=BBC Sport |access-date=4 January 2025}}</ref> [[Raymond van Barneveld]] was the thirty-second seed. [[2014 BDO World Darts Championship|2014]] [[BDO World Darts Championship|BDO World Champion]]<ref>{{cite web |date=12 January 2014 |title=BDO World Darts: Stephen Bunting beats Alan Norris in final |url=https://www.bbc.com/sport/0/darts/25706855 |publisher=BBC Sport |access-date=4 January 2025}}</ref> and [[2024 Masters (darts)|2024 Masters]] champion<ref name=BuntingMastersBBC/> [[Stephen Bunting]] was the eighth seed. He was one of two former BDO world champions to qualify as seeds, alongside [[1998 BDO World Darts Championship|1998]], [[1999 BDO World Darts Championship|1999]], [[2003 BDO World Darts Championship|2003]], and [[2005 BDO World Darts Championship|2005]] BDO world champion van Barneveld.<ref name=Field/>
+
+The top seeds behind Humphries, Smith, van Gerwen, Littler and Cross were [[Dave Chisnall]], [[2023 World Matchplay]] runner-up [[Jonny Clayton]],<ref name=AspinallWMPSL>{{cite web |date=24 July 2023 |title=Darts results: Nathan Aspinall crowned World Matchplay champion after thrashing Jonny Clayton in the Blackpool final |url=https://www.sportinglife.com/darts/news/darts-results-nathan-aspinall-crowned-world-matchplay-champion-after-thrashing-jonny-clayton-in-the-blackpool-final/210974 |work=Sporting Life |access-date=4 January 2025}}</ref> Bunting, [[2024 UK Open]] semi-finalist<ref name=PDCUKOpen24>{{Cite web |last=Gorton |first=Josh |date=3 March 2024 |title=Van den Bergh topples Humphries to claim UK Open glory |url=https://www.pdc.tv/news/2024/03/03/van-den-bergh-topples-humphries-claim-uk-open-glory |archive-url=https://web.archive.org/web/20240303235349/https://www.pdc.tv/news/2024/03/03/van-den-bergh-topples-humphries-claim-uk-open-glory |url-status=dead |archive-date=3 March 2024 |access-date=3 March 2024 |website=PDC}}</ref> [[Damon Heta]], Price, 2024 UK Open<ref name=PDCUKOpen24/> champion [[Dimitri Van den Bergh]], 2023 World Matchplay champion<ref name=AspinallWMPSL/> [[Nathan Aspinall]], [[2022 UK Open]] champion [[Danny Noppert]],<ref>{{cite news |date=7 March 2022 |title=Danny Noppert beats Michael Smith to claim UK Open title in thrilling final-leg finish |url=https://www.skysports.com/darts/news/12288/12559721/danny-noppert-beats-michael-smith-to-claim-uk-open-title-in-thrilling-final-leg-finish |url-status=live |archive-url=https://web.archive.org/web/20220922164517/https://www.skysports.com/darts/news/12288/12559721/danny-noppert-beats-michael-smith-to-claim-uk-open-title-in-thrilling-final-leg-finish |archive-date=22 September 2022 |access-date=7 March 2022 |work=Sky Sports}}</ref> Anderson, [[2023 Masters (darts)|2023 Masters]] champion [[Chris Dobey]]<ref>{{Cite web |date=29 January 2023 |title=Chris Dobey defeats Rob Cross for shock Masters win |url=https://www.bbc.com/sport/darts/64448385 |access-date=3 January 2025 |publisher=[[BBC Sport]]}}</ref> and [[2023 European Championship (darts)|2023 European Championship]] runner-up<ref name=WrightECBBC>{{cite web|date=29 October 2023 |title=European Championship: Peter Wright beats James Wade to win second European title in Dortmund |url=https://www.bbc.com/sport/darts/67258821|publisher=[[BBC Sport]] |access-date=30 October 2023}}</ref><ref name=WrightECSky>{{cite web |date=29 October 2023 |title=European Championship: Peter Wright secures title with victory over James Wade in Dortmund |url=https://www.skysports.com/darts/news/12288/12996188/european-championship-peter-wright-secures-title-with-victory-over-james-wade-in-dortmund |publisher=[[Sky Sports]] |access-date=30 October 2023}}</ref> [[James Wade]]. Other tournament winners to qualify as seeds were [[2022 European Championship (darts)|2022 European Champion]] [[Ross Smith (darts player)|Ross Smith]]<ref>{{cite web |date=30 October 2022 |title=Ross Smith sensationally wins first TV title at Cazoo European Championship |url=https://www.pdc.tv/news/2022/10/30/ross-smith-sensationally-wins-first-tv-title-cazoo-european-championship |archive-url=https://web.archive.org/web/20221030222936/https://www.pdc.tv/news/2022/10/30/ross-smith-sensationally-wins-first-tv-title-cazoo-european-championship |url-status=dead |archive-date=30 October 2022 |publisher=[[Professional Darts Corporation]] |access-date=4 January 2025}}</ref> as the nineteenth seed, [[2023 UK Open]] champion [[Andrew Gilding]]<ref>{{cite news |last=Gorton |first=Josh |date=5 March 2023 |title=Gilding strikes gold to stun Van Gerwen & clinch UK Open glory |url=https://www.pdc.tv/news/2023/03/05/gilding-strikes-gold-stun-van-gerwen-clinch-uk-open-glory |url-status=dead |archive-url=https://web.archive.org/web/20230930095449/https://www.pdc.tv/news/2023/03/05/gilding-strikes-gold-stun-van-gerwen-clinch-uk-open-glory |archive-date=30 September 2023 |access-date=4 January 2025 |work=[[Professional Darts Corporation|PDC]]}}</ref> as the twenty-first seed, [[2022 Masters (darts)|2022 Masters]] champion [[Joe Cullen (darts player)|Joe Cullen]]<ref>{{Cite web |last=Allen |first=Dave |date=30 January 2022 |url=https://www.pdc.tv/news/2022/01/30/emotional-cullen-secures-maiden-tv-title-ladbrokes-masters |archive-url=https://web.archive.org/web/20220131040317/https://www.pdc.tv/news/2022/01/30/emotional-cullen-secures-maiden-tv-title-ladbrokes-masters |url-status=dead |archive-date=31 January 2022 |title=Emotional Cullen secures maiden TV title at Ladbrokes Masters |access-date=4 January 2025 |website=PDC}}</ref> as the twenty-third seed, [[2024 World Grand Prix (darts)|2024 World Grand Prix]] champion [[Mike De Decker]]<ref name=SkyWGPFinal>{{cite web |date=13 October 2024 |title=World Grand Prix: Mike De Decker shocks Luke Humphries in epic final to clinch title |url=https://www.skysports.com/darts/news/12288/13233089/world-grand-prix-mike-de-decker-shocks-luke-humphries-in-epic-final-to-clinch-title |website=[[Sky Sports]] |access-date=4 January 2025}}</ref> as the twenty-fourth seed, [[2018 Players Championship Finals]] champion [[Daryl Gurney]]<ref>{{Cite web |last=Gorton |first=Josh |date=26 November 2018 |title=Daryl Gurney stuns Michael van Gerwen to win Players Championship Finals |url=https://www.skysports.com/darts/news/12288/11563710/daryl-gurney-stuns-michael-van-gerwen-to-win-players-championship-finals |access-date=4 January 2025 |publisher=[[Sky Sports]]}}</ref> as twenty-seventh seed and [[2024 European Championship (darts)|2024 European Champion]] [[Ritchie Edhouse]]<ref name=EdhouseWin>{{cite web |date=27 October 2024 |title=European Championship: Ritchie Edhouse secured maiden major title with win over Jermaine Wattimena |url=https://www.skysports.com/darts/news/12288/13243093/european-championship-ritchie-edhouse-secured-maiden-major-title-with-win-over-jermaine-wattimena |publisher=Sky Sports |access-date=4 January 2025}}</ref><ref name=BBC27October>{{cite news |date=27 October 2024 |title='Madhouse' Edhouse lands shock European title |url=https://www.bbc.co.uk/sport/darts/articles/cy4nn91ykvwo |publisher=BBC Sport |access-date=4 January 2025}}</ref> as the twenty-ninth seed. Edhouse had previously led the non–seeded Pro Tour Order of Merit qualifiers prior to his major win.<ref>{{cite web |last=Gorton |first=Josh |date=27 October 2024 |title=Exceptional Edhouse wins Machineseeker European Championship |url=https://www.pdc.tv/news/2024/october/27/exceptional-edhouse-wins-machineseeker-european-championship |publisher=PDC |access-date=28 October 2024}}</ref> The [[2023 PDC World Darts Championship|2023 World Championship]] semi-finalist [[Gabriel Clemens]]<ref>{{cite web |last=Gill |first=Samuel |title=Smith reaches third PDC World Darts Championship final after comprehensive win over Clemens with 19 180's |date=2 January 2023 |url=https://dartsnews.com/pdc/smith-reaches-third-pdc-world-darts-championship-final-after-comprehensive-win-over-clemens-with-19-180s |publisher=Darts News |access-date=4 January 2025 |archive-date=2 January 2023 |archive-url=https://web.archive.org/web/20230102212733/https://dartsnews.com/pdc/smith-reaches-third-pdc-world-darts-championship-final-after-comprehensive-win-over-clemens-with-19-180s |url-status=live}}</ref> qualified as twenty-seventh seed, while [[2024 PDC World Youth Championship|2024 World Youth Champion]] [[Gian van Veen]]<ref>{{cite web |last=Allen |first=Dave |date=24 November 2024 |url=https://www.pdc.tv/news/2024/november/24/van-veen-becomes-first-dutch-winner-winmau-world-youth-championship |title=Van Veen becomes first Dutch winner of Winmau World Youth Championship |website=[[Professional Darts Corporation|PDC]] |access-date=4 January 2025}}</ref> was the twenty-eighth seed and 2024 quarter-finalist [[Brendan Dolan]]<ref>{{cite news |date=1 January 2024 |title=Luke Littler beats Brendan Dolan to reach semi-finals of PDC World Championship 2024 |url=https://www.bbc.co.uk/sport/darts/67858060 |work=BBC Sport |access-date=4 January 2025}}</ref><ref>{{cite web |last=Stafford|first=Ali |date=2 January 2024 |title=World Darts Championship: Luke Littler thrashes Brendan Dolan after Rob Cross makes history at Alexandra Palace |url=https://www.skysports.com/darts/news/12288/13039919/world-darts-championship-luke-littler-thrashes-brendan-dolan-after-rob-cross-makes-history-at-alexandra-palace |publisher=Sky Sports |access-date=4 January 2025}}</ref> was the thirtieth seed.<ref name=Field/>
+
+===Pro Tour qualification===
+
+[[Cameron Menzies]] was the highest-ranked non-seed on the 2024 PDC Pro Tour Order of Merit<ref name=Field/> and one of four Pro Tour event winners in 2024 to qualify via the Pro Tour, alongside [[Wessel Nijman]],<ref>{{cite web |last=Allen |first=Dave |date=1 October 2024 |url=https://www.pdc.tv/news/2024/october/01/first-senior-pdc-title-nijman-players-championship-24 |title=First senior PDC title for Nijman at Players Championship 24 |website=PDC.tv |access-date=1 October 2024}}</ref> [[Wesley Plaisier]]<ref>{{Cite web |date=16 October 2024 |title=Plaisier wins maiden PDC title at Players Championship |url=https://www.bbc.com/sport/darts/articles/c3vk4d9r9xno |access-date=4 January 2025 |publisher=[[BBC]]}}</ref><ref>{{Cite web |date=16 October 2024 |title=Josh Rock misses six match darts as Wesley Plaisier prevails in Wigan |url=https://www.rte.ie/sport/darts/2024/1012/1475145-rock-misses-six-match-darts-as-plaisier-wins-in-wigan/ |access-date=4 January 2025 |publisher=[[RTÉ]]}}</ref> and [[Alan Soutar]].<ref>{{cite web |date=11 June 2024 |title=PDC Darts: Stephen Bunting hits epic nine-darter as Alan Soutar wins maiden tour title |url=https://www.skysports.com/darts/news/12288/13151688/pdc-darts-stephen-bunting-hits-epic-nine-darter-as-alan-soutar-wins-maiden-tour-title |website=[[Sky Sports]] |access-date=4 January 2025}}</ref> Two players who were runners-up in PDC majors in 2024 qualified via the Pro Tour, [[Jermaine Wattimena]] at the 2024 European Championship<ref name=EdhouseWin/><ref name=BBC27October/> and [[Martin Lukeman]] at the Grand Slam.<ref name=LittlerSlamBBC/>
+
+Other players qualifying via the 2024 Pro Tour included event winners from 2023 [[Ricardo Pietreczko]],<ref>{{cite web |date=15 October 2023 |title=Pietreczko beats Wright to claim maiden European Tour title |url=https://www.rte.ie/sport/darts/2023/1015/1411061-pietreczko-beats-wright-to-claim-maiden-tour-title/ |publisher=[[RTÉ]] |access-date=4 January 2025}}</ref><ref>{{cite web |last=Shaw |first=Jamie |date=15 October 2023 |title=Ricardo Pietreczko claims German Darts Championship glory |url=https://www.live-darts.com/pdc-darts-news/european-tour/pietreczko-claims-german-championship-glory/ |website=Live Darts |access-date=4 January 2025}}</ref> [[Ryan Joyce]],<ref>{{cite web |date=23 October 2024 |title=Resurgent Ryan Joyce stuns Gerwyn Price to end title drought at Players Championship 26 |url=https://www.skysports.com/darts/news/12288/12987943/resurgent-ryan-joyce-stuns-gerwyn-price-to-end-title-drought-at-players-championship-26 |access-date=10 December 2024 |publisher=[[Sky Sports]]}}</ref> [[Callan Rydz]]<ref>{{cite web |last=Allen |first=Dave |date=3 September 2023 |title=Rydz ends title drought with narrow defeat of Chisnall in PC19 thriller |url=https://www.pdc.tv/news/2023/09/03/rydz-ends-title-drought-narrow-defeat-chisnall-pc19-thriller |archive-url=https://web.archive.org/web/20230904010020/https://www.pdc.tv/news/2023/09/03/rydz-ends-title-drought-narrow-defeat-chisnall-pc19-thriller |url-status=dead |archive-date=4 September 2023 |publisher=[[Professional Darts Corporation|PDC]] |access-date=4 January 2025}}</ref> and [[Kim Huybrechts]]<ref name=SkyPC3&4>{{cite web |date=20 February 2023 |title=Dirk van Duijvenbode and Kim Huybrechts wins Players Championship titles |url=https://www.skysports.com/darts/news/12288/12815208/dirk-van-duijvenbode-and-kim-huybrechts-wins-players-championship-titles |access-date=4 January 2025 |publisher=[[Sky Sports]]}}</ref><ref>{{cite web |date=18 February 2023 |title=Darts results: Kim Huybrechts wins Players Championship 3 |url=https://www.sportinglife.com/darts/news/darts-results-kim-huybrechts-wins-players-championship-3/207465 |access-date=4 January 2025 |publisher=Sporting Life}}</ref> as well as 2024 UK Open semi-finalist<ref name=PDCUKOpen24/> and 2024 Pro Tour event runner-up<ref>{{cite web |last=Allen |first=Dave |date=1 August 2024 |title=Deadly De Decker sweeps to maiden ProTour title at PC16|url=https://www.pdc.tv/news/2024/august/01/deadly-de-decker-sweeps-maiden-protour-title-pc16 |publisher=PDC |access-date=1 August 2024}}</ref> [[Ricky Evans (darts player)|Ricky Evans]].<ref name=Field/>
+
+[[2024 PDC World Darts Championship|2024 World Championship]] semi-finalist<ref>{{cite news |date=2 January 2024 |title=Luke Littler beats Rob Cross to reach World Darts Championship final |publisher=[[BBC Sport]] |url=https://www.bbc.co.uk/sport/darts/67868664 |access-date=4 January 2025}}</ref> and 2022 Pro Tour event winner [[Scott Williams (darts player)|Scott Williams]] also qualified alongside [[Connor Scutt]], the [[2024 PDC Challenge Tour series|2024 Challenge Tour]] Order of Merit winner, and a Pro Tour event runner-up in both the 2023 and 2024 seasons. Scutt and Wesley Plaisier also qualified for the [[2024 WDF World Darts Championship]] but withdrew in order to play at the Alexandra Palace.<ref>{{cite web |last=Gill |first=Samuel |date=28 October 2024 |title=Plaisier, Gates, Robb and Scutt snub Lakeside in favour of PDC World Darts Championship |url=https://dartsnews.com/wdf/plaisier-gates-robb-and-scutt-snub-lakeside-in-favour-of-pdc-world-darts-championship |website=DartsNews |access-date=28 October 2024}}</ref>
+
+[[Jeffrey de Graaf]], a 2024 Pro Tour event runner-up,<ref>{{cite web |last=Gorton |first=Josh |date=7 May 2024 |title=Dolan denies De Graaf to return to winner's circle in Hildesheim |url=https://www.pdc.tv/news/2024/may/07/dolan-denies-de-graaf-return-winners-circle-hildesheim |publisher=PDC |access-date=4 January 2025}}</ref> qualified via both the 2024 Pro Tour and the PDC Nordic and Baltic circuit but was drawn as a Pro Tour qualifier.<ref name=Field/>
+
+Other players qualifying via their Pro Tour ranking included 2024 European Championship semi-finalist [[Luke Woodhouse]], [[2017 Champions League of Darts]] winner [[Mensur Suljović]],<ref name="Suljović's Glory">{{cite web |last=Allen |first=Dave |date=17 September 2017 |title=Super Suljovic's Champions League Glory |url=https://www.pdc.tv/news/2017/09/17/super-suljovics-champions-league-glory |archive-url=https://web.archive.org/web/20170918063940/https://www.pdc.tv/news/2017/09/17/super-suljovics-champions-league-glory |url-status=dead |archive-date=18 September 2017 |publisher=[[Professional Darts Corporation|PDC]] |access-date=17 September 2017}}</ref> 13-time PDC ranking event winner [[Ian White (darts player)|Ian White]] and 2024 Grand Slam semi-finalist<ref>{{cite web |last=Wellens |first=Megan |date=16 November 2024 |title=Grand Slam of Darts 2024: Rob Cross suffers shock defeat to Martin Lukeman in quarter-finals as Mickey Mansell survives Cameron Menzies scare |url=https://www.skysports.com/darts/news/12288/13254674/grand-slam-of-darts-2024-rob-cross-suffers-shock-defeat-to-martin-lukeman-in-quarter-finals-as-mickey-mansell-survives-cameron-menzies-scare |access-date=4 January 2025 |website=Sky Sports}}</ref><ref>{{cite web |last=Gorton |first=Josh |date=17 November 2024 |url=https://www.pdc.tv/news/2024/november/17/astonishing-littler-storms-mr-vegas-grand-slam-darts-glory |title=Astonishing Littler storms to Mr Vegas Grand Slam of Darts glory |publisher=PDC |access-date=4 January 2025}}</ref> [[Mickey Mansell]].<ref name=Field/>
+
+[[Wesley Plaisier|Plaisier]] and [[James Hurrell]] made their [[PDC World Darts Championship]] debuts.<ref name=Debutants>{{cite web |last=Wood |first=Kieran |date=13 December 2024 |title=These are all fourteen debutants at the upcoming World Darts Championship |url=https://dartsnews.com/pdc/these-are-all-fourteen-debutants-at-the-upcoming-world-darts-championship |publisher=DartsNews}}</ref>
+
+===International qualifiers===
+[[Niko Springer]] and [[Keane Barry]] qualified from the [[2024 PDC Development Tour series]], while [[2012 BDO World Darts Championship|2012 BDO World Champion]] [[Christian Kist]] and [[Alexander Merkx]] qualified from the [[2024 PDC Challenge Tour series]].<ref name=Field/>
+
+[[Fallon Sherrock]], the only woman to have won a match at the PDC World Darts Championship, and [[Noa-Lynn van Leuven]] qualified from the [[2024 PDC Women's Series]], with Van Leuven becoming the first transgender competitor to play at the event. As with the previous edition, no player was eligible to compete in the 2025 PDC World Championship had they played at the 2024 WDF World Championship which concluded a week earlier. [[Beau Greaves]], the winner of the [[2024 Women's World Matchplay]], qualified but opted to play the WDF event.<ref>{{cite web |title=Greaves says no to PDC Worlds after Matchplay win |url=https://www.bbc.com/sport/darts/articles/c0dmgl481ylo |publisher=[[BBC Sport]] |access-date=19 October 2024 |date=21 July 2024}}</ref><ref>{{Cite news |date=12 November 2024 |title=Grand Slam of Darts: Beau Greaves open to playing men regularly and says she has gone 'stale' dominating women's game |url=https://www.skysports.com/darts/news/12288/13252895/grand-slam-of-darts-beau-greaves-open-to-playing-men-regularly-and-says-she-has-gone-stale-dominating-womens-game |work=Sky Sports}}</ref>
+
+[[Rashad Sweeting]] became the first player from the Bahamas to play at the PDC World Championship after sealing his qualification through the Championship Darts Latin America and Caribbean Order of Merit, while [[Stefan Bellmont]] became the first Swiss player to play at the PDC World Championship.<ref name=Bellmont>{{Cite web |last=Wood |first=Kieran |date=16 November 2024 |title=Stefan Bellmont makes history as first ever Swiss qualifier for PDC World Darts Championship |url=https://dartsnews.com/pdc/stefan-bellmont-makes-history-as-first-ever-swiss-qualifier-for-pdc-world-darts-championship |access-date=16 November 2024 |website=Dartsnews.com}}</ref>
+
+The final places were awarded by a qualifier for non-qualified PDC Tour Card holders, with Rhys Griffin, [[Jeffrey de Zwaan]], [[Dylan Slevin]] and [[Matt Campbell (darts player)|Matt Campbell]] progressing through the qualifier.<ref>{{cite web |last=Gorton |first=Josh |date=25 November 2024 |title=Campbell, De Zwaan, Slevin, Griffin secure last Ally Pally spots |url=https://www.pdc.tv/news/2024/november/25/campbell-de-zwaan-slevin-griffin-secure-last-ally-pally-spots |website=[[Professional Darts Corporation|PDC]].tv}}</ref><ref>{{cite web |date=25 November 2024 |title=World Darts Championship: Simon Whitlock, Steve Beaton miss out in Tour Card Holder Qualifier for Alexandra Palace |url=https://www.skysports.com/darts/news/12288/13260522/world-darts-championship-simon-whitlock-steve-beaton-miss-out-in-tour-card-holder-qualifier-for-alexandra-palace |work=Sky Sports |access-date=30 November 2024}}</ref>
+
+Debutants from the international qualifiers were Ryusei Azemoto, [[Stefan Bellmont]], [[:de:Joe Comito|Joe Comito]], Kai Gotthardt, Romeo Grbavac, [[Rhys Griffin]], [[:de:Lok Yin Lee|Lok Yin Lee]], [[Alexander Merkx]], [[Niko Springer]], [[Rashad Sweeting]], [[Alexis Toylo]] and [[Noa-Lynn van Leuven]].<ref name=Debutants/>
+
+{| class="wikitable mw-collapsible mw-collapsed"
+|+class=nowrap| List of international qualifying events
+|-
+! Event !! Dates !! Position !! Qualifier
+|-
+| [[2024 PDC Pro Tour#North American Championship|North American Championship]] || 1 June || Champion || style="background:pink;"|<s>{{PDCFlag|Matt Campbell|strikethrough=1}}</s>{{efn|Campbell was ineligible to qualify through a regional qualifier as he is in the third year of his tour card. His spot was reallocated to the CDC tour.}}
+|-
+| [[2024 Women's World Matchplay|Women's World Matchplay]] || 21 July || Champion || style="background:pink;"|<s>{{PDCFlag|Beau Greaves}}</s>{{efn|name=Beau}}
+|-
+| [[2024 PDC Pro Tour#PDC China Championship|China Championship]] || 18 August || Winner || {{PDCFlag|Xiaochen Zong|b=1}}
+|-
+| rowspan=2|[[2024 PDC Pro Tour#PDC Nordic & Baltic (PDCNB) Tour|PDCNB ProTour]] || rowspan=2|16 February – 25 August || Winner || {{PDCFlag|Jeffrey de Graaf|b=1}}
+|-
+| Runner-Up || {{PDCFlag|Darius Labanauskas|b=1}}
+|-
+| [[2024 PDC Pro Tour#PDJ Japan Tour|Japan Tour]] || 27 April – 8 September || Winner || {{PDCFlag|Tomoya Goto|b=1}}
+|-
+| [[2024 PDC Pro Tour#Dart Players Australia Tour (DPA) Tour|DPA ProTour]] || 10 Feb – 14 Sep || Champion || {{PDCFlag|Joe Comito|b=1}}
+|-
+| rowspan=3|[[2024 PDC Pro Tour#Championship Darts Circuit (CDC)|CDC Main Tour]] || rowspan=3|18 May – 22 September || Top American || {{PDCFlag|Leonard Gates|b=1}}
+|-
+| Top Canadian || {{PDCFlag|Jim Long|b=1}}
+|- style="background:lightcyan;"
+| Top-Ranked Non-Qualified || {{PDCFlag|Stowe Buntz|b=1}}
+|-
+| [[2024 PDC Pro Tour#ADS PDC World Championship Qualifier 2024|African Darts Group Qualifier]] || 29 September || Winner || {{PDCFlag|Cameron Carolissen|b=1}}
+|-
+| rowspan=4|[[2024 PDC Pro Tour#PDC Asian Tour|Asian Tour]] || rowspan=4|13 January – 6 October || Winner || {{PDCFlag|Alexis Toylo|b=1}}
+|-
+| Runner-Up || {{PDCFlag|Lourence Ilagan|b=1}}
+|-
+| Third Place || {{PDCFlag|Paolo Nebrida|b=1}}
+|-
+| Fourth Place || {{PDCFlag|Ryusei Azemoto|b=1}}
+|-
+| [[2024 PDC Pro Tour#DPNZ Winmau 2024 - Top 16 Playoffs|DPNZ Qualifier]] || 7 October || Winner || {{PDCFlag|Ben Robb|b=1}}
+|-
+| [[2024 PDC Pro Tour#Championship Darts Latin America and Caribbean (CDLC) Tour|CLDC Tour]] || 20 July – 6 October || Winner || {{PDCFlag|Rashad Sweeting|b=1}}
+|-
+| rowspan=3|[[2024 PDC Pro Tour#PDC Development Tour|Development Tour]] || rowspan=3|23 February – 13 October || Winner || style="background:lightyellow;font-style:italic;"|{{PDCFlag|Wessel Nijman}}
+|-
+| Runner-Up || {{PDCFlag|Niko Springer|b=1}}
+|- style="background:lightcyan;"
+| Third Place || {{PDCFlag|Keane Barry|b=1}}
+|-
+| rowspan=3|[[2024 PDC Pro Tour#PDC Asian Championship|Asian Championship]] || rowspan=3|19–20 October || Winner || style="background:lightyellow;font-style:italic;"|{{PDCFlag|Lourence Ilagan}}
+|-
+| Runner-Up || {{PDCFlag|Sandro Eric Sosing|b=1}}
+|- style="background:lightcyan;"
+| Top-Ranked Semi-Finalist || {{PDCFlag|Lok Yin Lee|b=1}}
+|-
+| [[2024 PDC Pro Tour#DPA Oceanic Masters 2024|DPA Oceanic Masters]] || 20 October || Winner || {{PDCFlag|Gordon Mathers|b=1}}
+|-
+| rowspan=3|[[2024 PDC Pro Tour#PDC Women's Series|Women's Series]] || rowspan=3|23 March – 20 October || Winner || style="background:lightyellow;font-style:italic;"|{{PDCFlag|Beau Greaves}}
+|-
+| Runner-Up || {{PDCFlag|Noa-Lynn van Leuven|b=1}}
+|- style="background:lightcyan;"
+| Third Place || {{PDCFlag|Fallon Sherrock|b=1}}
+|-
+| Indian Qualifier || 27–28 October || Winner || {{PDCFlag|Nitin Kumar|b=1}}
+|-
+| rowspan=4|[[2024 PDC Pro Tour#PDC Challenge Tour|Challenge Tour]] || rowspan=4|19 January – 3 November || Winner || style="background:lightyellow;font-style:italic;"|{{PDCFlag|Connor Scutt}}
+|-
+| Runner-Up || style="background:lightyellow;font-style:italic;"|{{PDCFlag|Wesley Plaisier}}
+|- style="background:lightcyan;"
+| Third Place || {{PDCFlag|Christian Kist|b=1}}
+|- style="background:lightcyan;"
+| Fourth Place || {{PDCFlag|Alexander Merkx|b=1}}
+|-
+| PDC Europe Superleague || 7–8 November || Champion || {{PDCFlag|Kai Gotthardt|b=1}}
+|-
+| West Europe Qualifier || 16 November || Winner || {{PDCFlag|Stefan Bellmont|b=1}}
+|-
+| [[2024 PDC World Youth Championship|World Youth Championship]] || 14 Oct – 24 Nov || Champion || style="background:lightyellow;font-style:italic;"|{{PDCFlag|Gian van Veen}}{{Efn|name=Gian}}
+|-
+| East Europe Qualifier || 24 November || Winner || {{PDCFlag|Romeo Grbavac|b=1}}
+|-
+| rowspan=4|PDPA Tour Card Holder Qualifier || rowspan=4|25 November || rowspan=2|Last Four || {{PDCFlag|Rhys Griffin|b=1}}
+|-
+| {{PDCFlag|Jeffrey de Zwaan|b=1}}
+|-
+| rowspan=2 style="background:lightcyan;"|Last Four || {{PDCFlag|Dylan Slevin|b=1}}
+|-
+| {{PDCFlag|Matt Campbell|b=1}}
+|}
+
+===List of qualifiers===
+{{col-begin}}
+{{col-break}}
+'''Order of Merit'''<br />''Second round (seeded)''
+{{seeds|1|1}}{{nowrap|{{PDCFlag|Luke Humphries}} ''(fourth round)''}}
+{{seeds|2|3}}{{nowrap|{{PDCFlag|Michael Smith}} ''(second round)''}}
+{{seeds|3|4}}{{nowrap|{{PDCFlag|Michael van Gerwen}} ''(runner-up)''}}
+{{seeds|4|2}}{{PDCFlag|Luke Littler|b=1}} '''(champion)'''
+{{seeds|5|2}}{{nowrap|{{PDCFlag|Rob Cross|}} ''(second round)''}}
+{{seeds|6|4}}{{nowrap|{{PDCFlag|Dave Chisnall|}} ''(second round)''}}
+{{seeds|7|3}}{{nowrap|{{PDCFlag|Jonny Clayton}} ''(fourth round)''}}
+{{seeds|8|1}}{{PDCFlag|Stephen Bunting}} ''(semi-finals)''
+{{seeds|9|1}}{{nowrap|{{PDCFlag|Damon Heta}} ''(third round)''}}
+{{seeds|10|3}}{{PDCFlag|Gerwyn Price}} ''(quarter-finals)''
+{{seeds|11|4}}{{nowrap|{{PDCFlag|Dimitri Van den Bergh}} ''(third round)''}}
+{{seeds|12|2}}{{PDCFlag|Nathan Aspinall}} ''(quarter-finals)''
+{{seeds|13|2}}{{nowrap|{{PDCFlag|Danny Noppert}} ''(second round)''}}
+{{seeds|14|4}}{{nowrap|{{PDCFlag|Gary Anderson}} ''(second round)''}}
+{{seeds|15|3}}{{PDCFlag|Chris Dobey}} ''(semi-finals)''
+{{seeds|16|1}}{{nowrap|{{PDCFlag|James Wade}} ''(second round)''}}
+{{seeds|17|1}}{{PDCFlag|Peter Wright}} ''(quarter-finals)''
+{{seeds|18|3}}{{nowrap|{{PDCFlag|Josh Rock}} ''(third round)''}}
+{{seeds|19|2}}{{nowrap|{{PDCFlag|Ross Smith}} ''(second round)''}}
+{{seeds|20|4}}{{nowrap|{{PDCFlag|Ryan Searle}} ''(third round)''}}
+{{seeds|21|2}}{{nowrap|{{PDCFlag|Andrew Gilding}} ''(third round)''}}
+{{seeds|22|4}}{{nowrap|{{PDCFlag|Martin Schindler}} ''(second round)''}}
+{{seeds|23|3}}{{nowrap|{{PDCFlag|Joe Cullen}} ''(third round)''}}
+{{seeds|24|1}}{{nowrap|{{PDCFlag|Mike De Decker}} ''(second round)''}}
+{{seeds|25|1}}{{nowrap|{{PDCFlag|Dirk van Duijvenbode}} ''(second round)''}}
+{{seeds|26|3}}{{nowrap|{{PDCFlag|Daryl Gurney}} ''(third round)''}}
+{{seeds|27|4}}{{nowrap|{{PDCFlag|Gabriel Clemens}} ''(second round)''}}
+{{seeds|28|2}}{{nowrap|{{PDCFlag|Gian van Veen}}{{Efn|name=Gian|Van Veen also qualified as the winner of the [[2024 PDC World Youth Championship]]. His second qualifying spot was reallocated to the PDC Tour Card Holders qualifier.}} ''(second round)''}}
+{{seeds|29|2}}{{nowrap|{{PDCFlag|Ritchie Edhouse}} ''(second round)''}}
+{{seeds|30|2}}{{nowrap|{{PDCFlag|Brendan Dolan}} ''(third round)''}}
+{{seeds|31|4}}{{nowrap|{{PDCFlag|Krzysztof Ratajski}} ''(third round)''}}
+{{seeds|32|3}}{{nowrap|{{PDCFlag|Raymond van Barneveld}} ''(second round)''}}
+{{col-break}}
+'''Pro Tour Order of Merit'''<br />''First round''
+# {{nowrap|{{PDCFlag|Cameron Menzies}}}} ''(first round)''
+# {{PDCFlag|Wessel Nijman}} ''(second round)''
+# {{nowrap|{{PDCFlag|Jermaine Wattimena}} ''(third round)''}}
+# {{nowrap|{{PDCFlag|Ricardo Pietreczko}} ''(fourth round)''}}
+# {{nowrap|{{PDCFlag|Luke Woodhouse}} ''(fourth round)''}}
+# {{PDCFlag|Ryan Joyce}} ''(fourth round)''
+# {{PDCFlag|Niels Zonneveld}} ''(first round)''
+# {{PDCFlag|Alan Soutar}} ''(first round)''
+# {{PDCFlag|Madars Razma}} ''(third round)'' 
+# {{PDCFlag|Callan Rydz}} ''(quarter-finals)''
+# {{nowrap|{{PDCFlag|Wesley Plaisier}} ''(second round)''}}
+# {{nowrap|{{PDCFlag|Martin Lukeman}} ''(second round)''}}
+# {{PDCFlag|Kevin Doets}} ''(fourth round)''
+# {{PDCFlag|Richard Veenstra}} ''(first round)''
+# {{PDCFlag|Scott Williams}} ''(third round)''
+# {{PDCFlag|Kim Huybrechts}} ''(first round)''
+# {{PDCFlag|William O'Connor}} ''(first round)''
+# {{PDCFlag|Karel Sedláček}} ''(first round)''
+# {{PDCFlag|Stephen Burton}} ''(first round)''
+# {{nowrap|{{PDCFlag|Thibault Tricole}} ''(second round)''}}
+# {{nowrap|{{PDCFlag|Connor Scutt}} ''(second round)''}}
+# {{PDCFlag|Mensur Suljovic}} ''(first round)''
+# {{PDCFlag|Ian White}} ''(third round)''
+# {{PDCFlag|Jim Williams}} ''(first round)''
+# {{PDCFlag|Florian Hempel}} ''(second round)''
+# {{PDCFlag|Ryan Meikle}} ''(second round)''
+# {{PDCFlag|Chris Landman}} ''(first round)''
+# {{PDCFlag|Nick Kenny}} ''(third round)'' 
+# {{PDCFlag|James Hurrell}} ''(second round)''
+# {{PDCFlag|Mickey Mansell}} ''(second round)''
+# {{PDCFlag|Ricky Evans}} ''(third round)''
+# {{PDCFlag|Robert Owen}}{{Efn|Dom Taylor, who was originally 17th on the Pro Tour list, was suspended by the Darts Regulation Authority following the failure of a drugs test.<ref name ="Dom Taylor">{{cite web|url=https://www.pdc.tv/news/2024/november/22/statement-dom-taylor|title=Statement: Dom Taylor|website=www.pdc.tv|date=22 November 2024 |access-date=22 November 2024}}</ref> Robert Owen was his replacement as the highest ranked Pro Tour player not yet qualified. He was treated as an international qualifier in the draw due to [[Jeffrey de Graaf]]'s Pro Tour ranking.<ref name=Field/>}} ''(fourth round)''
+{{col-break}}
+'''International Qualifiers'''<br />''First round''
+* {{PDCFlag|Ryusei Azemoto}} – PDC Asian Tour<ref name="AsianTourQuals">{{cite web |last1=Gorton |first1=Josh |title=Toylo & Azemoto secure Ally Pally debuts alongside Ilagan & Nebrida |url=https://www.pdc.tv/news/2024/october/08/toylo-azemoto-secure-ally-pally-debuts-alongside-ilagan-nebrida |website=Professional Darts Corporation |access-date=19 October 2024 |date=8 October 2024}}</ref> ''(first round)''
+* {{PDCFlag|Keane Barry}} – PDC Development Tour<ref name="DevTourQuals">{{cite web |last1=Gorton |first1=Josh |title=Coates & Dudeney win maiden titles; Springer & Barry seal WDC spots |url=https://www.pdc.tv/news/2024/october/13/coates-dudeney-win-maiden-titles-springer-barry-seal-wdc-spots |website=Professional Darts Corporation |access-date=19 October 2024 |date=13 October 2024}}</ref> ''(second round)''
+* {{PDCFlag|Stefan Bellmont}} – West Europe Qualifier<ref name=Bellmont/> ''(first round)''
+* {{PDCFlag|Stowe Buntz}} – CDC Pro Tour<ref name="CDCQuals">{{cite web |last1=Gorton |first1=Josh |title=Gates, Long & Buntz secure World Darts Championship qualification |url=https://www.pdc.tv/news/2024/september/23/gates-long-buntz-secure-world-darts-championship-qualification |website=Professional Darts Corporation |access-date=19 October 2024 |date=23 September 2024}}</ref> ''(first round)''
+* {{PDCFlag|Matt Campbell}} – PDC TCH Qualifier ''(second round)''
+* {{PDCFlag|Cameron Carolissen}} – African Qualifier<ref>{{cite web |last1=Gorton |first1=Josh |title=Carolissen confirms Ally Pally return with epic win over Wachiuri |url=https://www.pdc.tv/news/2024/september/30/carolissen-confirms-ally-pally-return-epic-win-over-wachiuri |website=Professional Darts Corporation |access-date=19 October 2024 |date=30 September 2024}}</ref> ''(first round)''
+* {{PDCFlag|Joe Comito}} – DPA Pro Tour<ref>{{cite web |last1=Duncan |first1=Craig |title=Harvey's darts supremo Joe Comito to show skills at world titles |url=https://www.harveyreporter.com.au/news/harvey-waroona-reporter/harveys-darts-supremo-joe-comito-to-show-skills-at-world-titles-c-16107597 |website=Harvey-Waroona Reporter |access-date=19 October 2024 |date=24 September 2024}}</ref> ''(first round)''
+* {{PDCFlag|Leonard Gates}} – CDC Pro Tour<ref name="CDCQuals"/> ''(second round)''
+* {{PDCFlag|Tomoya Goto}} – PDJ Japan Tour<ref>{{cite web |last1=Gorton |first1=Josh |title=Goto wins Japan Tour Finals to secure World Championship return |url=https://www.pdc.tv/news/2024/september/09/goto-wins-japan-tour-finals-secure-world-championship-return |website=Professional Darts Corporation |access-date=19 October 2024 |date=9 September 2024}}</ref> ''(first round)''
+* {{PDCFlag|Kai Gotthardt}} – PDC Europe Super League ''(second round)''
+* {{PDCFlag|Jeffrey de Graaf}} – PDC Nordic & Baltic{{Efn|De Graaf was ranked in the top 32 on the Pro Tour list, so was treated as a ProTour qualifier in the draw.<ref name=Field/>}}<ref name="PDCNBQuals">{{cite web |last=Allen |first=Dave |title=Harrysson & Labanauskas end PDCNB season with victories |url=https://www.pdc.tv/news/2024/august/27/harrysson-labanauskas-end-pdcnb-season-victories |website=Professional Darts Corporation |access-date=19 October 2024 |date=27 August 2024}}</ref> ''(fourth round)''
+* {{PDCFlag|Romeo Grbavac}} – East Europe Qualifier ''(first round)''
+* <s>{{PDCFlag|Beau Greaves}} – Women's World Matchplay</s> ''(declined)''{{Efn|name=Beau|Greaves chose to play the [[2024 WDF World Darts Championship]]<ref>{{Cite web |url=https://dartswdf.com/news/2024-wdf-lakeside-world-championship-fields|title=2024 WDF Lakeside World Championship Fields |website=www.dartswdf.com |access-date=2 November 2024}}</ref> following a ruling by the PDC which did not allow players to compete in both World Championships in the same year.<ref>{{Cite web|url=https://dartswdf.com/news/2023-wdf-lakeside-world-championships-player-eligibility-update|title=2023 WDF Lakeside World Championships – Player eligibility update|website=www.dartswdf.com|access-date=2 November 2024}}</ref> Her spot was reallocated to the PDC Tour Card Holders qualifier.}}
+* {{PDCFlag|Rhys Griffin}} – PDC TCH Qualifier ''(second round)''
+* {{PDCFlag|Lourence Ilagan}} – PDC Asian Tour<ref name="AsianTourQuals"/> ''(first round)''
+* {{PDCFlag|Christian Kist}} – PDC Challenge Tour<ref name=CT24WDC>{{cite web |last=Gorton |first=Gorton |date=5 November 2024 |title=Kist & Merkx confirm World Darts Championship qualification |url=https://www.pdc.tv/news/2024/november/05/kist-merkx-confirm-world-darts-championship-qualification |publisher=[[Professional Darts Corporation]] |access-date=18 December 2024}}</ref> ''(first round)''
+* {{PDCFlag|Nitin Kumar}} – India Qualifier ''(first round)''
+* {{PDCFlag|Darius Labanauskas}} – PDC Nordic & Baltic<ref name="PDCNBQuals" /> ''(first round)''
+* {{PDCFlag|Lok Yin Lee}} – PDC Asian Championship Qualifier<ref>{{cite web |last1=Gorton |first1=Josh |title=Five more International Qualifiers confirmed for World Darts Championship |url=https://www.pdc.tv/news/2024/10/21/five-more-international-qualifiers-confirmed-world-darts-championship |website=Professional Darts Corporation |access-date=2 November 2024 |date=21 October 2024}}{{dead link|date=February 2026|bot=medic}}{{cbignore|bot=medic}}</ref> ''(second round)''
+* {{nowrap|{{PDCFlag|Noa-Lynn van Leuven}} – PDC Women's Series<ref>{{cite web |date=19 October 2024 |title=World Darts Championship: Noa-Lynn van Leuven beats Beau Greaves to qualify for Alexandra Palace |url=https://www.skysports.com/darts/news/12288/13236931/world-darts-championship-noa-lynn-van-leuven-beats-beau-greaves-to-qualify-for-alexandra-palace |access-date=20 October 2024 |website=[[Sky Sports]]}}</ref> ''(first round)''}}
+* {{PDCFlag|Jim Long}} – CDC Pro Tour<ref name="CDCQuals"/> ''(first round)''
+* {{PDCFlag|Gordon Mathers}} – Oceanic Masters<ref>{{cite web |last1=Allen |first1=Dave |title=Mathers seals Ally Pally return with DPA Oceanic Masters triumph |url=https://www.pdc.tv/news/2024/october/20/mathers-seals-ally-pally-return-dpa-oceanic-masters-triumph |website=Professional Darts Corporation |access-date=21 October 2024 |date=20 October 2024}}</ref> ''(first round)''
+* {{PDCFlag|Alexander Merkx}} – PDC Challenge Tour<ref name=CT24WDC/> ''(second round)''
+* {{PDCFlag|Paolo Nebrida}} – PDC Asian Tour<ref name="AsianTourQuals" /> ''(third round)''
+* {{PDCFlag|Ben Robb}} – DPNZ Qualifier<ref>{{cite web |last1=Allen |first1=Dave |title=Robb wins DPNZ knockout to secure Ally Pally return |url=https://www.pdc.tv/news/2024/october/07/robb-wins-dpnz-knockout-secure-ally-pally-return |website=Professional Darts Corporation |access-date=19 October 2024 |date=7 October 2024}}</ref> ''(first round)''
+* {{PDCFlag|Fallon Sherrock}} – PDC Women's Series<ref>{{cite web |date=20 October 2024 |title=Fallon Sherrock qualifies for World Darts Championship but misses out on Grand Slam of Darts spot
+|url=https://www.skysports.com/darts/news/12040/13237666/fallon-sherrock-qualifies-for-world-darts-championship-but-misses-out-on-grand-slam-of-darts-spot |website=[[Sky Sports]] |access-date=21 October 2024}}</ref><ref>{{cite web |last=Gorton |first=Josh |date=20 October 2024 |title=Sherrock secures Ally Pally return; Van Leuven confirms Grand Slam debut |url=https://www.pdc.tv/news/2024/october/20/sherrock-secures-ally-pally-return-van-leuven-confirms-grand-slam-debut |work=[[Professional Darts Corporation|PDC]] |access-date=20 October 2024}}</ref> ''(first round)''
+* {{PDCFlag|Dylan Slevin}} – PDC TCH Qualifier ''(second round)''
+* {{nowrap|{{PDCFlag|Sandro Eric Sosing}} – Asian Championship<ref>{{cite web |last1=Gorton |first1=Josh |title=Ilagan wins PDC Asian Championship to seal Grand Slam debut |url=https://www.pdc.tv/news/2024/october/20/ilagan-wins-pdc-asian-championship-seal-grand-slam-debut |website=Professional Darts Corporation |access-date=21 October 2024 |date=20 October 2024}}</ref> ''(first round – withdrew)''{{efn|Sosing withdrew from his round 1 match with Ian White on medical grounds.<ref>{{cite web |title=2024/25 Paddy Power World Darts Championship – Day Six latest |url=https://www.pdc.tv/news/2024/12/20/202425-paddy-power-world-darts-championship-day-six-latest |archive-url=https://web.archive.org/web/20241220170525/https://www.pdc.tv/news/2024/12/20/202425-paddy-power-world-darts-championship-day-six-latest |url-status=dead |archive-date=20 December 2024 |website=Professional Darts Corporation |access-date=20 December 2024 |date=20 December 2024}}</ref> He was subsequently diagnosed with [[Guillain-Barré syndrome]].<ref>{{cite web |title=Update: Sandro Eric Sosing
+|url= https://www.pdc.tv/news/2024/december/22/update-sandro-eric-sosing |website=Professional Darts Corporation |access-date=22 December 2024 |date=22 December 2024}}</ref>}}}}
+* {{PDCFlag|Niko Springer}} – PDC Development Tour<ref name="DevTourQuals"/> ''(first round)''
+* {{PDCFlag|Rashad Sweeting}} – CDLC Tour<ref>{{cite web |title=Rashad Sweeting Qualifies for World Darts Championships |url=https://ournews.bs/rashad-sweeting-qualifies-for-world-darts-championships/ |website=Our News Bahamas |access-date=19 October 2024 |date=8 October 2024}}</ref> ''(first round)''
+* {{PDCFlag|Alexis Toylo}} – PDC Asian Tour<ref name="AsianTourQuals" /> ''(second round)''
+* {{nowrap|{{PDCFlag|Xiaochen Zong}} – PDC China Championship<ref>{{cite web |last1=Gorton |first1=Josh |title=Zong wins inaugural PDC China Championship to confirm Ally Pally return |url=https://www.pdc.tv/news/2024/august/19/zong-wins-inaugural-pdc-china-championship-confirm-ally-pally-return |website=Professional Darts Corporation |access-date=19 October 2024 |date=19 August 2024}}</ref> ''(first round)''}}
+* {{PDCFlag|Jeffrey de Zwaan}} – PDC TCH Qualifier ''(first round)''
+{{col-end}}
+{{notelist}}
+
+==Summary==
+[[File:Michael Smith 6-3 Steve Lennon - Michael Smith - 2019249215712 2019-09-06 PDC European Darts Matchplay - 1108 - B70I6125 (cropped).jpg|thumb|right|Former champion [[Michael Smith (darts player)|Michael Smith]] was the highest seeded player to be eliminated in his first match.]]
+
+===Opening rounds===
+The tournament began on 15 December, with defending champion [[Luke Humphries]] defeating Frenchman [[Thibault Tricole]] 3–0 in his opening match.<ref>{{cite web |date=15 December 2024 |title=World Darts Championship 2025 results: Luke Humphries beats Thibault Tricole to reach third round |url=https://www.bbc.co.uk/sport/darts/articles/cq5l41j5vljo |website=BBC Sport |access-date=1 January 2025}}</ref> Second seed and former champion [[Michael Smith (darts player)|Michael Smith]] became the highest-ranked player to fail to make it through the second round, losing 3–2 to [[Kevin Doets]].<ref>{{cite web |date=19 December 2024 |title=Michael Smith stunned by Kevin Doets in World Darts Championship upset |url=https://www.theguardian.com/sport/2024/dec/19/michael-smith-stunned-kevin-doets-world-darts-championship-upset |website=The Guardian |access-date=1 January 2025}}</ref> Smith was one of four former world champions not to win their opening match, being joined by [[Rob Cross]], who lost 3–1 to [[Scott Williams (darts player)|Scott Williams]],<ref name="RecordSeeds"/> [[Gary Anderson (darts player)|Gary Anderson]] who was beaten 3–0 by [[Jeffrey de Graaf]]<ref name="BBCAnderson">{{cite web |last=Keogh |first=Frank |date=22 December 2024 |title=Gary Anderson knocked out of PDC World Championship by Jeffrey de Graaf |url=https://www.bbc.co.uk/sport/darts/articles/c791x85737do |website=BBC Sport}}</ref> and [[Raymond van Barneveld]] who lost 3–1 to [[Nick Kenny (darts player)|Nick Kenny]].<ref name=BBC140>{{cite web |last=Keogh |first=Frank |date=21 December 2024|title=Luke Littler hits PDC World Championship record set average of 140 in win over Ryan Meikle |url=https://www.bbc.co.uk/sport/darts/articles/cgq1lpyn24lo |website=BBC Sport |access-date=1 January 2025}}</ref>
+
+Two major champions from the 2024 season also failed to win a match, [[2024 World Grand Prix (darts)|2024 World Grand Prix]] winner [[Mike De Decker]] being beaten by [[Luke Woodhouse]]<ref name=BBCDeDecker>{{cite web |date=17 December 2024 |title=De Decker stunned by Woodhouse at World Championship |url=https://www.bbc.co.uk/sport/darts/articles/cq5l8d537ego |website=BBC Sport |access-date=7 January 2025}}</ref> and [[2024 European Championship (darts)|2024 European Champion]] [[Ritchie Edhouse]] losing 3–1 to [[Ian White (darts player)|Ian White]],<ref name="BBCAnderson"/> with White himself having received a walkover victory over Sandro Eric Sosing in the first round after the Filipino withdrew with ill health.<ref>{{cite web |last1=Gorton |first1=Josh |date=22 December 2024 |title=Update: Sandro Eric Sosing |url=https://www.pdc.tv/news/2024/december/22/update-sandro-eric-sosing |website=PDC |access-date=1 January 2025}}</ref>
+
+In total, 14 seeds were eliminated in the second round, a record for the tournament; in addition to Michael Smith, Cross, Anderson, Van Barneveld, De Decker and Edhouse, [[Dave Chisnall]], [[Danny Noppert]], [[James Wade]], [[Ross Smith (darts player)|Ross Smith]], [[Martin Schindler]], [[Dirk van Duijvenbode]], [[Gabriel Clemens]] and [[Gian van Veen]] all lost their first game.<ref name="RecordSeeds">{{cite web |date=23 December 2024 |last1=Colman |first1=Jonty |last2=Matthews |first2=Callum |title=PDC World Darts Championship 2025 results: Rob Cross knocked out as record number of seeds fall |url=https://www.bbc.co.uk/sport/darts/articles/cvg612k9d6ko |website=BBC Sport |access-date=31 December 2024}}</ref>
+
+Former world champions to win their opening match, in addition to Humphries, were [[Michael van Gerwen]] who defeated [[James Hurrell]] 3–0, [[Peter Wright (darts player)|Peter Wright]] who knocked out [[Wesley Plaisier]] 3–1 and [[Gerwyn Price]] who beat [[Keane Barry]] 3–0. The highest average of the tournament, was thrown by [[Callan Rydz]] in his first round victory over Romeo Grbavac, hitting a [[High dart average|three dart average]] of 107.06; Rydz would go on to defeat [[Martin Schindler]] to make the third round.<ref>{{cite web |last=Conrad |first=Alex |date=29 December 2024 |title=Rydz explains how rival's pre-match comments backfired in spectacular fashion |url=https://talksport.com/darts/2426410/callan-rydz-dimitri-van-den-bergh-world-darts-championship/ |website=talkSPORT |access-date=1 January 2025}}</ref> 
+
+In his first round defeat to [[Madars Razma]], [[Christian Kist]] hit the first [[nine-dart finish]] at the World Championship since the [[2023 PDC World Darts Championship|2023 tournament's]] final.<ref>{{cite web |last1=Keogh |first1=Frank |date=18 December 2024|title=PDC World Darts Championship 2025 results: Christian Kist hits nine-darter but beaten |url=https://www.bbc.co.uk/sport/darts/articles/cz9g3928l2lo |website=BBC Sport |access-date=31 December 2024}}</ref>
+
+===Third round===
+{{multiple image
+ | align = right
+ | total_width = 320
+ | image1 = Christian Kist - TOTO Dutch Open Darts 2023.jpg
+ | alt1 = Christian Kist
+ | image2 = Damon Heta WDC 2025.png
+ | alt2 = Damon Heta
+ | footer = [[Christian Kist]] (left) and [[Damon Heta]] both hit [[nine-dart finish]]es during the tournament. 
+}}
+
+[[Callan Rydz]] continued to average highly in the third round, averaging 105.31 in a 4–0 win over [[2024 UK Open]] champion [[Dimitri Van den Bergh]].<ref name="LJPW"/> Ninth-seed [[Damon Heta]] was eliminated by a 4–3 scoreline to [[Luke Woodhouse]], being the highest seed to be eliminated in this round despite being the second player to throw a nine-dart finish in the championship.<ref>{{cite web |title=Heta lands nine-darter as PDC world champion Humphries eases through |url=https://www.theguardian.com/sport/2024/dec/27/damon-heta-lands-nine-darter-as-pdc-world-darts-championship-resumes |website=The Guardian |date=27 December 2024}}</ref> Rydz and Woodhouse were two of seven unseeded players to make it to the fourth round, along with [[Ryan Joyce]], [[Ricardo Pietreczko]], [[Kevin Doets]], [[Jeffrey de Graaf]] and [[Robert Owen (darts player)|Robert Owen]].<ref name="LJPW"/>
+
+Former world champion [[Gerwyn Price]] kept his hopes of regaining his crown alive with a victory over [[Joe Cullen (darts player)|Joe Cullen]], having to come through a deciding leg in the final set despite having previously held a 3–0 lead.<ref>{{cite web |title=World Darts Championship 2025: Gerwyn Price downs Joe Cullen |url=https://www.espn.co.uk/darts/story/_/id/43184589/world-darts-championship-2025-gerwyn-price-downs-joe-cullen |website=ESPN.com |access-date=1 January 2025 |language=en |date=27 December 2024}}</ref> Reigning champion Luke Humphries defeated [[Nick Kenny (darts player)|Nick Kenny]],<ref name="LHGPPW">{{cite web |title=PDC World Darts Championship 2025 results: Luke Humphries, Gerwyn Price & Peter Wright progress |url=https://www.bbc.co.uk/sport/darts/articles/cg524dyzr71o |website=BBC Sport |access-date=1 January 2025 |date=27 December 2024}}</ref> with former world champions Michael van Gerwen<ref name="LLMVG">{{cite web |title=Luke Littler and Michael van Gerwen progress in PDC World Championships |url=https://www.theguardian.com/sport/2024/dec/28/pdc-world-darts-saturday-luke-littler-van-gerwen-aspinall |website=The Observer |access-date=1 January 2025 |date=28 December 2024}}</ref> and Peter Wright,<ref name="LHGPPW"/> and pre-tournament favourite [[Luke Littler]] also winning their third round matches.<ref name="LLMVG"/>
+
+===Fourth round===
+Reigning champion [[Luke Humphries]]'s campaign ended in the fourth round after he was defeated 4–1 by Peter Wright.<ref name="LJPW">{{cite web |last1=Matthews |first1=Callum |last2=Drury |first2=Sam |title=PDC World Darts Championship 2025 results: Luke Humphries knocked out by Peter Wright |url=https://www.bbc.co.uk/sport/darts/articles/cnv3pmpdl16o |website=[[BBC Sport]] |access-date=1 January 2025 |date=29 December 2024}}</ref> Wright's fellow former world champions also qualified, with Gerwyn Price knocking out fellow Welshman [[Jonny Clayton]] 4–2<ref name="LJPW"/> and [[Michael van Gerwen]] eliminating Jeffrey de Graaf by the same scoreline.<ref name="29DecGuar">{{cite web |last1=Liew |first1=Jonathan |date=31 December 2024 |title=Luke Littler comes up with killer finish to deny Ryan Joyce a dramatic upset |url=https://www.theguardian.com/sport/2024/dec/30/van-gerwen-holds-off-de-graaf-comeback-to-seal-quarter-final-spot-pdc-world-darts |website=[[The Guardian]] |access-date=1 January 2025}}</ref> Callan Rydz was the only unseeded player to reach the quarter-final, beating Robert Owen 4–3 to reach the second quarter final of his career.<ref name="29DecGuar"/>
+
+Two other matches went the full seven sets, Luke Littler defeating [[Ryan Joyce]] to reach his second quarter-final from two attempts and [[Chris Dobey]] beating [[Kevin Doets]] to get through the fourth round for the third consecutive year. The remaining matches were won by scorelines of 4–0, with [[2024 Masters (darts)|2024 Masters]] champion [[Stephen Bunting]] eliminating [[Luke Woodhouse]] and [[Nathan Aspinall]] conquering a distinctly below-par [[Ricardo Pietreczko]].<ref name="29DecGuar"/>
+
+===Quarter-finals===
+The quarter-finals were held on [[New Year's Day]] 2025. Chris Dobey played Gerwyn Price in the first quarter-final. Price won the first two sets before Dobey took control, winning four sets in a row to go one away. Price won the seventh set after Dobey missed five darts to win the match, but Dobey won the eighth set 3–1 to qualify for the first world championship semi-final of his career. In the second quarter-final Michael van Gerwen played Callan Rydz. After five sets, which were all won by the player throwing first, Van Gerwen held a 3–2 lead, before breaking Rydz's throw in the third leg of the sixth set on his way to a 3–1 victory in that set to go two sets up. Rydz, who had earlier missed a dart to win the fifth set, managed to win the seventh set against the Van Gerwen throw, but missed two darts in the deciding leg of the eighth set, allowing Van Gerwen to win that set and the match to qualify for the world championship semi-final for the ninth time of his career.<ref name="QF"/>
+
+Stephen Bunting played Peter Wright in the third quarter-final. Bunting won the first four sets, including winning the fourth set 3–0 against the throw, before Wright came back and won sets five and six. Bunting secured the match victory with a 3–0 win in the seventh set to reach the second PDC world championship semi-final of his career. In the final quarter-final Luke Littler took on Nathan Aspinall. Littler got off to a strong start, winning the first set with three consecutive twelve-darters, and took the second set against the Aspinall throw. Aspinall broke back in the third set, but a Littler eleven-darter in the deciding leg of the fourth set restored the two-set advantage. Littler won the fifth set to go one away, and while Aspinall did manage to take the sixth set, another 3–0 scoreline in the seventh set ensured Littler would qualify for the semi-final for the second consecutive year.<ref name="QF">{{cite web |last1=Keogh |first1=Francis |last2=Drury |first2=Sam |date=1 January 2025 |title=PDC World Darts Championship 2025 results: Luke Littler beats Nathan Aspinall to set up Stephen Bunting semi-final |url=https://www.bbc.co.uk/sport/darts/articles/cn9gnxlw87do |website=BBC Sport |access-date=2 January 2025}}</ref>
+
+===Semi-finals===
+In the first semi-final, Michael van Gerwen played Chris Dobey. Van Gerwen won the first set against the throw, and took advantage of three missed darts from Dobey to also take the second. Dobey got off the mark with a 3–0 win in the third set, including a 170 checkout in the second leg, but Van Gerwen won the fourth set by the same scoreline to re-gain the two set advantage before breaking in the fifth set. Van Gerwen took the next two sets to complete a 6–1 victory to reach his seventh world championship final. Luke Littler took on Stephen Bunting in the other semi-final. Littler won the first set 3–2, before breaking in second set 3–1. The same 3–2, 3–1 pattern was repeated in the next two sets, giving Littler a 4–0 lead. Bunting broke back the fifth set with a 3–1 win, but missed 3 to win the sixth set, which Littler won 3–2 to go one away. With a 3–1 win in the seventh set Littler also completed a 6–1 win to reach the world championship final for the second time.<ref>{{cite web |last1=Keogh |first1=Frank |title=Luke Littler to face Michael van Gerwen in PDC World Darts Championship final |url=https://www.bbc.co.uk/sport/darts/articles/c3vr045zqrlo |website=BBC Sport |access-date=3 January 2025 |date=2 January 2025}}</ref>
+
+===Final===
+Luke Littler took on Michael van Gerwen in the final, held on Friday January 3. Van Gerwen threw first in the opening set, but missed three darts, and lost a fourth after busting his score, to win the first leg, enabling Littler to break and eventually win the set 3–1. Littler won the second set 3–0. In the second leg of the third set Van Gerwen missed three darts to break, and Littler won that leg and the next two to go 3–0 up in the match. The third leg of the fourth set saw Van Gerwen break the Littler throw for the first time in the match – with Littler having missed two darts for the set – but in the next leg van Gerwen missed more darts and Littler broke again to cross the halfway mark towards the championship.<ref name=GuardianFinal>{{Cite web |last=Liew |first=Jonathan |date=3 January 2025 |title=Luke Littler thrashes Michael van Gerwen to claim historic world title |url=https://www.theguardian.com/sport/2025/jan/03/luke-littler-thrashes-michael-van-gerwen-to-claim-historic-world-title |website=[[The Guardian]]}}</ref>
+
+Van Gerwen got off the mark with a 3–1 win in the fifth set, but Littler held the sixth set to go two sets away from victory. Van Gerwen took the seventh set 3–2, but again Littler won the next set. Van Gerwen won the ninth set, but Littler broke in the second leg of the next set to set himself up to throw for the match, and a fourteen-dart leg finished on double 16 wrapped up the world championship for Littler. Aged 17, Littler became the youngest world champion in PDC history, beating the record previously held by Van Gerwen who was 24 years old when he triumphed in 2014.<ref>{{cite web |last1=Cartwright |first1=Phil |last2=Higham |first2=Paul |last3=Keogh |first3=Frank |date=3 January 2025 |title=World Darts Championship Final 2025 LIVE: Luke Littler vs Michael van Gerwen – score, results & stats |url=https://www.bbc.co.uk/sport/darts/live/c4gwz153e7et |website=BBC Sport |access-date=3 January 2025}}</ref><ref name=HighamFinal>{{cite web |last=Higham |first=Paul |date=3 January 2025 |title=Teenager Littler demolishes Van Gerwen to claim historic world title |url=https://www.bbc.co.uk/sport/darts/articles/clyx7403y9ko |website=BBC Sport |access-date=3 January 2025}}</ref>
+
+==Schedule==
+
+{{hidden begin|expanded=yes|titlestyle=text-align:center;background:#FFFFFF; border-top:#CE1126 2px solid; border-bottom:#CE1126 2px solid;|title=Sunday, 15 December<ref name="Day One">{{cite web |last=Gorton |first=Josh |date=15 December 2024 |title=Day One: Humphries opens World Championship title defence with routine win |url=https://www.pdc.tv/news/2024/december/15/humphries-opens-world-championship-title-defence-routine-win |publisher=[[Professional Darts Corporation]] |access-date=16 December 2024}}</ref><ref name=BBCD1>{{cite web |last=Keogh |first=Frank |date=15 December 2024 |title=Humphries begins title defence with emphatic win |url=https://www.bbc.co.uk/sport/darts/articles/cq5l41j5vljo |publisher=[[BBC Sport]] |access-date=16 December 2024}}</ref>}}
+
+{| class="wikitable" style="text-align: center;"
+|+ '''Evening session (19:00 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+|-
+|- style=text-align:center;
+| 01 || rowspan=3| 1 || {{PDCFlag|Thibault Tricole|b=1|avg=80.61}} || {{dart score|3|1}} || {{PDCFlag|Joe Comito|avg=81.25}} || {{dart score|3|1}} || {{dart score|3|2}} || {{dart score|2|3}} || {{dart score|3|2}} || {{n/a}}
+|- style=text-align:center;
+| 02 || {{PDCFlag|Jermaine Wattimena|b=1|avg=98.54}} || {{dart score|3|0}} || {{PDCFlag|Stefan Bellmont|avg=92.95}} || {{dart score|3|1}} || {{dart score|3|1}} || {{dart score|3|2}}  || colspan=2{{n/a}}
+|- style=text-align:center;
+| 03 || {{PDCFlag|Kim Huybrechts|avg=96.92}} || {{dart score|1|3}} || {{PDCFlag|Keane Barry|b=1|avg=94.97}} || {{dart score|3|2}} || {{dart score|2|3}} || {{dart score|1|3}} || {{dart score|1|3}} || {{n/a}}
+|- style=text-align:center;
+| 04 || 2 || {{PDCFlag|Luke Humphries|b=1|avg=90.79}} || {{dart score|3|0}} || {{PDCFlag|Thibault Tricole|avg=85.62}} || {{dart score|3|0}} || {{dart score|3|0}} || {{dart score|3|0}} || colspan=2{{n/a}}
+|}{{hidden end}}
+{{hidden begin|expanded=yes|titlestyle=text-align:center;background:#FFFFFF; border-top:#CE1126 2px solid; border-bottom:#CE1126 2px solid;|title=Monday, 16 December<ref name="Day Two">{{cite web |last=Gorton |first=Josh |date=16 December 2024 |title=Price powers through on Day Two, as Wattimena dumps out Wade |url=https://www.pdc.tv/news/2024/december/16/price-powers-through-day-two-wattimena-dumps-out-wade |publisher=[[Professional Darts Corporation]] |access-date=16 December 2024}}</ref><ref name=GuardianDayTwo>{{cite web |date=16 December 2024 |title=James Wade crashes out of World Darts Championship in second-round shock |url=https://www.theguardian.com/sport/2024/dec/16/james-wade-crashes-out-of-world-darts-championship-in-first-round-shock |work=[[The Guardian]] |access-date=17 December 2024}}</ref>}}
+{| class="wikitable" style="text-align: center;"
+|+ '''Afternoon session (12:30 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+|-
+|- style=text-align:center;
+| 05 || rowspan=3| 1 || {{PDCFlag|Wesley Plaisier|b=1|avg=82.56}} || {{dart score|3|2}} || {{PDCFlag|Ryusei Azemoto|avg=79.23}} || {{dart score|1|3}} || {{dart score|3|2}} ||  {{dart score|1|3}}  || {{dart score|3|1}} || {{dart score|3|0}}
+|- style=text-align:center;
+| 06 || {{PDCFlag|Luke Woodhouse|b=1|avg=94.38}} || {{dart score|3|0}} || {{PDCFlag|Lourence Ilagan|avg=81.11}} || {{dart score|3|0}} || {{dart score|3|0}} || {{dart score|3|2}} || colspan=2{{n/a}}
+|- style=text-align:center;
+| 07 || {{PDCFlag|Alan Soutar|avg=84.19}} || {{dart score|1|3}} || {{PDCFlag|Kai Gotthardt|b=1|avg=89.10}} || {{dart score|3|2}} || {{dart score|1|3}} || {{dart score|0|3}} || {{dart score|2|3}} || {{n/a}}
+|- style=text-align:center;
+| 08 || 2 || {{PDCFlag|James Wade|avg=97.01}} || {{dart score|0|3}} || {{PDCFlag|Jermaine Wattimena|b=1|avg=99.17}} || {{dart score|1|3}} || {{dart score|0|3}} || {{dart score|1|3}} || colspan=2{{n/a}}
+|}
+{| class="wikitable" style="text-align: center;"
+|+ '''Evening session (19:00 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+|-
+|- style=text-align:center;
+| 09 || rowspan=3| 1 || {{PDCFlag|Niels Zonneveld|avg=93.19}} || {{dart score|1|3}} || {{PDCFlag|Robert Owen|b=1|avg=91.64}} || {{dart score|3|0}} || {{dart score|2|3}} || {{dart score|1|3}} || {{dart score|2|3}} || {{n/a}}
+|- style=text-align:center;
+| 10 || {{PDCFlag|Connor Scutt|b=1|avg=101.92}} || {{dart score|3|0}} || {{PDCFlag|Ben Robb|avg=82.64}} || {{dart score|3|0}} || {{dart score|3|1}} || {{dart score|3|0}} || colspan=2{{n/a}}
+|- style=text-align:center;
+| 11 || {{PDCFlag|Cameron Menzies|avg=83.77}} || {{dart score|1|3}} || {{PDCFlag|Leonard Gates|b=1|avg=82.96}} || {{dart score|0|3}}  || {{dart score|3|2}} || {{dart score|0|3}} || {{dart score|2|3}} || {{n/a}}
+|- style=text-align:center;
+| 12 || 2 || {{PDCFlag|Gerwyn Price|b=1|avg=91.32}} || {{dart score|3|0}} || {{PDCFlag|Keane Barry|avg=86.81}} || {{dart score|3|0}} || {{dart score|3|1}} || {{dart score|3|1}} || colspan=2{{n/a}}
+|}{{hidden end}}
+{{hidden begin|expanded=yes|titlestyle=text-align:center;background:#FFFFFF; border-top:#CE1126 2px solid; border-bottom:#CE1126 2px solid;|title=Tuesday, 17 December}}
+{| class="wikitable" style="text-align: center;"
+|+ '''Afternoon session (12:30 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+|-
+|- style=text-align:center;
+| 13 || rowspan=3| 1 || {{PDCFlag|James Hurrell|b=1|avg=88.75}} || {{dart score|3|0}} || {{PDCFlag|Jim Long|avg=79.17}} || {{dart score|3|0}} || {{dart score|3|1}} || {{dart score|3|0}} || colspan=2{{n/a}}
+|- style=text-align:center;
+| 14 || {{PDCFlag|Kevin Doets|b=1|avg=88.13}} || {{dart score|3|1}} || {{PDCFlag|Noa-Lynn van Leuven|avg=87.02}} || {{dart score|1|3}} || {{dart score|3|1}} || {{dart score|3|1}} || {{dart score|3|2}}|| {{n/a}}
+|- style=text-align:center;
+| 15 || {{PDCFlag|Ryan Joyce|b=1|avg=92.97}} || {{dart score|3|1}} || {{PDCFlag|Darius Labanauskas|avg=89.62}} || {{dart score|3|0}} || {{dart score|0|3}} || {{dart score|3|1}} || {{dart score|3|1}} || {{n/a}}
+|- style=text-align:center;
+| 16 || 2 || {{PDCFlag|Mike De Decker|avg=87.38}} || {{dart score|1|3}} || {{PDCFlag|Luke Woodhouse|b=1|avg=88.38}} || {{dart score|0|3}} || {{dart score|1|3}} || {{dart score|3|0}} || {{dart score|1|3}}|| {{n/a}}
+|}
+{| class="wikitable" style="text-align: center;"
+|+ '''Evening session (19:00 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+|-
+|- style=text-align:center;
+| 17 || rowspan=3| 1 || {{PDCFlag|Jeffrey de Graaf|b=1|avg=92.30}} || {{dart score|3|1}} || {{PDCFlag|Rashad Sweeting|avg=82.88}} || {{dart score|1|3}} || {{dart score|3|2}} || {{dart score|3|0}} || {{dart score|3|1}} || {{n/a}}
+|- style=text-align:center;
+| 18 || {{PDCFlag|Ricardo Pietreczko|b=1|avg=88.68}} || {{dart score|3|0}} || {{PDCFlag|Xiaochen Zong|avg=84.03}} || {{dart score|3|0}} || {{dart score|3|2}} || {{dart score|3|1}} || colspan=2{{n/a}}
+|- style=text-align:center;
+| 19 || {{PDCFlag|Ryan Meikle|b=1|avg=83.53}} || {{dart score|3|2}} || {{PDCFlag|Fallon Sherrock|avg=81.81}} || {{dart score|0|3}} || {{dart score|3|0}} || {{dart score|3|0}} || {{dart score|2|3}} || {{dart score|3|1}}
+|- style=text-align:center;
+| 20 || 2 || {{PDCFlag|Peter Wright|b=1|avg=89.63}} || {{dart score|3|1}} || {{PDCFlag|Wesley Plaisier|avg=93.77}} || {{dart score|3|2}} || {{dart score|3|2}} || {{dart score|0|3}} || {{dart score|3|2}} || {{n/a}}
+|-
+|}
+{{hidden end}}
+{{hidden begin|expanded=yes|titlestyle=text-align:center;background:#FFFFFF; border-top:#CE1126 2px solid; border-bottom:#CE1126 2px solid;|title=Wednesday, 18 December}}
+{| class="wikitable" style="text-align: center;"
+|+ '''Evening session (19:00 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+|-
+|- style=text-align:center;
+| 21 || rowspan=3| 1 || {{PDCFlag|Jim Williams|avg=94.10}} || {{dart score|2|3}} || {{PDCFlag|Paolo Nebrida|b=1|avg=86.63}} || {{dart score|2|3}} || {{dart score|3|1}} || {{dart score|1|3}} || {{dart score|3|0}} || {{dart score|2|3}}
+|- style=text-align:center;
+| 22 || {{PDCFlag|Madars Razma|b=1|avg=90.65}} || {{dart score|3|1}} || {{PDCFlag|Christian Kist|avg=94.90}} || {{dart score|2|3}} || {{dart score|3|1}} || {{dart score|3|1}} || {{dart score|3|2}} || {{n/a}}
+|- style=text-align:center;
+| 23 || {{PDCFlag|Ricky Evans|b=1|avg=86.23}} || {{dart score|3|2}} || {{PDCFlag|Gordon Mathers|avg=87.57}} || {{dart score|3|1}} || {{dart score|0|3}} || {{dart score|3|1}} || {{dart score|1|3}} || {{dart score|3|1}}
+|- style=text-align:center;
+| 24 || 2 || {{PDCFlag|Nathan Aspinall|b=1|avg=88.03}} || {{dart score|3|1}} || {{PDCFlag|Leonard Gates|avg=83.41}} || {{dart score|3|1}} || {{dart score|2|3}} || {{dart score|3|1}} || {{dart score|3|2}} || {{n/a}}
+|}{{hidden end}}
+{{hidden begin|expanded=yes|titlestyle=text-align:center;background:#FFFFFF; border-top:#CE1126 2px solid; border-bottom:#CE1126 2px solid;|title=Thursday, 19 December}}
+{| class="wikitable" style="text-align: center;"
+|+ '''Afternoon session (12:30 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+|-
+|- style=text-align:center;
+| 25 || rowspan=3| 1 || {{PDCFlag|Chris Landman|avg=80.71}} || {{dart score|1|3}} || {{PDCFlag|Lok Yin Lee|b=1|avg=84.40}} || {{dart score|3|2}} || {{dart score|0|3}} || {{dart score|0|3}} || {{dart score|0|3}} || {{n/a}}
+|- style=text-align:center;
+| 26 || {{PDCFlag|Callan Rydz|b=1|avg=107.06}} || {{dart score|3|0}} || {{PDCFlag|Romeo Grbavac|avg=97.92}} || {{dart score|3|0}} || {{dart score|3|1}} || {{dart score|3|1}} || colspan=2{{n/a}}
+|- style=text-align:center;
+| 27 || {{PDCFlag|Martin Lukeman|b=1|avg=86.66}} || {{dart score|3|1}} || {{PDCFlag|Nitin Kumar|avg=85.77}} || {{dart score|2|3}} || {{dart score|3|1}} || {{dart score|3|1}} || {{dart score|3|1}} || {{n/a}}
+|- style=text-align:center;
+| 28 || 2 || {{PDCFlag|Gabriel Clemens|avg=92.39}} || {{dart score|1|3}} || {{PDCFlag|Robert Owen|b=1|avg=98.97}} || {{dart score|2|3}} || {{dart score|0|3}} || {{dart score|3|1}} || {{dart score|1|3}} || {{n/a}}
+|}
+{| class="wikitable" style="text-align: center;"
+|+ '''Evening session (19:00 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+|-
+|- style=text-align:center;
+| 29 || rowspan=3| 1 || {{PDCFlag|Nick Kenny|b=1|avg=87.66}} || {{dart score|3|0}} || {{PDCFlag|Stowe Buntz|avg=87.26}} || {{dart score|3|1}} || {{dart score|3|2}} || {{dart score|3|1}} || colspan=2{{n/a}}
+|- style=text-align:center;
+| 30 || {{PDCFlag|Mensur Suljovic|avg=88.44}} || {{dart score|2|3}} || {{PDCFlag|Matt Campbell|b=1|avg=93.31}} || {{dart score|2|3}} || {{dart score|3|2}} || {{dart score|0|3}} || {{dart score|3|2}} || {{dart score|0|3}}
+|- style=text-align:center;
+| 31 || {{PDCFlag|Scott Williams|b=1|avg=96.24}} || {{dart score|3|1}} || {{PDCFlag|Niko Springer|avg=98.92}} || {{dart score|0|3}} || {{dart score|3|1}} || {{dart score|3|1}} || {{dart score|3|2}} || {{n/a}}
+|- style=text-align:center;
+| 32 || 2 || {{PDCFlag|Michael Smith|avg=96.93}} || {{dart score|2|3}} || {{PDCFlag|Kevin Doets|b=1|avg=96.90}} || {{dart score|3|0}} || {{dart score|1|3}} || {{dart score|3|0}} || {{dart score|0|3}} || {{dart score|4|6}}
+|}{{hidden end}}
+{{hidden begin|expanded=yes|titlestyle=text-align:center;background:#FFFFFF; border-top:#CE1126 2px solid; border-bottom:#CE1126 2px solid;|title=Friday, 20 December}}
+{| class="wikitable" style="text-align: center;"
+|+ '''Afternoon session (12:30 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+|-
+|- style=text-align:center;
+| 33 || rowspan=3| 1 || {{PDCFlag|Stephen Burton|avg=75.63}} || {{dart score|0|3}} || {{PDCFlag|Alexander Merkx|b=1|avg=78.41}} || {{dart score|1|3}} || {{dart score|1|3}} || {{dart score|2|3}} || colspan=2{{n/a}}
+|- style=text-align:center;
+| 34 || {{PDCFlag|Wessel Nijman|b=1|avg=94.83}} || {{dart score|3|2}} || {{PDCFlag|Cameron Carolissen|avg=95.90}} || {{dart score|3|0}} || {{dart score|3|2}} || {{dart score|0|3}} || {{dart score|2|3}} || {{dart score|3|2}}
+|- style=text-align:center;
+| 35 || {{PDCFlag|Ian White|b=1|avg=}} || [[Walkover|w/o]] || {{PDCFlag|Sandro Eric Sosing|avg=}} || colspan=5{{n/a}}
+|- style=text-align:center;
+| 36 || 2 || {{PDCFlag|Stephen Bunting|b=1|avg=92.12}} || {{dart score|3|1}} || {{PDCFlag|Kai Gotthardt|avg=89.40}} || {{dart score|1|3}} || {{dart score|3|2}} || {{dart score|3|0}} || {{dart score|3|0}} || {{n/a}}
+|}
+{| class="wikitable" style="text-align: center;"
+|+ '''Evening session (19:00 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+|-
+|- style=text-align:center;
+| 37 || rowspan=3| 1 || {{PDCFlag|Mickey Mansell|b=1|avg=81.34}} || {{dart score|3|1}} || {{PDCFlag|Tomoya Goto|avg=82.22}} || {{dart score|3|1}} || {{dart score|3|2}} || {{dart score|2|3}} || {{dart score|3|2}} || {{n/a}}
+|- style=text-align:center;
+| 38 || {{PDCFlag|Florian Hempel|b=1|avg=92.73}} || {{dart score|3|1}} || {{PDCFlag|Jeffrey de Zwaan|avg=94.36}} || {{dart score|3|1}} || {{dart score|3|0}} || {{dart score|1|3}} || {{dart score|3|1}} || {{n/a}}
+|- style=text-align:center;
+| 39 || {{PDCFlag|William O'Connor|avg=85.92}} || {{dart score|1|3}} || {{PDCFlag|Dylan Slevin|b=1|avg=86.35}} || {{dart score|2|3}} || {{dart score|1|3}} || {{dart score|3|1}} || {{dart score|2|3}} || {{n/a}}
+|- style=text-align:center;
+| 40 || 2 || {{PDCFlag|Michael van Gerwen|b=1|avg=94.85}} || {{dart score|3|0}} || {{PDCFlag|James Hurrell|avg=89.32}} || {{dart score|3|1}} || {{dart score|3|1}} || {{dart score|3|1}} || colspan=2{{n/a}}
+|}{{hidden end}}
+{{hidden begin|expanded=yes|titlestyle=text-align:center;background:#FFFFFF; border-top:#CE1126 2px solid; border-bottom:#CE1126 2px solid;|title=Saturday, 21 December<ref>{{cite web |date=21 December 2024 |title=Tearful Littler hits record 140 set average in win |url=https://www.bbc.co.uk/sport/darts/articles/cgq1lpyn24lo |publisher=BBC Sport |access-date=21 December 2024}}</ref>}}
+{| class="wikitable" style="text-align: center;"
+|+ '''Afternoon session (12:30 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+|-
+|- style=text-align:center;
+| 41 || rowspan=2| 1 || {{PDCFlag|Karel Sedláček|avg=82.58}} || {{dart score|0|3}} || {{PDCFlag|Rhys Griffin|b=1|avg=91.10}} || {{dart score|2|3}} || {{dart score|2|3}} || {{dart score|0|3}} || colspan=2{{n/a}}
+|- style=text-align:center;
+| 42 || {{PDCFlag|Richard Veenstra|avg=86.00}} || {{dart score|0|3}} || {{PDCFlag|Alexis Toylo|b=1|avg=86.03}} || {{dart score|2|3}} || {{dart score|2|3}} || {{dart score|2|3}} || colspan=2{{n/a}}
+|- style=text-align:center;
+| 43 || rowspan=2| 2 || {{PDCFlag|Brendan Dolan|b=1|avg=92.02}} || {{dart score|3|0}} || {{PDCFlag|Lok Yin Lee|avg=83.20}} || {{dart score|3|2}} || {{dart score|3|0}} || {{dart score|3|1}} || colspan=2{{n/a}}
+|- style=text-align:center;
+| 44 || {{PDCFlag|Chris Dobey|b=1|avg=95.62}} || {{dart score|3|1}} || {{PDCFlag|Alexander Merkx|avg=90.54}} || {{dart score|3|1}} || {{dart score|3|0}} || {{dart score|0|3}} || {{dart score|3|1}} || {{n/a}}
+|}
+{| class="wikitable" style="text-align: center;"
+|+ '''Evening session (19:00 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+|-
+|- style=text-align:center;
+| 45 || rowspan=4| 2 || {{PDCFlag|Danny Noppert|avg=93.91}} || {{dart score|1|3}} || {{PDCFlag|Ryan Joyce|b=1|avg=93.88}} || {{dart score|3|1}} || {{dart score|2|3}} || {{dart score|1|3}} || {{dart score|2|3}} || {{n/a}}
+|- style=text-align:center;
+| 46 || {{PDCFlag|Raymond van Barneveld|avg=84.64}} || {{dart score|1|3}} || {{PDCFlag|Nick Kenny|b=1|avg=86.39}} || {{dart score|1|3}} || {{dart score|2|3}} || {{dart score|3|0}} || {{dart score|2|3}} || {{n/a}}
+|- style=text-align:center;
+| 47 || {{PDCFlag|Luke Littler|b=1|avg=100.85}} || {{dart score|3|1}} || {{PDCFlag|Ryan Meikle|avg=91.93}} || {{dart score|3|2}} || {{dart score|1|3}} || {{dart score|3|1}} || {{dart score|3|0}} || {{n/a}}
+|- style=text-align:center;
+| 48 || {{PDCFlag|Damon Heta|b=1|avg=97.96}} || {{dart score|3|1}} || {{PDCFlag|Connor Scutt|avg=98.47}} || {{dart score|2|3}} || {{dart score|3|0}} || {{dart score|3|2}} || {{dart score|3|0}} || {{n/a}}
+|}{{hidden end}}
+{{hidden begin|expanded=yes|titlestyle=text-align:center;background:#FFFFFF; border-top:#CE1126 2px solid; border-bottom:#CE1126 2px solid;|title=Sunday, 22 December}}
+{| class="wikitable" style="text-align: center;"
+|+ '''Afternoon session (12:30 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+|-
+|- style=text-align:center;
+| 49 || rowspan=4| 2 || {{PDCFlag|Ryan Searle|b=1|avg=99.38}} ||  {{dart score|3|0}} || {{PDCFlag|Matt Campbell|avg=90.66}} || {{dart score|3|1}} || {{dart score|3|0}} || {{dart score|3|0}} || colspan=2{{n/a}}
+|- style=text-align:center;
+| 50 || {{PDCFlag|Dirk van Duijvenbode|avg=88.72}} || {{dart score|1|3}} || {{PDCFlag|Madars Razma|b=1|avg=91.33}} || {{dart score|3|0}} || {{dart score|2|3}} || {{dart score|0|3}} || {{dart score|2|3}} || {{n/a}}
+|- style=text-align:center;
+| 51 || {{PDCFlag|Joe Cullen|b=1|avg=98.18}} || {{dart score|3|0}} || {{PDCFlag|Wessel Nijman|avg=98.01}} || {{dart score|3|1}} || {{dart score|3|2}} || {{dart score|3|1}} || colspan=2{{n/a}}
+|- style=text-align:center;
+| 52 || {{PDCFlag|Ritchie Edhouse|avg=84.19}} || {{dart score|1|3}} || {{PDCFlag|Ian White|b=1|avg=88.86}} || {{dart score|3|1}} || {{dart score|1|3}} || {{dart score|1|3}} || {{dart score|1|3}} || {{n/a}}
+|}
+{| class="wikitable" style="text-align: center;"
+|+ '''Evening session (19:00 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+|-
+|- style=text-align:center;
+| 53 || rowspan=4| 2 || {{PDCFlag|Martin Schindler|avg=89.37}} || {{dart score|0|3}} || {{PDCFlag|Callan Rydz|b=1|avg=91.05}} || {{dart score|2|3}} || {{dart score|1|3}} || {{dart score|0|3}} || colspan=2{{n/a}}
+|- style=text-align:center;
+| 54 || {{PDCFlag|Ross Smith|avg=89.79}} || {{dart score|0|3}} || {{PDCFlag|Paolo Nebrida|b=1|avg=91.07}} || {{dart score|2|3}} || {{dart score|2|3}} || {{dart score|2|3}} ||  colspan=2{{n/a}}
+|- style=text-align:center;
+| 55 || {{PDCFlag|Gary Anderson|avg=92.51}} || {{dart score|0|3}} || {{PDCFlag|Jeffrey De Graaf|b=1|avg=95.56}} || {{dart score|1|3}} || {{dart score|0|3}} || {{dart score|2|3}} || colspan=2{{n/a}}
+|- style=text-align:center;
+| 56 || {{PDCFlag|Dimitri Van den Bergh|b=1|avg=96.00}} || {{dart score|3|0}} || {{PDCFlag|Dylan Slevin|avg=95.02}} || {{dart score|3|2}} || {{dart score|3|2}} || {{dart score|3|2}} || colspan=2{{n/a}}
+|}{{hidden end}}
+{{hidden begin|expanded=yes|titlestyle=text-align:center;background:#FFFFFF; border-top:#CE1126 2px solid; border-bottom:#CE1126 2px solid;|title=Monday, 23 December}}
+{| class="wikitable" style="text-align: center;"
+|+ '''Afternoon session (12:30 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+|-
+|- style=text-align:center;
+| 57 || rowspan=4| 2 || {{PDCFlag|Krzysztof Ratajski|b=1|avg=95.32}} || {{dart score|3|1}} || {{PDCFlag|Alexis Toylo|avg=96.39}} || {{dart score|3|1}} || {{dart score|3|2}} || {{dart score|2|3}} || {{dart score|3|1}} || {{n/a}}
+|- style=text-align:center;
+| 58 || {{PDCFlag|Andrew Gilding|b=1|avg=92.65}} || {{dart score|3|1}} || {{PDCFlag|Martin Lukeman|avg=91.28}} || {{dart score|3|0}} || {{dart score|0|3}} || {{dart score|3|2}} || {{dart score|3|2}} || {{n/a}}
+|- style=text-align:center;
+| 59 || {{PDCFlag|Josh Rock|b=1|avg=87.13}} || {{dart score|3|0}} || {{PDCFlag|Rhys Griffin|avg=85.99}} || {{dart score|3|0}} || {{dart score|3|2}} || {{dart score|3|0}} || colspan=2{{n/a}}
+|- style=text-align:center;
+| 60 || {{PDCFlag|Jonny Clayton|b=1|avg=92.45}} || {{dart score|3|2}} || {{PDCFlag|Mickey Mansell|avg=84.26}} || {{dart score|2|3}} || {{dart score|3|0}} || {{dart score|3|0}} || {{dart score|1|3}} || {{dart score|6|5}}
+|}
+{| class="wikitable" style="text-align: center;"
+|+ '''Evening session (19:00 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+|-
+|- style=text-align:center;
+| 61 || rowspan=4| 2 || {{PDCFlag|Gian van Veen|avg=91.99}} || {{dart score|1|3}} || {{PDCFlag|Ricardo Pietreczko|b=1|avg=91.64}} || {{dart score|0|3}} || {{dart score|3|1}} || {{dart score|0|3}} || {{dart score|1|3}} || {{n/a}}
+|- style=text-align:center;
+| 62 || {{PDCFlag|Daryl Gurney|b=1|avg=98.31}} || {{dart score|3|2}} || {{PDCFlag|Florian Hempel|avg=96.44}} || {{dart score|1|3}} || {{dart score|3|1}} || {{dart score|0|3}} || {{dart score|3|2}} || {{dart score|3|1}}
+|- style=text-align:center;
+| 63 || {{PDCFlag|Dave Chisnall|avg=94.54}} || {{dart score|2|3}} || {{PDCFlag|Ricky Evans|b=1|avg=94.30}} || {{dart score|3|1}} || {{dart score|2|3}} || {{dart score|1|3}} || {{dart score|3|0}} || {{dart score|5|6}}
+|- style=text-align:center;
+| 64 || {{PDCFlag|Rob Cross|avg=88.64}} || {{dart score|1|3}} || {{PDCFlag|Scott Williams|b=1|avg=87.90}} || {{dart score|3|2}} || {{dart score|2|3}} || {{dart score|1|3}} || {{dart score|2|3}} || {{n/a}}
+|}{{hidden end}}
+{{hidden begin|expanded=yes|titlestyle=text-align:center;background:#FFFFFF; border-top:#CE1126 2px solid; border-bottom:#CE1126 2px solid;|title=Friday, 27 December}}
+{| class="wikitable" style="text-align: center;"
+|+ '''Afternoon session (12:30 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+! width="3%" | Set 6
+! width="3%" | Set 7
+|-
+|- style=text-align:center;
+| 65 || rowspan=3| 3 || {{PDCFlag|Damon Heta|avg=89.69}} || {{dart score|3|4}} || {{PDCFlag|Luke Woodhouse|b=1|avg=92.34}} || {{dart score|2|3}} || {{dart score|3|1}} || {{dart score|3|2}} || {{dart score|3|2}} || {{dart score|1|3}} || {{dart score|0|3}} || {{dart score|0|3}}
+|- style=text-align:center;
+| 66 || {{PDCFlag|Jonny Clayton|b=1|avg=90.11}} || {{dart score|4|3}} || {{PDCFlag|Daryl Gurney|avg=92.60}} || {{dart score|3|2}} || {{dart score|3|1}} || {{dart score|3|0}} || {{dart score|1|3}} || {{dart score|0|3}} || {{dart score|1|3}} || {{dart score|3|1}}
+|- style=text-align:center;
+| 67 || {{PDCFlag|Stephen Bunting|b=1|avg=100.06}} || {{dart score|4|1}} || {{PDCFlag|Madars Razma|avg=90.92}} || {{dart score|3|1}} || {{dart score|3|0}} || {{dart score|2|3}} || {{dart score|3|0}} || {{dart score|3|2}} || colspan=2{{n/a}}
+|}
+{| class="wikitable" style="text-align: center;"
+|+ '''Evening session (19:00 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+! width="3%" | Set 6
+! width="3%" | Set 7
+|-
+|-
+|- style=text-align:center;
+| 68 || rowspan=3| 3 || {{PDCFlag|Gerwyn Price|b=1|avg=92.60}} || {{dart score|4|3}} || {{PDCFlag|Joe Cullen|avg=92.77}} || {{dart score|3|2}} || {{dart score|3|2}} || {{dart score|3|1}} || {{dart score|1|3}} || {{dart score|1|3}} || {{dart score|1|3}} || {{dart score|6|5}}
+|- style=text-align:center;
+| 69 || {{PDCFlag|Jermaine Wattimena|avg=96.50}} || {{dart score|2|4}} || {{PDCFlag|Peter Wright|b=1|avg=96.19}} || {{dart score|1|3}} || {{dart score|0|3}} || {{dart score|3|2}} || {{dart score|0|3}} || {{dart score|3|0}} || {{dart score|1|3}} || {{n/a}}
+|- style=text-align:center;
+| 70 || {{PDCFlag|Luke Humphries|b=1|avg=98.59}} || {{dart score|4|0}} || {{PDCFlag|Nick Kenny|avg=93.42}} || {{dart score|3|2}} || {{dart score|3|1}} || {{dart score|3|1}} || {{dart score|3|0}} || colspan=3{{n/a}}
+|}{{hidden end}}
+{{hidden begin|expanded=yes|titlestyle=text-align:center;background:#FFFFFF; border-top:#CE1126 2px solid; border-bottom:#CE1126 2px solid;|title=Saturday, 28 December}}
+{| class="wikitable" style="text-align: center;"
+|+ '''Afternoon session (12:30 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+! width="3%" | Set 6
+! width="3%" | Set 7
+|-
+|- style=text-align:center;
+| 71 || rowspan=3| 3 || {{PDCFlag|Ryan Joyce|b=1|avg=97.40}} || {{dart score|4|3}} || {{PDCFlag|Ryan Searle|avg=100.97}} || {{dart score|3|2}} || {{dart score|3|2}} || {{dart score|1|3}} || {{dart score|2|3}} || {{dart score|3|0}} || {{dart score|2|3}} || {{dart score|4|2}}
+|- style=text-align:center;
+| 72 ||{{PDCFlag|Scott Williams|avg=94.29}} || {{dart score|1|4}} || {{PDCFlag|Ricardo Pietreczko|b=1|avg=97.00}} || {{dart score|2|3}} || {{dart score|1|3}} || {{dart score|3|1}} || {{dart score|0|3}} || {{dart score|2|3}} || colspan=2{{n/a}}
+|- style=text-align:center;
+| 73 || {{PDCFlag|Nathan Aspinall|b=1|avg=92.17}} || {{dart score|4|0}} || {{PDCFlag|Andrew Gilding|avg=86.65}} || {{dart score|3|1}} || {{dart score|3|2}} || {{dart score|3|2}} || {{dart score|3|1}} || colspan=3{{n/a}}
+|}
+{| class="wikitable" style="text-align: center;"
+|+ '''Evening session (19:00 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+! width="3%" | Set 6
+! width="3%" | Set 7
+|-
+|- style=text-align:center;
+| 74 || rowspan=3| 3 || {{PDCFlag|Chris Dobey|b=1|avg=97.29}} || {{dart score|4|2}} || {{PDCFlag|Josh Rock|avg=95.99}} || {{dart score|1|3}} || {{dart score|3|1}} || {{dart score|1|3}} || {{dart score|3|0}} || {{dart score|3|2}} || {{dart score|3|1}} || {{n/a}}
+|- style=text-align:center;
+| 75 || {{PDCFlag|Michael van Gerwen|b=1|avg=97.01}} || {{dart score|4|2}} || {{PDCFlag|Brendan Dolan|avg=96.08}} || {{dart score|2|3}} || {{dart score|3|1}} || {{dart score|3|0}} || {{dart score|3|0}} || {{dart score|1|3}} || {{dart score|3|2}} || {{n/a}}
+|- style=text-align:center;
+| 76 || {{PDCFlag|Luke Littler|b=1|avg=97.84}} || {{dart score|4|1}} || {{PDCFlag|Ian White|avg=96.40}} || {{dart score|3|2}} || {{dart score|1|3}} || {{dart score|3|0}} || {{dart score|3|2}} || {{dart score |3|1}} || colspan=2{{n/a}}
+|}{{hidden end}}
+{{hidden begin|expanded=yes|titlestyle=text-align:center;background:#FFFFFF; border-top:#CE1126 2px solid; border-bottom:#CE1126 2px solid;|title=Sunday, 29 December}}
+{| class="wikitable" style="text-align: center;"
+|+ '''Afternoon session (12:30 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+! width="3%" | Set 6
+! width="3%" | Set 7
+|-
+|- style=text-align:center;
+| 77 || rowspan=3| 3 || {{PDCFlag|Jeffrey De Graaf|b=1|avg=89.99}} || {{Dart score|4|1}} || {{PDCFlag|Paolo Nebrida|avg=83.01}} || {{dart score|1|3}} || {{dart score|3|0}} || {{dart score|3|2}} || {{Dart score|3|1}} || {{Dart score|3|1}} || colspan=2{{n/a}}
+|- style=text-align:center;
+| 78 || {{PDCFlag|Kevin Doets|b=1|avg=89.67}} || {{Dart score|4|3}} || {{PDCFlag|Krzysztof Ratajski|avg=94.55}} || {{dart score|0|3}} || {{Dart score|0|3}} || {{Dart score|3|1}} || {{Dart score|3|0}} || {{Dart score|2|3}} || {{Dart score|3|2}} || {{Dart score|3|1}}
+|- style=text-align:center;
+| 79 || {{PDCFlag|Dimitri Van Den Bergh|avg=94.79}} || {{dart score|0|4}}  || {{PDCFlag|Callan Rydz|b=1|avg=105.31}} || {{dart score|0|3}} || {{dart score|2|3}} || {{dart score|2|3}} || {{dart score|0|3}} || colspan=3{{n/a}}
+|}
+{| class="wikitable" style="text-align: center;"
+|+ '''Evening session (19:00 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+! width="3%" | Set 6
+! width="3%" | Set 7
+|-
+|- style=text-align:center;
+| 80 || 3 || {{PDCFlag|Ricky Evans|avg=86.84}} || {{dart score|2|4}} || {{PDCFlag|Robert Owen|b=1|avg=92.92}} || {{dart score|3|1}} || {{dart score|2|3}} || {{dart score|3|2}} || {{dart score|2|3}} || {{dart score|2|3}} || {{dart score|0|3}} || {{n/a}}
+|- style=text-align:center;
+| 81 || rowspan=2| 4 || {{PDCFlag|Jonny Clayton|avg=91.73}} || {{dart score|2|4}} || {{PDCFlag|Gerwyn Price|b=1|avg=92.28}} || {{dart score|1|3}} || {{dart score|1|3}} || {{dart score|3|0}} || {{dart score|3|1}} || {{dart score|1|3}} || {{dart score|1|3}} || {{n/a}}
+|- style=text-align:center;
+| 82 || {{PDCFlag|Luke Humphries|avg=99.23}} || {{dart score|1|4}} || {{PDCFlag|Peter Wright|b=1|avg=100.93}} || {{dart score|2|3}} || {{dart score|3|2}} || {{dart score|2|3}} || {{dart score|2|3}} || {{dart score|0|3}} || colspan=2{{n/a}}
+|} {{hidden end}}
+{{hidden begin|expanded=yes|titlestyle=text-align:center;background:#FFFFFF; border-top:#CE1126 2px solid; border-bottom:#CE1126 2px solid;|title=Monday, 30 December}}
+{| class="wikitable" style="text-align: center;"
+|+ '''Afternoon session (12:30 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+! width="3%" | Set 6
+! width="3%" | Set 7
+|-
+|- style=text-align:center;
+| 83 || rowspan=3| 4 || {{PDCFlag|Kevin Doets|avg=88.17}} || {{dart score|3|4}} || {{PDCFlag|Chris Dobey|b=1|avg=91.59}} || {{dart score|1|3}} || {{dart score|3|1}} || {{dart score|0|3}} || {{dart score|3|2}} || {{dart score|3|2}} || {{dart score|1|3}} || {{dart score|1|3}}
+|- style=text-align:center;
+| 84 || {{PDCFlag|Robert Owen|avg=94.07}} || {{dart score|3|4}}  || {{PDCFlag|Callan Rydz|b=1|avg=97.38}} || {{dart score|3|1}} || {{dart score|3|2}} || {{dart score|2|3}} || {{dart score|0|3}} || {{dart score|0|3}} || {{dart score|3|1}} || {{dart score|1|3}}
+|- style=text-align:center;
+| 85 || {{PDCFlag|Ricardo Pietreczko|avg=78.46}} || {{dart score|0|4}} || {{PDCFlag|Nathan Aspinall|b=1|avg=94.28}} || {{dart score|1|3}} || {{dart score|0|3}} || {{dart score|0|3}} || {{dart score|1|3}} || colspan=3{{n/a}}
+|}
+{| class="wikitable" style="text-align: center;"
+|+ '''Evening session (19:00 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+! width="3%" | Set 6
+! width="3%" | Set 7
+|-
+|- style=text-align:center;
+| 86 || rowspan=3| 4 || {{PDCFlag|Stephen Bunting|b=1|avg=96.78}} || {{dart score|4|0}} || {{PDCFlag|Luke Woodhouse|avg=90.61}} || {{dart score|3|0}} || {{dart score|3|1}} || {{dart score|3|1}} || {{dart score|3|1}} || colspan=3{{n/a}}
+|- style=text-align:center;
+| 87 || {{PDCFlag|Michael van Gerwen|b=1|avg=101.98}} || {{dart score|4|2}} || {{PDCFlag|Jeffrey de Graaf|avg=91.85}} || {{dart score|3|1}} || {{dart score|3|0}} || {{dart score|0|3}} || {{dart score|1|3}} || {{dart score|3|0}} || {{dart score|3|0}} || {{n/a}}
+|- style=text-align:center;
+| 88 || {{PDCFlag|Luke Littler|b=1|avg=103.14}} || {{dart score|4|3}} || {{PDCFlag|Ryan Joyce|avg=97.73}} || {{dart score|3|1}} || {{dart score|2|3}} || {{dart score|3|1}} || {{dart score|1|3}} || {{dart score|3|1}} || {{dart score|2|3}} || {{dart score|3|1}}
+|}{{hidden end}}
+{{hidden begin|expanded=yes|titlestyle=text-align:center;background:#FFFFFF; border-top:#CE1126 2px solid; border-bottom:#CE1126 2px solid;|title=Wednesday, 1 January}}
+{| class="wikitable" style="text-align: center;"
+|+ '''Afternoon session (12:30 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+! width="3%" | Set 6
+! width="3%" | Set 7
+! width="3%" | Set 8
+|-
+|- style=text-align:center;
+| 89 || rowspan=2| QF || {{PDCFlag|Chris Dobey|b=1|avg=95.38}} || {{dart score|5|3}} || {{PDCFlag|Gerwyn Price|avg=92.74}} || {{dart score|2|3}} || {{dart score|1|3}} || {{dart score|3|1}} || {{dart score|3|2}} || {{dart score|3|2}} || {{dart score|3|0}} || {{dart score|2|3}} || {{dart score|3|1}}
+|- style=text-align:center;
+| 90 || {{PDCFlag|Michael van Gerwen|b=1|avg=103.10}} || {{dart score|5|3}} || {{PDCFlag|Callan Rydz|avg=103.88}} || {{dart score|3|2}} || {{dart score|0|3}} || {{dart score|3|2}} || {{dart score|1|3}}  || {{dart score|3|2}} || {{dart score|3|1}} || {{dart score|1|3}} || {{dart score|3|2}}
+|}
+{| class="wikitable" style="text-align: center;"
+|+ '''Evening session (19:00 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+! width="3%" | Set 6
+! width="3%" | Set 7
+|-
+|- style=text-align:center;
+| 91 || rowspan=2| QF || {{PDCFlag|Peter Wright|avg=92.41}} || {{dart score|2|5}} || {{PDCFlag|Stephen Bunting|b=1|avg=95.55}} || {{dart score|1|3}} || {{dart score|1|3}} || {{dart score|2|3}} || {{dart score|0|3}} || {{dart score|3|0}} || {{dart score|3|1}}|| {{dart score|0|3}}
+|- style=text-align:center;
+| 92 || {{PDCFlag|Luke Littler|b=1|avg=101.54}} || {{dart score|5|2}} || {{PDCFlag|Nathan Aspinall|avg=96.31}} || {{dart score|3|0}} || {{dart score|3|1}}  || {{dart score|2|3}} || {{dart score|3|2}} || {{dart score|3|1}} || {{dart score|2|3}} || {{dart score|3|0}}
+|}{{hidden end}}
+{{hidden begin|expanded=yes|titlestyle=text-align:center;background:#FFFFFF; border-top:#CE1126 2px solid; border-bottom:#CE1126 2px solid;|title=Thursday, 2 January}}
+{| class="wikitable"
+|-
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+! width="3%" | Set 6
+! width="3%" | Set 7
+|-
+|- style=text-align:center;
+| 93 || rowspan=2| SF || {{PDCFlag|Chris Dobey|avg=94.77}} || {{dart score|1|6}} || {{PDCFlag|Michael van Gerwen|b=1|avg=98.84}} || {{dart score|1|3}} || {{dart score|2|3}} || {{dart score|3|0}} || {{dart score|0|3|}} || {{dart score|1|3}} || {{dart score|2|3}} || {{dart score|1|3}}
+|- style=text-align:center;
+| 94 || {{PDCFlag|Stephen Bunting|avg=100.10}} || {{dart score|1|6}} || {{PDCFlag|Luke Littler|b=1|avg=105.48}} || {{dart score|2|3}} || {{dart score|1|3}} || {{dart score|2|3|}} || {{dart score|1|3}} || {{dart score|3|1}} || {{dart score|2|3}} || {{dart score|1|3}}
+|}{{hidden end}}
+{{hidden begin|expanded=yes|titlestyle=text-align:center;background:#FFFFFF; border-top:#CE1126 2px solid; border-bottom:#CE1126 2px solid;|title=Friday, 3 January<ref name="Day Sixteen"/><ref name=HighamFinal/><ref name=GuardianFinal/>}}
+{| class="wikitable" style="text-align: center;"
+|+ '''Evening session (19:30 [[Greenwich Mean Time|GMT]])'''
+! width="2%" | Match no.
+! width="2%" | Round
+! width="15%" | Player 1
+! width="5%" | Score
+! width="15%" | Player 2
+! width="3%" | Set 1
+! width="3%" | Set 2
+! width="3%" | Set 3
+! width="3%" | Set 4
+! width="3%" | Set 5
+! width="3%" | Set 6
+! width="3%" | Set 7
+! width="3%" | Set 8
+! width="3%" | Set 9
+! width="3%" | Set 10
+|-
+|- style=text-align:center;
+| 95 || F || {{PDCFlag|Luke Littler|b=1|avg=102.73}}|| {{dart score|7|3|}} || {{PDCFlag|Michael van Gerwen|avg=100.69}} || {{dart score|3|1}} || {{dart score|3|0}} || {{dart score|3|1}} || {{dart score|3|1}} || {{dart score|1|3}} || {{dart score|3|2}} || {{dart score |2|3}} || {{dart score|3|0}} || {{dart score |1|3}} || {{dart score|3|0}}
+|}{{hidden end}}
+
+==Draw==
+The draw took place on 25 November 2024, live on Sky Sports News, and was conducted by Sky Sports presenter, Emma Paton, and former semi-finalists [[Wayne Mardle]] and [[Mark Webster (darts player)|Mark Webster]].<ref>{{cite web |last=Gorton |first=Josh |date=25 November 2024 |title=2024/25 Paddy Power World Darts Championship draw confirmed |url=https://www.pdc.tv/news/2024/november/25/202425-paddy-power-world-darts-championship-draw-confirmed |website=[[Professional Darts Corporation|PDC]].tv |access-date=25 November 2024}}</ref><ref>{{cite web |date=25 November 2024 |title=2024/25 World Darts Championship schedule: Alexandra Palace final on a Friday as Luke Littler seeks first title |url=https://www.skysports.com/darts/news/12288/13177079/2024-25-world-darts-championship-schedule-alexandra-palace-final-on-a-friday-as-luke-littler-seeks-first-title |website=[[Sky Sports]] |access-date=25 November 2024}}</ref><ref>{{cite web |date=25 November 2024 |title=Littler could face Sherrock at World Championship |url=https://www.bbc.co.uk/sport/darts/articles/cly2j3jp15ko |website=[[BBC Sport]] |access-date=25 November 2024}}</ref>
+
+===Finals===
+
+{{8TeamBracket
+| RD1= {{nowrap|1='''Quarter-finals'''<br>''(best of 9 sets)''<br/>1 January}}
+| RD2= {{nowrap|1='''Semi-finals'''<br>''(best of 11 sets)''<br/>2 January}} <ref name="Day Fifteen">{{cite web |last=Gorton |first=Josh |date=2 January 2024 |title=Littler & Van Gerwen set up blockbuster World Championship final |url=https://www.pdc.tv/news/2025/january/02/littler-van-gerwen-set-blockbuster-world-championship-final |publisher=[[Professional Darts Corporation|PDC]]}}</ref>
+| RD3= {{nowrap|1='''Final'''<br>''(best of 13 sets)''<br/>3 January}} <ref name="Day Sixteen">{{cite web |last=Gorton |first=Josh |date=3 January 2024 |title=Teenage sensation Littler storms to historic World Darts Championship title |url=https://www.pdc.tv/news/2025/january/03/teenage-sensation-littler-storms-historic-world-darts-championship-title |publisher=[[Professional Darts Corporation|PDC]]}}</ref>
+
+| seed-width  = 30
+| team-width  = 200
+| score-width = 50
+| boldwinner=high
+
+| RD1-seed1  = 17
+| RD1-team1  = {{PDCFlag|Peter Wright|avg=92.41}}
+| RD1-score1 = 2
+| RD1-seed2  = 8
+| RD1-team2  = {{PDCFlag|Stephen Bunting|avg=95.55}}
+| RD1-score2 = 5
+| RD1-seed3  = 4
+| RD1-team3  = {{PDCFlag|Luke Littler|avg=101.54}}
+| RD1-score3 = 5
+| RD1-seed4  = 12
+| RD1-team4  = {{PDCFlag|Nathan Aspinall|avg=96.31}}
+| RD1-score4 = 2
+| RD1-seed5  = 15
+| RD1-team5  = {{PDCFlag|Chris Dobey|avg=95.38}}
+| RD1-score5 = 5
+| RD1-seed6  = 10
+| RD1-team6  = {{PDCFlag|Gerwyn Price|avg=92.74}}
+| RD1-score6 = 3
+| RD1-seed7  = 3
+| RD1-team7  = {{PDCFlag|Michael van Gerwen|avg=103.10}}
+| RD1-score7 = 5
+| RD1-seed8  = &nbsp;
+| RD1-team8  = {{PDCFlag|Callan Rydz|avg=103.88}}
+| RD1-score8 = 3
+
+| RD2-seed1  = 8
+| RD2-team1  = {{PDCFlag|Stephen Bunting|avg=100.10}}
+| RD2-score1 = 1
+| RD2-seed2  = 4
+| RD2-team2  = {{PDCFlag|Luke Littler|avg=105.48}}
+| RD2-score2 = 6
+| RD2-seed3  = 15
+| RD2-team3  = {{PDCFlag|Chris Dobey|avg=94.77}}
+| RD2-score3 = 1
+| RD2-seed4  = 3
+| RD2-team4  = {{PDCFlag|Michael van Gerwen|avg=98.84}}
+| RD2-score4 = 6
+
+| RD3-seed1  = 4
+| RD3-team1  = {{PDCFlag|Luke Littler|avg=102.73}}
+| RD3-score1 = 7
+| RD3-seed2  = 3
+| RD3-team2  = {{PDCFlag|Michael van Gerwen|avg=100.69}}
+| RD3-score2 = 3
+}}
+
+===Top half===
+====Section 1====
+{{24TeamBracket-Byes
+| RD1-shift = -1
+| RD1 = {{nowrap|1='''First round''' <br />''(best of 5 sets)'' <br /> 15–21 December<br><ref name="Day One"/><ref name="Day Two"/><ref name="Day Three">{{cite web |last=Gorton |first=Josh |url=https://www.pdc.tv/news/2024/december/17/wright-enjoys-winning-world-championship-return-day-three |title=Wright enjoys winning World Championship return on Day Three |publisher=[[Professional Darts Corporation|PDC]] |date=17 December 2024}}</ref><ref name="Day Four">{{cite web |last=Gorton |first=Josh |url=https://www.pdc.tv/news/2024/december/18/kist-lands-historic-nine-darter-defeat-razma |title=Day Four: Kist lands historic nine-darter in defeat to Razma |publisher=[[Professional Darts Corporation|PDC]] |date=18 December 2024}}</ref><ref name="Day Five">{{cite web |last=Gorton |first=Josh |url=https://www.pdc.tv/news/2024/december/19/inspired-doets-denies-smith-ally-pally-thriller |title=Day Five: Inspired Doets denies Smith in Ally Pally thriller |publisher=[[Professional Darts Corporation|PDC]] |date=19 December 2024}}</ref><ref name="Day Six">{{Cite web|last=Gorton |first=Josh |url=https://www.pdc.tv/news/2024/december/20/van-gerwen-opens-title-challenge-convincing-win-day-six|title=Van Gerwen opens title challenge with convincing win on Day Six|date=20 December 2024|website=PDC}}</ref><ref>{{cite web |last=Colman |first=Jonty |title=Van Gerwen enjoys comfortable opening victory |url=https://www.bbc.co.uk/sport/darts/articles/cvg649depywo |date=20 December 2024 |website=BBC Sport}}</ref><ref name="Day Seven">{{Cite web|last=Phillips |first=Josh |url=https://www.pdc.tv/news/2024/december/21/littler-makes-more-history-tough-meikle-test|title=Day Seven: Littler makes more history in 'tough' Meikle test|date=21 December 2024|website=PDC}}</ref><ref name=BBC140/><ref name="Day Eight">{{Cite web|last=Gorton |first=Josh |url=https://www.pdc.tv/news/2024/december/22/de-graaf-stuns-anderson-five-seeds-crash-out-alexandra-palace|title=Day Eight: De Graaf stuns Anderson as five seeds crash out at Alexandra Palace|date=22 December 2024|website=PDC}}</ref><ref name=BBCAnderson/><ref name="Day Nine">{{cite web|last=Gorton |first=Josh |url=https://www.pdc.tv/news/2024/december/23/williams-dumps-out-cross-further-three-seeds-exit-ally-pally |title=Day Nine: Williams dumps out Cross as a further three seeds exit at Ally Pally |publisher=[[Professional Darts Corporation|PDC]] |date=23 December 2024}}</ref>}}
+| RD2 = {{nowrap|1='''Second round''' <br />''(best of 5 sets)'' <br /> 15–23 December}}<br /><ref name="Day One"/><ref name=BBCD1/><ref name="Day Two"/><ref name=GuardianDayTwo/><ref name ="Day Three"/><ref name ="Day Four"/><ref name ="Day Five"/><ref name ="Day Six"/><ref name ="Day Seven"/><ref name ="Day Eight"/><ref name ="Day Nine"/>
+| RD3 = {{nowrap|1='''Third round''' <br />''(best of 7 sets)'' <br /> 27–29 December}}<br><ref name="Day Ten">{{cite web |last=Phillips |first=Josh |url=https://www.pdc.tv/news/2024/december/27/price-and-clayton-win-thrillers-heta-hits-nine-darter-day-ten |title=Price and Clayton win thrillers as Heta hits nine-darter on Day Ten |publisher=[[Professional Darts Corporation|PDC]] |date=27 December 2024}}</ref>
+| RD4 = {{nowrap|1='''Fourth round''' <br />''(best of 7 sets)'' <br /> 29–30 December}}
+| RD5 = {{nowrap|1='''Quarter-finals''' <br />''(best of 9 sets)'' <br /> 1 January}}
+| team-width=200
+| score-width=50
+| boldwinner=high
+
+| RD1-team01 = {{PDCFlag|Thibault Tricole|avg=80.61}}
+| RD1-score01= 3
+| RD1-seed02 = Q
+| RD1-team02 = {{PDCFlag|Joe Comito|avg=81.25}} 
+| RD1-score02= 1
+| RD1-team03 = {{PDCFlag|Nick Kenny|avg=87.66}}
+| RD1-score03= 3
+| RD1-seed04 = Q
+| RD1-team04 = {{PDCFlag|Stowe Buntz|avg=87.26}} 
+| RD1-score04= 0
+| RD1-team05 = {{PDCFlag|Jermaine Wattimena|avg=98.54}}
+| RD1-score05= 3
+| RD1-seed06 = Q
+| RD1-team06 = {{PDCFlag|Stefan Bellmont|avg=92.95}} 
+| RD1-score06= 0
+| RD1-team07 = {{PDCFlag|Wesley Plaisier|avg=82.56}}
+| RD1-score07= 3
+| RD1-seed08 = Q
+| RD1-team08 = {{PDCFlag|Ryusei Azemoto|avg=79.23}} 
+| RD1-score08= 2
+| RD1-team09 = {{PDCFlag|Alan Soutar|avg=84.19}}
+| RD1-score09= 1
+| RD1-seed10 = Q
+| RD1-team10 = {{PDCFlag|Kai Gotthardt|avg=89.10}} 
+| RD1-score10= 3
+| RD1-team11 = {{PDCFlag|Madars Razma|avg=90.65}}
+| RD1-score11= 3
+| RD1-seed12 = Q
+| RD1-team12 = {{PDCFlag|Christian Kist|avg=94.90}} 
+| RD1-score12= 1
+| RD1-team13 = {{PDCFlag|Connor Scutt|avg=101.92}}
+| RD1-score13= 3
+| RD1-seed14 = Q
+| RD1-team14 = {{PDCFlag|Ben Robb|avg=82.64}} 
+| RD1-score14= 0
+| RD1-team15 = {{PDCFlag|Luke Woodhouse|avg=94.38}}
+| RD1-score15= 3
+| RD1-seed16 = Q
+| RD1-team16 = {{PDCFlag|Lourence Ilagan|avg=81.11}}
+| RD1-score16= 0
+
+| RD2-seed01 = 1
+| RD2-team01 = {{PDCFlag|Luke Humphries|avg=90.79}}
+| RD2-score01 = 3
+| RD2-seed02 =
+| RD2-team02 = {{PDCFlag|Thibault Tricole|avg=85.62}}
+| RD2-score02= 0
+| RD2-seed03 = 32
+| RD2-team03 = {{PDCFlag|Raymond van Barneveld|avg=84.64}}
+| RD2-score03=1
+| RD2-seed04 =
+| RD2-team04 = {{PDCFlag|Nick Kenny|avg=86.39}}
+| RD2-score04=3
+| RD2-seed05 = 16
+| RD2-team05 = {{PDCFlag|James Wade|avg=97.01}}
+| RD2-score05= 0
+| RD2-seed06 =
+| RD2-team06 = {{PDCFlag|Jermaine Wattimena|avg=99.17}}
+| RD2-score06= 3
+| RD2-seed07 = 17
+| RD2-team07 = {{PDCFlag|Peter Wright|avg=89.63}}
+| RD2-score07= 3
+| RD2-seed08 =
+| RD2-team08 = {{PDCFlag|Wesley Plaisier|avg=93.77}}
+| RD2-score08= 1
+| RD2-seed09 = 8
+| RD2-team09 = {{PDCFlag|Stephen Bunting|avg=92.12}}
+| RD2-score09= 3
+| RD2-seed10 = Q
+| RD2-team10 = {{PDCFlag|Kai Gotthardt|avg=89.40}}
+| RD2-score10= 1
+| RD2-seed11 = 25
+| RD2-team11 = {{PDCFlag|Dirk van Duijvenbode|avg=88.72}}
+| RD2-score11= 1
+| RD2-seed12 =
+| RD2-team12 = {{PDCFlag|Madars Razma|avg=91.33}}
+| RD2-score12= 3
+| RD2-seed13 = 9
+| RD2-team13 = {{PDCFlag|Damon Heta|avg=97.96}}
+| RD2-score13=3
+| RD2-seed14 =
+| RD2-team14 = {{PDCFlag|Connor Scutt|avg=98.47}}
+| RD2-score14=1
+| RD2-seed15 = 24
+| RD2-team15 = {{PDCFlag|Mike De Decker|avg=87.38}}
+| RD2-score15= 1
+| RD2-seed16 =
+| RD2-team16 = {{PDCFlag|Luke Woodhouse|avg=88.38}}
+| RD2-score16= 3
+
+| RD3-seed01 = 1
+| RD3-team01 = {{PDCFlag|Luke Humphries|avg=98.59}}
+| RD3-score01= 4
+| RD3-seed02 =
+| RD3-team02 = {{PDCFlag|Nick Kenny|avg=93.42}}
+| RD3-score02= 0
+| RD3-seed03 =
+| RD3-team03 = {{PDCFlag|Jermaine Wattimena|avg=96.50}}
+| RD3-score03= 2
+| RD3-seed04 = 17
+| RD3-team04 = {{PDCFlag|Peter Wright|avg=96.19}}
+| RD3-score04= 4
+| RD3-seed05 = 8
+| RD3-team05 = {{PDCFlag|Stephen Bunting|avg=100.06}}
+| RD3-score05= 4
+| RD3-seed06 =
+| RD3-team06 = {{PDCFlag|Madars Razma|avg=90.92}}
+| RD3-score06= 1
+| RD3-seed07 = 9
+| RD3-team07 ={{PDCFlag|Damon Heta|avg=89.69}}
+| RD3-score07= 3
+| RD3-seed08 =
+| RD3-team08 = {{PDCFlag|Luke Woodhouse|avg=92.34}}
+| RD3-score08= 4
+
+| RD4-seed01 = 1
+| RD4-team01 = {{PDCFlag|Luke Humphries|avg=99.23}}
+| RD4-score01= 1
+| RD4-seed02 = 17
+| RD4-team02 = {{PDCFlag|Peter Wright|avg=100.93}}
+| RD4-score02= 4
+| RD4-seed03 = 8
+| RD4-team03 = {{PDCFlag|Stephen Bunting|avg=96.78}}
+| RD4-score03= 4
+| RD4-seed04 =
+| RD4-team04 = {{PDCFlag|Luke Woodhouse|avg=90.61}}
+| RD4-score04= 0
+
+| RD5-seed01 = 17
+| RD5-team01 ={{PDCFlag|Peter Wright|avg=92.41}}
+| RD5-score01= 2
+| RD5-seed02 = 8
+| RD5-team02 = {{PDCFlag|Stephen Bunting|avg=95.55}}
+| RD5-score02= 5
+}}
+
+====Section 2====
+{{24TeamBracket-Byes
+| RD1-shift = -1
+| RD1 = {{nowrap|1='''First round''' <br />''(best of 5 sets)'' <br /> 15–21 December}}<br /><ref name="Day One"/><ref name=BBCD1/><ref name="Day Two"/><ref name=GuardianDayTwo/><ref name ="Day Three"/><ref name ="Day Four"/><ref name ="Day Five"/><ref name ="Day Six"/><ref name ="Day Seven"/><ref name ="Day Eight"/><ref name="Day Nine"/>
+| RD2 = {{nowrap|1='''Second round''' <br />''(best of 5 sets)'' <br /> 15–23 December}}<br /><ref name="Day One"/><ref name=BBCD1/><ref name="Day Two"/><ref name=GuardianDayTwo/><ref name ="Day Three"/><ref name ="Day Four"/><ref name ="Day Five"/><ref name ="Day Six"/><ref name ="Day Seven"/><ref name ="Day Eight"/><ref name="Day Nine"/>
+| RD3 = {{nowrap|1='''Third round''' <br />''(best of 7 sets)'' <br /> 27–29 December}}<br><ref name ="Day Ten"/>
+| RD4 = {{nowrap|1='''Fourth round''' <br />''(best of 7 sets)'' <br /> 29–30 December}}
+| RD5 = {{nowrap|1='''Quarter-finals''' <br />''(best of 9 sets)'' <br /> 1 January}}
+
+| team-width=200
+| score-width=50
+| boldwinner=high
+
+| RD1-team01 = {{PDCFlag|Ryan Meikle|avg=83.53}}
+| RD1-score01= 3
+| RD1-seed02 = Q
+| RD1-team02 = {{PDCFlag|Fallon Sherrock|avg=81.81}} 
+| RD1-score02= 2
+| RD1-team03 = {{PDCFlag|Ian White|b=1}}
+| RD1-score03= '''[[Walkover|w/o]]'''
+| RD1-seed04 = Q
+| RD1-team04 = {{PDCFlag|Sandro Eric Sosing}}
+| RD1-score04= w/d
+| RD1-team05 = {{PDCFlag|Ryan Joyce|avg=92.97}}
+| RD1-score05= 3
+| RD1-seed06 = Q
+| RD1-team06 = {{PDCFlag|Darius Labanauskas|avg=89.62}} 
+| RD1-score06= 1
+| RD1-team07 = {{PDCFlag|Mensur Suljovic|avg=88.44}}
+| RD1-score07= 2
+| RD1-seed08 = Q
+| RD1-team08 = {{PDCFlag|Matt Campbell|avg=93.31}} 
+| RD1-score08= 3
+| RD1-team09 = {{PDCFlag|Scott Williams|avg=96.24}}
+| RD1-score09= 3
+| RD1-seed10 = Q
+| RD1-team10 = {{PDCFlag|Niko Springer|avg=98.92}} 
+| RD1-score10= 1
+| RD1-team11 = {{PDCFlag|Ricardo Pietreczko|avg=88.68}}
+| RD1-score11= 3
+| RD1-seed12 = Q
+| RD1-team12 = {{PDCFlag|Xiaochen Zong|avg=84.03}} 
+| RD1-score12= 0
+| RD1-team13 = {{PDCFlag|Cameron Menzies|avg=83.77}}
+| RD1-score13= 1
+| RD1-seed14 = Q
+| RD1-team14 = {{PDCFlag|Leonard Gates|avg=82.96}} 
+| RD1-score14= 3
+| RD1-team15 = {{PDCFlag|Martin Lukeman|avg=86.66}}
+| RD1-score15= 3
+| RD1-seed16 = Q
+| RD1-team16 = {{PDCFlag|Nitin Kumar|avg=85.77}} 
+| RD1-score16= 1
+
+| RD2-seed01 = 4
+| RD2-team01 = {{PDCFlag|Luke Littler|avg=100.85}}
+| RD2-score01 = 3
+| RD2-seed02 = &nbsp;
+| RD2-team02 = {{PDCFlag|Ryan Meikle|avg=91.93}}
+| RD2-score02= 1
+| RD2-seed03 = 29
+| RD2-team03 = {{PDCFlag|Ritchie Edhouse|avg=84.19}}
+| RD2-score03= 1
+| RD2-seed04 = &nbsp;
+| RD2-team04 = {{PDCFlag|Ian White|avg=88.86}}
+| RD2-score04= 3
+| RD2-seed05 = 13
+| RD2-team05 = {{PDCFlag|Danny Noppert|avg=93.91}}
+| RD2-score05=1
+| RD2-seed06 = &nbsp;
+| RD2-team06 = {{PDCFlag|Ryan Joyce|avg=93.88}}
+| RD2-score06=3
+| RD2-seed07 = 20
+| RD2-team07 = {{PDCFlag|Ryan Searle|avg=99.38}}
+| RD2-score07= 3
+| RD2-seed08 = Q
+| RD2-team08 = {{PDCFlag|Matt Campbell|avg=90.66}}
+| RD2-score08= 0
+| RD2-seed09 = 5
+| RD2-team09 = {{PDCFlag|Rob Cross|avg=88.64}}
+| RD2-score09= 1
+| RD2-seed10 = &nbsp;
+| RD2-team10 = {{PDCFlag|Scott Williams|avg=87.90}}
+| RD2-score10= 3
+| RD2-seed11 = 28
+| RD2-team11 = {{PDCFlag|Gian van Veen|avg=91.99}}
+| RD2-score11= 1
+| RD2-seed12 = &nbsp;
+| RD2-team12 = {{PDCFlag|Ricardo Pietreczko|avg=91.64}}
+| RD2-score12= 3
+| RD2-seed13 = 12
+| RD2-team13 = {{PDCFlag|Nathan Aspinall|avg=88.03}}
+| RD2-score13= 3
+| RD2-seed14 = Q
+| RD2-team14 = {{PDCFlag|Leonard Gates|avg=83.41}} 
+| RD2-score14= 1
+| RD2-seed15 = 21
+| RD2-team15 = {{PDCFlag|Andrew Gilding|avg=92.65}}
+| RD2-score15= 3
+| RD2-seed16 = &nbsp;
+| RD2-team16 = {{PDCFlag|Martin Lukeman|avg=91.28}}
+| RD2-score16= 1
+
+| RD3-seed01 = 4
+| RD3-team01 = {{PDCFlag|Luke Littler|avg=97.84}}
+| RD3-score01= 4
+| RD3-seed02 = &nbsp;
+| RD3-team02 = {{PDCFlag|Ian White|avg=96.40}}
+| RD3-score02= 1
+| RD3-seed03 = &nbsp;
+| RD3-team03 = {{PDCFlag|Ryan Joyce|avg=97.40}}
+| RD3-score03= 4
+| RD3-seed04 = 20
+| RD3-team04 = {{PDCFlag|Ryan Searle|avg=100.97}}
+| RD3-score04= 3
+| RD3-seed05 = &nbsp;
+| RD3-team05 = {{PDCFlag|Scott Williams|avg=94.29}}
+| RD3-score05= 1
+| RD3-seed06 = &nbsp;
+| RD3-team06 = {{PDCFlag|Ricardo Pietreczko|avg=97.00}}
+| RD3-score06= 4
+| RD3-seed07 = 12
+| RD3-team07 = {{PDCFlag|Nathan Aspinall|avg=92.17}}
+| RD3-score07= 4
+| RD3-seed08 = 21
+| RD3-team08 = {{PDCFlag|Andrew Gilding|avg=86.85}}
+| RD3-score08= 0
+
+| RD4-seed01 = 4
+| RD4-team01 = {{PDCFlag|Luke Littler|avg=103.14}}
+| RD4-score01= 4
+| RD4-seed02 = &nbsp;
+| RD4-team02 = {{PDCFlag|Ryan Joyce|avg=97.73}}
+| RD4-score02= 3
+| RD4-seed03 = &nbsp;
+| RD4-team03 = {{PDCFlag|Ricardo Pietreczko|avg=78.46}}
+| RD4-score03= 0
+| RD4-seed04 = 12
+| RD4-team04 = {{PDCFlag|Nathan Aspinall|avg=94.28}}
+| RD4-score04= 4
+
+| RD5-seed01 = 4
+| RD5-team01 = {{PDCFlag|Luke Littler|avg=101.54}}
+| RD5-score01= 5
+| RD5-seed02 = 12
+| RD5-team02 = {{PDCFlag|Nathan Aspinall|avg=96.31}}
+| RD5-score02= 2
+}}
+
+===Bottom half===
+====Section 3====
+{{24TeamBracket-Byes
+| RD1-shift = -1
+| RD1 = {{nowrap|1='''First round''' <br />''(best of 5 sets)'' <br /> 15–21 December}}<br /><ref name="Day One"/><ref name=BBCD1/><ref name="Day Two"/><ref name=GuardianDayTwo/><ref name ="Day Three"/><ref name ="Day Four"/><ref name ="Day Five"/><ref name ="Day Six"/><ref name ="Day Seven"/><ref name ="Day Eight"/><ref name="Day Nine"/>
+| RD2 = {{nowrap|1='''Second round''' <br />''(best of 5 sets)'' <br /> 15–23 December}}<br /><ref name="Day One"/><ref name=BBCD1/><ref name="Day Two"/><ref name=GuardianDayTwo/><ref name ="Day Three"/><ref name ="Day Four"/><ref name ="Day Five"/><ref name ="Day Six"/><ref name ="Day Seven"/><ref name ="Day Eight"/><ref name="Day Nine"/>
+| RD3 = {{nowrap|1='''Third round''' <br />''(best of 7 sets)'' <br /> 27–29 December}}<br><ref name ="Day Ten"/>
+| RD4 = {{nowrap|1='''Fourth round''' <br />''(best of 7 sets)'' <br /> 29–30 December}}
+| RD5 = {{nowrap|1='''Quarter-finals''' <br />''(best of 9 sets)'' <br /> 1 January}}
+
+| team-width=200
+| score-width=50
+| boldwinner=high
+
+| RD1-team01 = {{PDCFlag|Kevin Doets|avg=88.13}}
+| RD1-score01= 3
+| RD1-seed02 = Q
+| RD1-team02 = {{PDCFlag|Noa-Lynn van Leuven|avg=87.02}}
+| RD1-score02= 1
+| RD1-team03 = {{PDCFlag|Richard Veenstra|avg=86.00}}
+| RD1-score03= 0
+| RD1-seed04 = Q
+| RD1-team04 = {{PDCFlag|Alexis Toylo|avg=86.03}} 
+| RD1-score04= 3
+| RD1-team05 = {{PDCFlag|Stephen Burton|avg=75.63}}
+| RD1-score05= 0
+| RD1-seed06 = Q
+| RD1-team06 = {{PDCFlag|Alexander Merkx|avg=78.41}}
+| RD1-score06= 3
+| RD1-team07 = {{PDCFlag|Karel Sedláček|avg=82.58}}
+| RD1-score07= 0
+| RD1-seed08 = Q
+| RD1-team08 = {{PDCFlag|Rhys Griffin|avg=91.10}}
+| RD1-score08= 3
+| RD1-team09 = {{PDCFlag|Mickey Mansell|avg=81.34}}
+| RD1-score09= 3
+| RD1-seed10 = Q
+| RD1-team10 = {{PDCFlag|Tomoya Goto|avg=82.22}} 
+| RD1-score10= 1
+| RD1-team11 = {{PDCFlag|Florian Hempel|avg=92.73}}
+| RD1-score11= 3
+| RD1-seed12 = Q
+| RD1-team12 = {{PDCFlag|Jeffrey de Zwaan|avg=94.36}} 
+| RD1-score12= 1
+| RD1-team13 = {{PDCFlag|Kim Huybrechts|avg=96.92}}
+| RD1-score13= 1
+| RD1-seed14 = Q
+| RD1-team14 = {{PDCFlag|Keane Barry|avg=94.97}} 
+| RD1-score14= 3
+| RD1-team15 = {{PDCFlag|Wessel Nijman|avg=94.83}}
+| RD1-score15= 3
+| RD1-seed16 = Q
+| RD1-team16 = {{PDCFlag|Cameron Carolissen|avg=95.90}}
+| RD1-score16= 2
+
+| RD2-seed01 = 2
+| RD2-team01 = {{PDCFlag|Michael Smith|avg=96.93}}
+| RD2-score01 = 2
+| RD2-seed02 = 
+| RD2-team02 = {{PDCFlag|Kevin Doets|avg=96.90}}
+| RD2-score02 = 3
+| RD2-seed03 = 31
+| RD2-team03 = {{PDCFlag|Krzysztof Ratajski|avg=95.32}}
+| RD2-score03= 3
+| RD2-seed04 = Q
+| RD2-team04 = {{PDCFlag|Alexis Toylo|avg=96.39}}
+| RD2-score04= 1
+| RD2-seed05 = 15
+| RD2-team05 = {{PDCFlag|Chris Dobey|avg=95.62}}
+| RD2-score05=3
+| RD2-seed06 = Q
+| RD2-team06 = {{PDCFlag|Alexander Merkx|avg=90.54}}
+| RD2-score06=1
+| RD2-seed07 = 18
+| RD2-team07 = {{PDCFlag|Josh Rock|avg=87.13}}
+| RD2-score07= 3
+| RD2-seed08 = Q
+| RD2-team08 = {{PDCFlag|Rhys Griffin|avg=85.99}}
+| RD2-score08= 0
+| RD2-seed09 = 7
+| RD2-team09 = {{PDCFlag|Jonny Clayton|avg=92.45}}
+| RD2-score09= 3
+| RD2-seed10 =
+| RD2-team10 = {{PDCFlag|Mickey Mansell|avg=84.26}}
+| RD2-score10= 2
+| RD2-seed11 = 26
+| RD2-team11 = {{PDCFlag|Daryl Gurney|avg=98.31}}
+| RD2-score11= 3
+| RD2-seed12 =
+| RD2-team12 = {{PDCFlag|Florian Hempel|avg=96.44}}
+| RD2-score12= 2
+| RD2-seed13 = 10
+| RD2-team13 = {{PDCFlag|Gerwyn Price|avg=91.32}}
+| RD2-score13= 3
+| RD2-seed14 = Q
+| RD2-team14 = {{PDCFlag|Keane Barry|avg=86.81}}
+| RD2-score14= 0
+| RD2-seed15 = 23
+| RD2-team15 = {{PDCFlag|Joe Cullen|avg=98.18}}
+| RD2-score15= 3
+| RD2-seed16 = 
+| RD2-team16 = {{PDCFlag|Wessel Nijman|avg=98.01}}
+| RD2-score16= 0
+
+| RD3-seed01 = &nbsp;
+| RD3-team01 = {{PDCFlag|Kevin Doets|avg=89.67}}
+| RD3-score01=4 
+| RD3-seed02 = 31
+| RD3-team02 = {{PDCFlag|Krzysztof Ratajski|avg=94.55}}
+| RD3-score02=3
+| RD3-seed03 = 15
+| RD3-team03 = {{PDCFlag|Chris Dobey|avg=97.29}}
+| RD3-score03= 4
+| RD3-seed04 = 18
+| RD3-team04 = {{PDCFlag|Josh Rock|avg=95.99}}
+| RD3-score04= 2
+| RD3-seed05 = 7
+| RD3-team05 = {{PDCFlag|Jonny Clayton|avg=90.11}}
+| RD3-score05= 4
+| RD3-seed06 = 26
+| RD3-team06 = {{PDCFlag|Daryl Gurney|avg=92.60}}
+| RD3-score06= 3
+| RD3-seed07 = 10
+| RD3-team07 = {{PDCFlag|Gerwyn Price|avg=92.60}}
+| RD3-score07= 4
+| RD3-seed08 = 23
+| RD3-team08 = {{PDCFlag|Joe Cullen|avg=92.77}}
+| RD3-score08= 3
+
+| RD4-seed01 =
+| RD4-team01 ={{PDCFlag|Kevin Doets|avg=88.17}}
+| RD4-score01= 3
+| RD4-seed02 = 15
+| RD4-team02 = {{PDCFlag|Chris Dobey|avg=91.59}}
+| RD4-score02= 4
+| RD4-seed03 = 7
+| RD4-team03 = {{PDCFlag|Jonny Clayton|avg=91.73}}
+| RD4-score03= 2
+| RD4-seed04 = 10
+| RD4-team04 = {{PDCFlag|Gerwyn Price|avg=92.28}}
+| RD4-score04= 4
+
+| RD5-seed01 = 15
+| RD5-team01 = {{PDCFlag|Chris Dobey|avg=95.38}}
+| RD5-score01= 5
+| RD5-seed02 = 10
+| RD5-team02 = {{PDCFlag|Gerwyn Price|avg=92.74}}
+| RD5-score02= 3
+}}
+
+====Section 4====
+{{24TeamBracket-Byes
+| RD1-shift = -1
+| RD1 = {{nowrap|1='''First round''' <br />''(best of 5 sets)'' <br /> 15–21 December}}<br /><ref name="Day One"/><ref name=BBCD1/><ref name="Day Two"/><ref name=GuardianDayTwo/><ref name ="Day Three"/><ref name ="Day Four"/><ref name ="Day Five"/><ref name ="Day Six"/><ref name ="Day Seven"/><ref name ="Day Eight"/><ref name ="Day Nine"/>
+| RD2 = {{nowrap|1='''Second round''' <br />''(best of 5 sets)'' <br /> 15–23 December}}<br ><ref name="Day One"/><ref name=BBCD1/><ref name="Day Two"/><ref name=GuardianDayTwo/><ref name ="Day Three"/><ref name ="Day Four"/><ref name ="Day Five"/><ref name ="Day Six"/><ref name ="Day Seven"/><ref name ="Day Eight"/><ref name="Day Nine"/>
+| RD3 = {{nowrap|1='''Third round''' <br />''(best of 7 sets)'' <br /> 27–29 December}}<br><ref name ="Day Ten"/>
+| RD4 = {{nowrap|1='''Fourth round''' <br />''(best of 7 sets)'' <br /> 29–30 December}}
+| RD5 = {{nowrap|1='''Quarter-finals''' <br />''(best of 9 sets)'' <br /> 1 January}}
+
+| team-width=200
+| score-width=50
+| boldwinner=high
+
+| RD1-team01 = {{PDCFlag|James Hurrell|avg=88.75}}
+| RD1-score01= 3
+| RD1-seed02 = Q
+| RD1-team02 = {{PDCFlag|Jim Long|avg=79.17}} 
+| RD1-score02= 0
+| RD1-team03 = {{PDCFlag|Chris Landman|avg=80.71}}
+| RD1-score03= 1
+| RD1-seed04 = Q
+| RD1-team04 = {{PDCFlag|Lok Yin Lee|avg=84.40}}
+| RD1-score04= 3
+| RD1-team05 = {{PDCFlag|Jeffrey de Graaf|avg=92.30}} 
+| RD1-score05= 3
+| RD1-seed06 = Q
+| RD1-team06 = {{PDCFlag|Rashad Sweeting|avg=82.88}} 
+| RD1-score06= 1
+| RD1-team07 = {{PDCFlag|Jim Williams|avg=94.10}}
+| RD1-score07= 2
+| RD1-seed08 = Q
+| RD1-team08 = {{PDCFlag|Paolo Nebrida|avg=86.63}} 
+| RD1-score08= 3
+| RD1-team09 = {{PDCFlag|Ricky Evans|avg=86.23}}
+| RD1-score09= 3
+| RD1-seed10 = Q
+| RD1-team10 = {{PDCFlag|Gordon Mathers|avg=87.57}}
+| RD1-score10= 2
+| RD1-team11 = {{PDCFlag|Niels Zonneveld|avg=93.19}}
+| RD1-score11= 1
+| RD1-seed12 = Q
+| RD1-team12 = {{PDCFlag|Robert Owen|avg=91.64}}
+| RD1-score12= 3
+| RD1-team13 = {{PDCFlag|William O'Connor|avg=85.92}}
+| RD1-score13= 1
+| RD1-seed14 = Q
+| RD1-team14 = {{PDCFlag|Dylan Slevin|avg=86.35}} 
+| RD1-score14= 3
+| RD1-team15 = {{PDCFlag|Callan Rydz|avg=107.06}}
+| RD1-score15= 3
+| RD1-seed16 = Q
+| RD1-team16 = {{PDCFlag|Romeo Grbavac|avg=97.92}} 
+| RD1-score16= 0
+
+| RD2-seed01 = 3
+| RD2-team01 = {{PDCFlag|Michael Van Gerwen|avg=94.85}}
+| RD2-score01 = 3
+| RD2-seed02 =
+| RD2-team02 = {{PDCFlag|James Hurrell|avg=89.32}}
+| RD2-score02= 0
+| RD2-seed03 = 30
+| RD2-team03 = {{PDCFlag|Brendan Dolan|avg=92.02}}
+| RD2-score03= 3
+| RD2-seed04 = Q
+| RD2-team04 = {{PDCFlag|Lok Yin Lee|avg=83.20}}
+| RD2-score04= 0
+| RD2-seed05 = 14
+| RD2-team05 = {{PDCFlag|Gary Anderson|avg=92.51}}
+| RD2-score05= 0
+| RD2-seed06 =
+| RD2-team06 = {{PDCFlag|Jeffrey De Graaf|avg=95.56}}
+| RD2-score06= 3
+| RD2-seed07 = 19
+| RD2-team07 = {{PDCFlag|Ross Smith|avg=89.79}}
+| RD2-score07=  0
+| RD2-seed08 = Q
+| RD2-team08 = {{PDCFlag|Paolo Nebrida|avg=91.07}}
+| RD2-score08= 3
+| RD2-seed09 = 6
+| RD2-team09 = {{PDCFlag|Dave Chisnall|avg=94.54}}
+| RD2-score09= 2
+| RD2-seed10 =
+| RD2-team10 = {{PDCFlag|Ricky Evans|avg=94.30}}
+| RD2-score10= 3
+| RD2-seed11 = 27
+| RD2-team11 = {{PDCFlag|Gabriel Clemens|avg=92.39}}
+| RD2-score11= 1
+| RD2-seed12 = Q
+| RD2-team12 = {{PDCFlag|Robert Owen|avg=98.97}}
+| RD2-score12= 3
+| RD2-seed13 = 11
+| RD2-team13 = {{PDCFlag|Dimitri Van den Bergh|avg=96.00}}
+| RD2-score13=3
+| RD2-seed14 = Q
+| RD2-team14 = {{PDCFlag|Dylan Slevin|avg=95.02}}
+| RD2-score14=0
+| RD2-seed15 = 22
+| RD2-team15 = {{PDCFlag|Martin Schindler|avg=89.37}}
+| RD2-score15= 0
+| RD2-seed16 =
+| RD2-team16 = {{PDCFlag|Callan Rydz|avg=91.05}}
+| RD2-score16= 3
+
+| RD3-seed01 = 3
+| RD3-team01 = {{PDCFlag|Michael van Gerwen|avg=97.01}}
+| RD3-score01= 4
+| RD3-seed02 = 30
+| RD3-team02 = {{PDCFlag|Brendan Dolan|avg=96.08}}
+| RD3-score02= 2
+| RD3-seed03 =
+| RD3-team03 = {{PDCFlag|Jeffrey de Graaf|avg=89.99}}
+| RD3-score03= 4
+| RD3-seed04 = Q
+| RD3-team04 = {{PDCFlag|Paolo Nebrida|avg=83.01}}
+| RD3-score04= 1
+| RD3-seed05 =
+| RD3-team05 = {{PDCFlag|Ricky Evans|avg=86.84}}
+| RD3-score05= 2
+| RD3-seed06 = Q
+| RD3-team06 = {{PDCFlag|Robert Owen|avg=92.92}}
+| RD3-score06= 4
+| RD3-seed07 = 11
+| RD3-team07 = {{PDCFlag|Dimitri Van den Bergh|avg=94.79}}
+| RD3-score07= 0
+| RD3-seed08 = 
+| RD3-team08 = {{PDCFlag|Callan Rydz|avg=105.31}}
+| RD3-score08= 4
+
+| RD4-seed01 = 3
+| RD4-team01 = {{PDCFlag|Michael van Gerwen|avg=101.98}}
+| RD4-score01= 4
+| RD4-seed02 =
+| RD4-team02 = {{PDCFlag|Jeffrey de Graaf|avg=91.94}}
+| RD4-score02= 2
+| RD4-seed03 = Q
+| RD4-team03 = {{PDCFlag|Robert Owen|avg=94.07}}
+| RD4-score03= 3
+| RD4-seed04 = 
+| RD4-team04 = {{PDCFlag|Callan Rydz|avg=97.38}}
+| RD4-score04= 4
+
+| RD5-seed01 = 3
+| RD5-team01 = {{PDCFlag|Michael van Gerwen|avg=103.10}}
+| RD5-score01= 5
+| RD5-seed02 = &nbsp;
+| RD5-team02 = {{PDCFlag|Callan Rydz|avg=103.88}}
+| RD5-score02= 3
+}}
+
+==Final==
+{| class="wikitable" style="font-size: 90%; margin: 1em auto 1em auto;"
+|-
+| colspan="3" align="center" bgcolor="#ffd700" | Best of 13 sets<br /> Referee(s): [[Kirk Bevins]] & [[Huw Ware]] <br />[[Alexandra Palace]], London, England, 3 January 2025
+|-
+| width="230" align="right" | '''{{PDCFlagR|Luke Littler}}'''
+| width="100" align="center" |  '''7'''–3
+| width="230" | {{PDCFlag|Michael van Gerwen}}
+|-
+| colspan="3" align="center" style="font-size: 100%" | '''3'''–1, '''3'''–0, '''3'''–1, '''3'''–1, 1–'''3''', '''3'''–2, 2–'''3''', '''3'''–0, 1–'''3''', '''3'''–0
+|-
+| align="right" | 102.73
+| align="center" | Average (3 darts)
+| 100.69
+|-
+| align="right" | 52
+| align="center" | 100+ scores
+| 44
+|-
+| align="right" | 23
+| align="center" | 140+ scores
+| 22
+|-
+| align="right" | 12
+| align="center" | 180 scores
+| 13
+|-
+| align="right" | 130
+| align="center" | Highest checkout
+| 132
+|-
+| align="right" | 2
+| align="center" | 100+ Checkouts
+| 1
+|-
+| align="right" | 25/45 (55.55%)
+| align="center" | Checkout summary
+| 14/38 (36.84%)
+|}
+
+== Highest averages ==
+
+This table shows all [[High dart average|averages over 100]] achieved by players throughout the tournament.<ref name=SLifeFormat/><ref>{{Cite web |title=Results of PDC World Championship 2025 – Mastercaller |url=https://mastercaller.com/tournaments/pdc-world-championship/2025/results |access-date=16 December 2024 |website=mastercaller.com}}</ref> For players with multiple high averages, this is indicated by the number in brackets.
+
+The three-dart average is the most cited statistic in darts matches as it gives a rough estimate of a player's form.<ref>{{Cite web |last=Shaun |date=10 August 2022 |title=How To Calculate Your Darts Average |url=https://darthelp.com/guides/how-to-calculate-your-darts-average/ |access-date=28 December 2023 |website=DartHelp.com}}</ref><ref>{{Cite web |last=Nicholson |first=Paul |date=29 November 2023 |title=Averages in darts: Should players focus on improving them, are they useful or misleading, and is there a better alternative? |url=https://www.sportinglife.com/darts/news/averages-in-darts-should-players-focus-on-improving-them-are-they-useful-or-misleading-and-is-there-a-better-alternative/198610 |access-date=28 December 2023 |website=Sporting Life}}</ref> For comparison with previous years, see the [[PDC World Darts Championship#Averages|highest ever recorded averages]] in the World Darts Championship.
+
+{| class ="wikitable sortable"
+|-
+! Player
+! Round
+! Average
+! Opponent
+! Result
+|-
+|{{PDCFlag|Callan Rydz}}
+|1
+|107.06
+|{{PDCFlag|Romeo Grbavac}}
+| style="background:#CCFFCC;" |'''Won'''
+|-
+|{{PDCFlag|Luke Littler}}
+|SF
+|105.48
+|{{PDCFlag|Stephen Bunting}}
+| style="background:#CCFFCC;" |'''Won'''
+|-
+|{{PDCFlag|Callan Rydz}} (2)
+|3
+|105.31
+|{{PDCFlag|Dimitri Van den Bergh}}
+| style="background:#CCFFCC;" |'''Won'''
+|-
+|{{PDCFlag|Callan Rydz}} (3)
+|QF
+|103.88
+|{{PDCFlag|Michael van Gerwen}}
+| style="background:pink;" |'''Lost'''
+|-
+|{{PDCFlag|Luke Littler}} (2)
+|4
+|103.14
+|{{PDCFlag|Ryan Joyce}}
+| style="background:#CCFFCC;" |'''Won'''
+|-
+|{{Nowrap|{{PDCFlag|Michael van Gerwen}}}}
+|QF
+|103.10
+|{{PDCFlag|Callan Rydz}}
+| style="background:#CCFFCC;" |'''Won'''
+|-
+|{{PDCFlag|Luke Littler}} (3)
+|F
+|102.73
+|{{PDCFlag|Michael van Gerwen}}
+| style="background:#CCFFCC;" |'''Won'''
+|-
+|{{PDCFlag|Michael van Gerwen}} (2)
+|4
+|101.98
+|{{PDCFlag|Jeffrey de Graaf}}
+| style="background:#CCFFCC;" |'''Won'''
+|-
+|{{PDCFlag|Connor Scutt}}
+|1
+|101.92
+|{{PDCFlag|Ben Robb}}
+| style="background:#CCFFCC;" |'''Won'''
+|-
+|{{PDCFlag|Luke Littler}} (4)
+|QF
+|101.54
+|{{PDCFlag|Nathan Aspinall}}
+| style="background:#CCFFCC;" |'''Won'''
+|-
+|{{PDCFlag|Ryan Searle}}
+|3
+|100.97
+|{{PDCFlag|Ryan Joyce}}
+| style="background:pink;" |'''Lost'''
+|-
+|{{PDCFlag|Peter Wright}}
+|4
+|100.93
+|{{PDCFlag|Luke Humphries}}
+| style="background:#CCFFCC;" |'''Won'''
+|-
+|{{PDCFlag|Luke Littler}} (5)
+|2
+|100.85
+|{{PDCFlag|Ryan Meikle}}
+| style="background:#CCFFCC;" |'''Won'''
+|-
+|{{Nowrap|{{PDCFlag|Michael van Gerwen}} (3)}}
+|F
+|100.69
+|Rowspan=2|{{PDCFlag|Luke Littler}}
+|style="background:pink;" |'''Lost'''
+|-
+|{{PDCFlag|Stephen Bunting}}
+|SF
+|100.10
+| style="background:pink;" |'''Lost'''
+|-
+|{{PDCFlag|Stephen Bunting}} (2)
+|3
+|100.06
+|{{PDCFlag|Madars Razma}}
+| style="background:#CCFFCC;" |'''Won'''
+|}
+
+==Media coverage==
+In the United Kingdom, [[Sky Sports]] is the TV broadcaster for the coverage, with the event airing on a dedicated channel which replaced its [[Sky Sports F1]] channel for the duration of the tournament.<ref>{{cite web |last=Harden |first=Oliver |date=17 December 2024 |url=https://www.planetf1.com/news/sky-f1-replaced-darts-channel-coverage-schedule |title=Sky F1 taken off air in surprise change as darts takes centre stage |access-date=3 January 2025 |website=PlanetF1.com}}</ref> Sky Sports coverage was presented by Emma Paton, Anna Woolhouse and Michael Bridge with punditry and commentary coming from [[Stuart Pyke]], [[Rod Studd]], Dan Dawson, Abigail Davies, [[John Part]], [[Mark Webster (darts player)|Mark Webster]], [[Laura Turner (darts player)|Laura Turner]], and [[Glen Durrant]].<ref>{{cite web |last=Guyoncourt |first=Sally |date=17 December 2024 |title=World Darts Championship 2024–25 commentators and pundits on Sky Sports
+|url=https://inews.co.uk/sport/world-darts-championship-commentators-3428874 |publisher=iNews |access-date=3 January 2025}}</ref> [[Wayne Mardle]] was not present for the coverage due to the death of his wife prior to the start of the tournament.<ref>{{cite web |last=Veal |first=Jonathan |title=Wayne Mardle misses Sky's World Darts Championship coverage after wife's death |url=https://www.independent.co.uk/sport/darts/wayne-mardle-wife-death-sky-sports-b2664733.html |work=The Independent|date=15 December 2024}}</ref>
+
+[[Talksport]] also provided coverage of the event via their digital channel Talksport 2 with selected coverage on Talksport and the new Talksport darts YouTube channel.<ref>{{cite web |title=talksport extend rights for PDC darts |url=https://www.sportindustry.biz/news-categories/news/talksport-scores-darts-deal/ |website=Sports Industry |date=15 December 2023 |publisher=SIG}}</ref> Talksport coverage featured Ian Danter, [[Chris Mason (darts player)|Chris Mason]], [[Paul Nicholson (darts player)|Paul Nicholson]], Chris Murphy, Mark Wilson and Gabbie Partington.<ref>{{cite web |last=Brophy |first=Joe |date=2 January 2025 |title=When is Luke Littler's next PDC World Championship match and who will he face? Date, start time and talkSPORT coverage for final showdown |url=https://talksport.com/darts/2373573/luke-littler-next-match-pdc-world-championship-schedule-date-start-time-stephen-bunting/ |publisher=talkSPORT |access-date=3 January 2025}}</ref>
+
+==References==
+{{reflist}}
+
+{{World Darts Championship}}
+{{2024 in PDC darts}}
+{{2025 in PDC darts}}
+{{World championships in 2024}}
+{{World championships in 2025}}
+
+{{DEFAULTSORT:PDC World Darts Championship 2025}}
+[[Category:PDC World Darts Championships|2025]]
+[[Category:2024 in darts]]
+[[Category:2025 in darts]]
+[[Category:2024 in sport in London]]
+[[Category:2025 in sport in London]]
+[[Category:December 2024 sports events in the United Kingdom]]
+[[Category:January 2025 sports events in the United Kingdom]]
+[[Category:International sports competitions in London]]
+[[Category:Alexandra Palace]]
+[[Category:Sport in the London Borough of Haringey]]

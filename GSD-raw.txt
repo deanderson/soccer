@@ -1,0 +1,1273 @@
+{{Infobox individual darts tournament
+|tournament_name = 2024 Grand Slam of Darts
+|dates = 9–17 November 2024
+|venue = Aldersley Leisure Village
+|location = [[Wolverhampton]], England
+|organisation = [[Professional Darts Corporation]] (PDC)
+|format = Legs
+|prize_fund = £650,000
+|winners_share = £150,000
+|high_checkout = {{ubl|'''170'''| [[Danny Noppert]]|[[Stephen Bunting]]}}
+|nine_dart = 
+|winner = {{PDCFlag|Luke Littler|b=1}}
+|prev = [[2023 Grand Slam of Darts|2023]]
+|next = [[2025 Grand Slam of Darts|2025]]
+|image =
+}}
+The '''2024 Grand Slam of Darts''' (known for sponsorship reasons as the '''2024 Mr Vegas Grand Slam of Darts''') was a professional [[darts]] tournament that was held at Aldersley Leisure Village in [[Wolverhampton]], England from 9–17 November 2024.<ref>{{cite web |last=Phillips |first=Josh |date=11 September 2023 |title=2024 PDC calendar unveiled: New destinations & all midweek PCs confirmed |url=https://www.pdc.tv/news/2023/09/11/2024-pdc-calendar-unveiled-new-destinations-all-midweek-pcs-confirmed |archive-url=https://web.archive.org/web/20231017071058/https://www.pdc.tv/news/2023/09/11/2024-pdc-calendar-unveiled-new-destinations-all-midweek-pcs-confirmed |url-status=dead |archive-date=October 17, 2023 |website=[[Professional Darts Corporation]] |access-date=11 November 2023}}</ref> It was the eighteenth staging of the [[Grand Slam of Darts]] organised by the [[Professional Darts Corporation]].
+
+[[Luke Humphries]] was the defending champion, having defeated [[Rob Cross]] 16–8 in the [[2023 Grand Slam of Darts|2023 final]].<ref>{{cite web |date=19 November 2023 |title=Grand Slam of Darts: Luke Humphries beats Rob Cross 16-8 to win final |url=https://www.bbc.co.uk/sport/darts/67470522 |website=BBC Sport |access-date=3 March 2025}}</ref><ref>{{Cite web |last=Allen |first=Dave |title=Unstoppable Humphries races to Mr Vegas Grand Slam of Darts title |url=https://www.pdc.tv/news/2023/11/19/unstoppable-humphries-races-mr-vegas-grand-slam-darts-title |archive-url=https://web.archive.org/web/20231120120531/https://www.pdc.tv/news/2023/11/19/unstoppable-humphries-races-mr-vegas-grand-slam-darts-title |url-status=dead |archive-date=November 20, 2023 |website=PDC |access-date=20 November 2023 |date=19 November 2023}}</ref> He was eliminated in the group stage, after losing his first two matches.<ref>{{cite web |last=Wellens |first=Megan |date=11 November 2024 |title=Grand Slam of Darts 2024: Reigning champion Luke Humphries knocked out by James Wade as Luke Littler through to last 16 |url=https://www.skysports.com/darts/news/12288/13251913/grand-slam-of-darts-2024-reigning-champion-luke-humphries-knocked-out-by-james-wade |website=Sky Sports |access-date=3 March 2025}}</ref> [[Michael van Gerwen]] was eliminated in the group stage for the first time since [[2010 Grand Slam of Darts|2010]],<ref>{{cite web |last=Wellens |first=Megan |date=13 November 2024 |title=Grand Slam of Darts 2024: Michael van Gerwen and Michael Smith suffer shock early exits as Luke Littler shines |url=https://www.skysports.com/darts/news/12288/13253271/grand-slam-of-darts-2024-michael-van-gerwen-and-michael-smith-suffer-shock-early-exits-as-luke-littler-shines |website=Sky Sports |access-date=3 March 2025}}</ref> while [[2022 Grand Slam of Darts|2022]] champion [[Michael Smith (darts player)|Michael Smith]] was also unable to qualify from his group, meaning all former champions present at the tournament were eliminated before the knockout stage.<ref>{{cite web|title=De Decker and Joyce stun Smith and van Gerwen at Grand Slam of Darts.|URL=https://www.pdc.tv/news/2024/november/12/de-decker-joyce-stun-smith-van-gerwen-grand-slam-darts|access-date=12 November 2024|work=[[Professional Darts Corporation]]}}</ref>
+
+[[Luke Littler]] won the tournament, defeating [[Martin Lukeman]] 16–3 in the final for his first ranking major title.<ref name=BBCF>{{cite web |last=Matthews |first=Callum |date=17 November 2024 |title=Littler wins Grand Slam to go fifth in world rankings |url=https://www.bbc.co.uk/sport/darts/articles/c4g72n4d1kno |access-date=17 November 2024 |work=BBC Sport}}</ref>
+
+==Prize money==
+The prize fund for the Grand Slam remained the same as last year at £650,000.<ref>{{cite web |last=Johnson |first=Jack |date=17 November 2024 |title=Grand Slam of Darts 2024: Dates, schedule, results, prize money and how to follow as Luke Littler faces Martin Lukeman in final |url=https://talksport.com/darts/2227313/grand-slam-of-darts-2024-dates-groups-fixtures-schedule-prize-money-tv-channel/ |website=talkSPORT |access-date=3 March 2025}}</ref>
+
+{| class="wikitable"
+! colspan=2 | Position <small>(num. of players)</small>
+! Prize money<br /><small>(Total: £650,000)</small>
+|-
+|'''Winner'''
+| style="text-align:center" | <small>(1)</small>
+| style="text-align:center" | £150,000
+|-
+|'''Runner-up'''
+| style="text-align:center" | <small>(1)</small>
+| style="text-align:center" | £70,000
+|-
+|'''Semi-finalists'''
+| style="text-align:center" | <small>(2)</small>
+| style="text-align:center" | £50,000
+|-
+|'''Quarter-finalists'''
+| style="text-align:center" | <small>(4)</small>
+| style="text-align:center" | £25,000
+|-
+|'''Last 16'''
+| style="text-align:center" | <small>(8)</small>
+| style="text-align:center" | £12,250
+|-
+|'''Third in group'''
+| style="text-align:center" | <small>(8)</small>
+| style="text-align:center" | £8,000
+|-
+|'''Fourth in group'''
+| style="text-align:center" | <small>(8)</small>
+| style="text-align:center" | £5,000
+|-
+! colspan=3 |
+|-
+|'''Group winner bonus'''
+| style="text-align:center" | <small>(8)</small>
+| style="text-align:center" | £3,500
+|-
+|'''Nine Dart Finish'''
+| n/a
+| style="text-align:center" | £10,000
+|}
+
+==Qualification==
+The qualifying criteria for the Grand Slam were as follows:<ref>{{cite web |date=23 August 2024 |title=2024 Mr Vegas Grand Slam of Darts qualification latest |url=https://www.pdc.tv/news/2024/august/23/2024-mr-vegas-grand-slam-darts-qualification-latest |website=www.pdc.tv |access-date=23 Aug 2024}}</ref>
+
+* Finalists from PDC televised events over the previous twelve months (up to a maximum of 16 players),
+* Additional qualifiers (up to a maximum of 8 players),
+* European Tour events winners (to fill up to 24 players),
+* Players Championship event winners (to fill up to 24 players)
+
+The qualifiers were:<ref>{{cite web |last=Gorton |first=Josh |date=3 November 2024 |title=2024 Mr Vegas Grand Slam of Darts field confirmed |url=https://www.pdc.tv/news/2024/november/03/2024-mr-vegas-grand-slam-darts-field-confirmed |publisher=[[Professional Darts Corporation]] |access-date=3 November 2024}}</ref>
+
+===PDC Televised Event Finalists===
+{| class="wikitable"
+|-
+!width=300| Tournament
+!width=50| Year
+!width=80| Position
+!width=200| Player
+!rowspan=23 width=5|
+!width=200| Qualifiers
+|-
+| style="background:#ffdead;" | {{nowrap| '''[[PDC World Darts Championship]]'''}}
+| style="background:#ffdead;" | [[2024 PDC World Darts Championship|2024]]
+| Winner
+| {{PDCFlag|Luke Humphries|b=1}}
+| rowspan=22 | {{PDCFlag|Luke Humphries|b=1}}<br />{{PDCFlag|Luke Littler|b=1}}<br />{{PDCFlag|Mike De Decker|b=1}}<br />{{PDCFlag|Stephen Bunting|b=1}}<br />{{PDCFlag|Dimitri Van den Bergh|b=1|}}<br />{{PDCFlag|Ritchie Edhouse|b=1}}<br />{{PDCFlag|Michael Smith|b=1}}<br />{{PDCFlag|Rob Cross|b=1}}<br />{{PDCFlag|Michael van Gerwen|b=1}}<br />{{PDCFlag|Jermaine Wattimena|b=1}}<br />{{PDCFlag|Rowby-John Rodriguez|b=1}}<br />{{PDCFlag|Mensur Suljović|b=1}}<br /><br />
+|-
+| style="background:#ffdead;" | '''[[Grand Slam of Darts]]'''
+| style="background:#ffdead;" | [[2023 Grand Slam of Darts|2023]]
+| Winner
+| ''{{PDCFlag|Luke Humphries|nolink=1}}''
+|-
+| style="background:#ffdead;" | '''[[Premier League Darts]]'''
+| style="background:#ffdead;" | [[2024 Premier League Darts|2024]]
+| Winner
+| {{PDCFlag|Luke Littler|b=1}}
+|-
+| style="background:#ffdead;" | '''[[World Matchplay (darts)|World Matchplay]]'''
+| style="background:#ffdead;" | [[2024 World Matchplay|2024]]
+| Winner
+| ''{{PDCFlag|Luke Humphries|nolink=1}}''
+|-
+| style="background:#ffdead;" | '''[[World Grand Prix (darts)|World Grand Prix]]'''
+| style="background:#ffdead;" | [[2024 World Grand Prix (darts)|2024]]
+| Winner
+| {{PDCFlag|Mike De Decker|b=1}}
+|-
+| style="background:#ffdead;" | '''[[Masters (darts)|Masters]]'''
+| style="background:#ffdead;" | [[2024 Masters (darts)|2024]]
+| Winner
+| {{PDCFlag|Stephen Bunting|b=1}}
+|-
+| style="background:#ffdead;" | '''[[UK Open]]'''
+| style="background:#ffdead;" | [[2024 UK Open|2024]]
+| Winner
+| {{PDCFlag|Dimitri Van den Bergh|b=1|}}
+|-
+| style="background:#ffdead;" | '''[[European Championship (darts)|European Championship]]'''
+| style="background:#ffdead;" | [[2024 European Championship (darts)|2024]]
+| Winner
+| {{PDCFlag|Ritchie Edhouse|b=1}}
+|-
+| style="background:#ffdead;" | '''[[Players Championship Finals]]'''
+| style="background:#ffdead;" | [[2023 Players Championship Finals|2023]]
+| Winner
+| ''{{PDCFlag|Luke Humphries|nolink=1}}''
+|-
+| style="background:#ffdead;" | '''[[World Series of Darts Finals]]'''
+| style="background:#ffdead;" | [[2024 World Series of Darts Finals|2024]]
+| Winner
+| ''{{PDCFlag|Luke Littler|nolink=1}}''
+|-
+| style="background:#ffdead;" | '''[[PDC World Cup of Darts]]'''
+| style="background:#ffdead;" | [[2024 PDC World Cup of Darts|2024]]
+| Winners
+| ''{{PDCFlag|Luke Humphries|nolink=1}}''<br />{{PDCFlag|Michael Smith|b=1}}
+|-
+| style="background:#ffdead;" | '''[[PDC World Darts Championship]]'''
+| style="background:#ffdead;" | [[2024 PDC World Darts Championship|2024]]
+| Runner-up
+| ''{{PDCFlag|Luke Littler|nolink=1}}''
+|-
+| style="background:#ffdead;" | '''[[Grand Slam of Darts]]'''
+| style="background:#ffdead;" | [[2023 Grand Slam of Darts|2023]]
+| Runner-up
+| {{PDCFlag|Rob Cross|b=1}}
+|-
+| style="background:#ffdead;" | '''[[Premier League Darts]]'''
+| style="background:#ffdead;" | [[2024 Premier League Darts|2024]]
+| Runner-up
+| ''{{PDCFlag|Luke Humphries|nolink=1}}''
+|-
+| style="background:#ffdead;" | '''[[World Matchplay (darts)|World Matchplay]]'''
+| style="background:#ffdead;" | [[2024 World Matchplay|2024]]
+| Runner-up
+| {{PDCFlag|Michael van Gerwen|b=1}}
+|-
+| style="background:#ffdead;" | '''[[World Grand Prix (darts)|World Grand Prix]]'''
+| style="background:#ffdead;" | [[2024 World Grand Prix (darts)|2024]]
+| Runner-up
+| ''{{PDCFlag|Luke Humphries|nolink=1}}''
+|-
+| style="background:#ffdead;" | '''[[Masters (darts)|Masters]]'''
+| style="background:#ffdead;" | [[2024 Masters (darts)|2024]]
+| Runner-up
+| ''{{PDCFlag|Michael van Gerwen|nolink=1}}''
+|-
+| style="background:#ffdead;" | '''[[UK Open]]'''
+| style="background:#ffdead;" | [[2024 UK Open|2024]]
+| Runner-up
+| ''{{PDCFlag|Luke Humphries|nolink=1}}''
+|-
+| style="background:#ffdead;" | '''[[European Championship (darts)|European Championship]]'''
+| style="background:#ffdead;" | [[2024 European Championship (darts)|2024]]
+| Runner-up
+| {{PDCFlag|Jermaine Wattimena|b=1}}
+|-
+| style="background:#ffdead;" | '''[[Players Championship Finals]]'''
+| style="background:#ffdead;" | [[2023 Players Championship Finals|2023]]
+| Runner-up
+| ''{{PDCFlag|Michael van Gerwen|nolink=1}}''
+|-
+| style="background:#ffdead;" | '''[[World Series of Darts Finals]]'''
+| style="background:#ffdead;" | [[2024 World Series of Darts Finals|2024]]
+| Runner-up
+| ''{{PDCFlag|Michael Smith|nolink=1}}''
+|-
+| style="background:#ffdead;" | '''[[PDC World Cup of Darts]]'''
+| style="background:#ffdead;" | [[2024 PDC World Cup of Darts|2024]]
+| Runners-up
+| {{PDCFlag|Rowby-John Rodriguez|b=1}}<br />{{PDCFlag|Mensur Suljović|b=1}}
+|-
+|}
+
+===Additional Qualifiers===
+{| class="wikitable"
+|-
+!width=300| Tournament
+!width=50| Year
+!width=250| Position
+!width=200| Player
+|-
+| rowspan="2" style="background:#ffdead;" | '''PDC World Youth Championship'''
+| rowspan="2" style="background:#ffdead;" | [[2023 PDC World Youth Championship|2023]]
+| Winner
+| ''{{PDCFlag|Luke Littler|nolink=1}}''
+|-
+| Runner-up
+| {{PDCFlag|Gian van Veen|b=1}}
+|-
+| style="background:#ffdead;" | '''PDC Challenge Tour'''
+| style="background:#ffdead;" | [[2024_PDC_Pro_Tour#PDC_Challenge_Tour|2024]]
+| Order of Merit Winner
+| {{PDCFlag|Connor Scutt|b=1}}
+|-
+| style="background:#ffdead;" | '''PDC Development Tour'''
+| style="background:#ffdead;" | [[2024_PDC_Pro_Tour#PDC_Development_Tour|2024]]
+| Order of Merit Winner
+| {{PDCFlag|Wessel Nijman|b=1}}
+|-
+| style="background:#ffdead;" | '''Women's World Matchplay'''
+| style="background:#ffdead;" | [[2024 Women's World Matchplay|2024]]
+| Winner
+| {{PDCFlag|Beau Greaves|b=1}}
+|-
+| style="background:#ffdead;" | '''PDC Women's Series'''
+| style="background:#ffdead;" | [[2024_PDC_Pro_Tour#PDC_Women's_Series|2024]]
+| Order of Merit Winner
+| ''{{PDCFlag|Beau Greaves|nolink=1}}''
+|-
+| style="background:#ffdead;" | '''PDC Women's Series'''
+| style="background:#ffdead;" | [[2024_PDC_Pro_Tour#PDC_Women's_Series|2024]]
+| Order of Merit Runner-up
+| {{PDCFlag|Noa-Lynn van Leuven|b=1}}
+|-
+| style="background:#ffdead;" | '''PDC Asian Championship'''
+| style="background:#ffdead;" | [[2024 PDC Pro Tour#PDC Asian Championship|2024]]
+|Winner
+|{{PDCFlag|Lourence Ilagan|b=1}}
+|-
+| style="background:#ffdead;" | '''CDC Continental Cup'''
+| style="background:#ffdead;" | [[2024 PDC Pro Tour#2024 CDC Continental Cup|2024]]
+|Winner
+|{{PDCFlag|Leonard Gates|b=1}}
+|}
+
+===European Tour===
+As the list of qualifiers did yet not fill twenty-four places, the remaining places were filled with winners from [[2024 PDC Pro Tour|2024 European Tour]] events who were not yet qualified, in which the winners were ordered firstly by number of wins, then Order of Merit position order at the cut-off date.
+
+{| class="wikitable"
+|-
+!width=200| Event
+!width=200| Player
+!rowspan=14 width=6|
+!width=200| Qualifiers
+|-
+| style="background:#ffdead;" | '''{{nowrap|1=[[2024 Belgian Darts Open|Belgian Darts Open]]}}'''
+| ''{{PDCFlag|Luke Littler|nolink=1}}''
+| rowspan=13 |{{PDCFlag|Dave Chisnall|b=1}}<br />{{PDCFlag|Martin Schindler|b=1}}<br />{{PDCFlag|Peter Wright|b=1}}<br />{{PDCFlag|Josh Rock|b=1}}<br />{{PDCFlag|Gary Anderson|b=1}}
+|-
+| style="background:#ffdead;" | '''{{nowrap|1=[[2024 German Darts Grand Prix|German Darts Grand Prix]]}}'''
+| ''{{PDCFlag|Luke Humphries|nolink=1}}''
+|-
+| style="background:#ffdead;" | '''{{nowrap|1=[[2024 International Darts Open|International Darts Open]]}}'''
+| {{PDCFlag|Martin Schindler|b=1}}
+|-
+| style="background:#ffdead;" | '''{{nowrap|1=[[2024 European Darts Grand Prix|European Darts Grand Prix]]}}'''
+| {{PDCFlag|Gary Anderson|b=1}}
+|- 
+| style="background:#ffdead;" | '''{{nowrap|1=[[2024 Austrian Darts Open|Austrian Darts Open]]}}'''
+| ''{{PDCFlag|Luke Littler|nolink=1}}(2)''
+|-
+| style="background:#ffdead;" | '''{{nowrap|1=[[2024 Baltic Sea Darts Open|Baltic Sea Darts Open]]}}'''
+| ''{{PDCFlag|Rob Cross|nolink=1}}''
+|-
+| style="background:#ffdead;" | '''{{nowrap|1=[[2024 Dutch Darts Championship|Dutch Darts Championship]]}}'''
+| {{PDCFlag|Josh Rock|b=1}}
+|-
+| style="background:#ffdead;" | '''{{nowrap|1=[[2024 European Darts Open|European Darts Open]]}}'''
+|  {{PDCFlag|Dave Chisnall|b=1}}
+|-
+| style="background:#ffdead;" | '''{{nowrap|1=[[2024 German Darts Championship|German Darts Championship]]}}'''
+| {{PDCFlag|Peter Wright|b=1}}
+|-
+| style="background:#ffdead;" | '''{{nowrap|1=[[2024 Flanders Darts Trophy|Flanders Darts Trophy]]}}'''
+| ''{{PDCFlag|Dave Chisnall|nolink=1}}(2)''
+|-
+| style="background:#ffdead;" | '''{{nowrap|1=[[2024 Hungarian Darts Trophy|Hungarian Darts Trophy]]}}'''
+| ''{{PDCFlag|Michael van Gerwen|nolink=1}}''
+|-
+| style="background:#ffdead;" | '''{{nowrap|1=[[2024 Swiss Darts Trophy|Swiss Darts Trophy]]}}'''
+| ''{{PDCFlag|Martin Schindler|nolink=1}}(2)''
+|-
+| style="background:#ffdead;" | '''{{nowrap|1=[[2024 Czech Darts Open|Czech Darts Open]]}}'''
+| ''{{PDCFlag|Luke Humphries|nolink=1}}(2)''
+|-
+|}
+
+If there were still less than the 24 qualified players after the winners of the European Tour events are added, then the winners of the [[2024 PDC Players Championship series]] events would've been added, firstly by winners of multiple events then by Order of Merit order, but that was not required for this year's edition.
+
+===PDC Tour Card Holder Qualifying Event===
+A further eight places were filled by qualifiers from a PDC Tour Card Holder qualifier held on 1 November in [[Leicester]].
+
+These were the qualifiers:<ref>{{cite web |last=Gorton |first=Josh |date=1 November 2024 |title=Noppert, Wade & R Smith among Grand Slam Tour Card Holder Qualifiers |url=https://www.pdc.tv/news/2024/november/01/noppert-wade-r-smith-among-grand-slam-tour-card-holder-qualifiers |website=Professional Darts Corporation |access-date=3 March 2025}}</ref>
+* {{PDCFlag|Keane Barry}}
+* {{PDCFlag|Martin Lukeman}}
+* {{PDCFlag|Ryan Joyce}}
+* {{PDCFlag|Danny Noppert}}
+* {{PDCFlag|Cameron Menzies}}
+* {{PDCFlag|James Wade}}
+* {{PDCFlag|Mickey Mansell}}
+* {{PDCFlag|Ross Smith}}
+
+{{Notelist}}
+
+==Pools==
+{| class="wikitable"
+|-
+!width=220|Pool A
+!width=220|Pool B
+!width=220|Pool C
+!width=220|Pool D
+|-
+!(Seeded Players)
+!colspan=3|(Qualifiers)
+|-
+| vstyle="text-align:top"|
+{{PDCFlag|Luke Humphries}}'''(1)'''
+{{PDCFlag|Michael Smith}}'''(2)'''
+{{PDCFlag|Michael van Gerwen}}'''(3)''' 
+{{PDCFlag|Rob Cross}}'''(4)'''<br/>
+{{PDCFlag|Dave Chisnall}}'''(5)'''
+{{PDCFlag|Stephen Bunting}}'''(6)'''
+{{PDCFlag|Dimitri Van den Bergh}}'''(7)'''
+{{PDCFlag|Danny Noppert}}'''(8)'''
+| valign="top"|
+{{PDCFlag|Peter Wright}} <br>  <!-- 14 -->
+{{PDCFlag|Josh Rock}}<br> <!-- 15 -->
+{{PDCFlag|James Wade}}<br>  <!-- 16 -->
+{{PDCFlag|Luke Littler}}<br>
+{{PDCFlag|Gary Anderson}} <br>
+{{PDCFlag|Ross Smith}} <br>
+{{PDCFlag|Martin Schindler}} <br>
+{{PDCFlag|Mike De Decker}} 
+| valign="top"|
+{{PDCFlag|Ritchie Edhouse}} <br>
+{{PDCFlag|Gian van Veen}} <br>
+{{PDCFlag|Ryan Joyce}}<br>
+{{PDCFlag|Jermaine Wattimena}} <br>
+{{PDCFlag|Cameron Menzies}}<br>
+{{PDCFlag|Martin Lukeman}}<br>
+{{PDCFlag|Keane Barry}} <br>
+{{PDCFlag|Mickey Mansell}} <br>
+| vstyle="text-align:top"|
+{{PDCFlag|Mensur Suljovic}} <br>
+{{PDCFlag|Wessel Nijman}} <br>
+{{PDCFlag|Rowby-John Rodriguez}}<br>
+{{PDCFlag|Connor Scutt}}  <br>
+{{PDCFlag|Leonard Gates}} <br>
+{{PDCFlag|Beau Greaves}}<br>
+{{PDCFlag|Lourence Ilagan}} <br>
+{{PDCFlag|Noa-Lynn van Leuven}}<br>
+|}
+
+==Group stage==
+''All group matches are best of nine legs.'' <br> ''After three games, the top two in each group qualify for the knock-out stage.''<ref name="SlamGS"/>
+
+NB: P = Played; W = Won; L = Lost; LF = Legs for; LA = Legs against; +/− = Plus/minus record, in relation to legs; Pts = Points; Status = Qualified to knockout stage
+
+{{col-begin}}
+{{col-2}}
+
+=== Group A ===
+{| class="wikitable" style="text-align:center; margin: 1em auto 1em auto, align:left"
+|-
+!width=20|Pos.
+!width=185|Player
+!width=20|P
+!width=20|W
+!width=20|L
+!width=20|LF
+!width=20|LA
+!width=25|{{nowrap|+/−}}
+!width=20|Pts
+!width=70|{{nowrap|Status}}
+|- style="background:#CCFFCC;" 
+| 1 ||style="text-align:left"| {{PDCFlag|James Wade|b=1}}|| 3 || 2 || 1 || 13 || 9 || +4 || '''4''' || rowspan=2|'''Q'''
+|- style="background:#CCFFCC;" 
+| 2 ||style="text-align:left"| {{PDCFlag|Mickey Mansell|b=1}} || 3|| 2 || 1 || 11 || 11 || 0 || '''4''' 
+|- style="background:#FFccCC;"
+| 3 ||style="text-align:left"| {{PDCFlag|Luke Humphries|txt=(1)}} || 3 || 1 || 2 || 11 || 11 || 0 || '''2''' || rowspan=2 |'''Eliminated'''
+|- style="background:#FFccCC;" 
+| 4 ||style="text-align:left"| {{PDCFlag|Rowby-John Rodriguez}} || 3 || 1 || 2 || 9 || 13 || –4 || '''2''' 
+|}
+
+9 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|James Wade|avg=103.12}}
+| {{dart score|3|5}}
+|style="text-align:left"| {{PDCFlag|Mickey Mansell|avg=100.87|b=1}}
+|-
+|style="text-align:right"| {{PDCFlagR|Luke Humphries|avg=97.64}}
+| {{dart score|3|5}}
+|style="text-align:left"| {{PDCFlag|Rowby-John Rodriguez|avg=92.95|b=1}}
+|}
+
+10 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Mickey Mansell|avg=97.27|b=1}}
+| {{dart score|5|3}}
+|style="text-align:left"| {{PDCFlag|Rowby-John Rodriguez|avg=93.82}}
+|-
+|style="text-align:right"| {{PDCFlagR|Luke Humphries|avg=95.80}}
+| {{dart score|3|5}}
+|style="text-align:left"| {{PDCFlag|James Wade|avg=87.73|b=1}}
+|}
+
+11 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Luke Humphries|avg=101.52|b=1}}
+| {{dart score|5|1}}
+|style="text-align:left"| {{PDCFlag|Mickey Mansell|avg=94.32}}
+|-
+|style="text-align:right"| {{PDCFlagR|James Wade|avg=87.48|b=1}}
+| {{dart score|5|1}}
+|style="text-align:left"| {{PDCFlag|Rowby-John Rodriguez|avg=86.81}}
+|}
+
+{{col-2}}
+
+=== Group B ===
+{| class="wikitable" style="text-align:center; margin: 1em auto 1em auto, align:left"
+|-
+!width=20|Pos.
+!width=185|Player
+!width=20|P
+!width=20|W
+!width=20|L
+!width=20|LF
+!width=20|LA
+!width=25|{{nowrap|+/−}}
+!width=20|Pts
+!width=70|{{nowrap|Status}}
+|- style="background:#CCFFCC;"- 
+| 1 ||style="text-align:left"| {{PDCFlag|Danny Noppert|txt=(8)|b=1}}|| 3 || 3 || 0 || 15 || 8 || +7 || '''6''' || rowspan=2|'''Q'''
+|- style="background:#CCFFCC;"
+| 2 ||style="text-align:left"| {{PDCFlag|Cameron Menzies|b=1}} || 3 || 1 || 2 || 10 || 12 || –2 || '''2''' 
+|- style="background:#FFccCC;"
+| 3 ||style="text-align:left"| {{PDCFlag|Martin Schindler}} || 3 || 1 || 2 || 9 || 11 || –2 || '''2''' || rowspan=2| '''Eliminated'''
+|- style="background:#FFccCC;"
+| 4 ||style="text-align:left"| {{PDCFlag|Beau Greaves}} || 3 || 1 || 2 || 8 || 11 || –3 || '''2'''
+|}
+
+9 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Danny Noppert|avg=94.79|b=1}}
+| {{dart score|5|2}}
+|style="text-align:left"| {{PDCFlag|Beau Greaves|avg=91.92}}
+|-
+|style="text-align:right"| {{PDCFlagR|Martin Schindler|avg=91.11}}
+| {{dart score|2|5}}
+|style="text-align:left"| {{PDCFlag|Cameron Menzies|avg=98.91|b=1}}
+|}
+
+10 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Danny Noppert|avg=96.76|b=1}}
+| {{dart score|5|4}}
+|style="text-align:left"| {{PDCFlag|Cameron Menzies|avg=90.44}}
+|-
+|style="text-align:right"| {{PDCFlagR|Martin Schindler|avg=98.44|b=1}}
+| {{dart score|5|1}}
+|style="text-align:left"| {{PDCFlag|Beau Greaves|avg=83.43}}
+|}
+
+11 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Cameron Menzies|avg=89.80}}
+| {{dart score|1|5}}
+|style="text-align:left"| {{PDCFlag|Beau Greaves|avg=95.17|b=1}}
+|-
+|style="text-align:right"| {{PDCFlagR|Danny Noppert|avg=106.28|b=1}}
+| {{dart score|5|2}}
+|style="text-align:left"| {{PDCFlag|Martin Schindler|avg=109.15}}
+|}
+
+{{col-end}}
+{{col-begin}}
+{{col-2}}
+
+=== Group C ===
+{| class="wikitable" style="text-align:center; margin: 1em auto 1em auto, align:left"
+|-
+!width=20|Pos.
+!width=185|Player
+!width=20|P
+!width=20|W
+!width=20|L
+!width=20|LF
+!width=20|LA
+!width=25|{{nowrap|+/−}}
+!width=20|Pts
+!width=70|Status
+|- style="background:#CCFFCC;"
+| 1 ||style="text-align:left"| {{PDCFlag|Martin Lukeman|b=1}}|| 3 || 3 || 0 || 15 || 6 || +9 || '''6'''|| rowspan=2|'''Q'''
+|- style="background:#CCFFCC;"
+| 2 ||style="text-align:left"| {{PDCFlag|Rob Cross|txt=(4)|b=1}} || 3 || 2 || 1 || 13 || 8 || +5  || '''4''' 
+|- style="background:#FFccCC;"
+| 3 ||style="text-align:left"| {{PDCFlag|Leonard Gates}} || 3 || 1 || 2 || 10 || 14 || –4 || '''2''' || rowspan=2|'''Eliminated'''
+|- style="background:#FFccCC;"
+| 4 ||style="text-align:left"| {{PDCFlag|Peter Wright}} || 3 || 0 || 3 || 5 || 15 || {{nowrap|–10}} || '''0'''
+|}
+
+9 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Rob Cross|avg=95.04|b=1}}
+| {{dart score|5|2}}
+|style="text-align:left"| {{PDCFlag|Leonard Gates|avg=87.65}}
+|-
+|style="text-align:right"| {{PDCFlagR|Peter Wright|avg=84.75}}
+| {{dart score|0|5}}
+|style="text-align:left"| {{PDCFlag|Martin Lukeman|avg=98.88|b=1}}
+|}
+
+10 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Peter Wright|avg=83.44}}
+| {{dart score|4|5}}
+|style="text-align:left"| {{PDCFlag|Leonard Gates|avg=83.31|b=1}}
+|-
+|style="text-align:right"| {{PDCFlagR|Rob Cross|avg=98.51}}
+| {{dart score|3|5}}
+|style="text-align:left"| {{PDCFlag|Martin Lukeman|avg=87.96|b=1}}
+|}
+
+11 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Martin Lukeman|avg=93.56|b=1}}
+| {{dart score|5|3}}
+|style="text-align:left"| {{PDCFlag|Leonard Gates|avg=85.09}}
+|-
+|style="text-align:right"| {{PDCFlagR|Rob Cross|avg=91.21|b=1}}
+| {{dart score|5|1}}
+|style="text-align:left"| {{PDCFlag|Peter Wright|avg=83.55}}
+|}
+
+{{col-2}}
+
+=== Group D ===
+{| class="wikitable" style="text-align:center; margin: 1em auto 1em auto, align:left"
+|-
+!width=20|Pos.
+!width=185|Player
+!width=20|P
+!width=20|W
+!width=20|L
+!width=20|LF
+!width=20|LA
+!width=25|{{nowrap|+/−}}
+!width=20|Pts
+!width=70|Status
+
+|- style="background:#CCFFCC;"
+| 1 ||style="text-align:left"| {{PDCFlag|Ritchie Edhouse|b=1}} || 3 || 3 || 0 || 15 || 5 || +10 || '''6''' || rowspan=2|'''Q'''
+|- style="background:#CCFFCC;"
+| 2 ||style="text-align:left"| {{PDCFlag|Ross Smith|b=1}}|| 3 || 2 || 1 || 11 || 7 || +4 || '''4'''
+|- style="background:#FFccCC;"
+| 3 ||style="text-align:left"| {{PDCFlag|Connor Scutt}} || 3 || 1 || 2 || 7 || 10 || –3 || '''2''' || rowspan=2| '''Eliminated'''
+|- style="background:#FFccCC;"
+| 4 ||style="text-align:left"| {{PDCFlag|Dave Chisnall|txt=(5)}} || 3 || 0 || 3 || 4 || 15 ||{{nowrap|–11}} || '''0''' 
+|}
+
+9 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Dave Chisnall|avg=93.35}}
+| {{dart score|0|5}}
+|style="text-align:left"| {{PDCFlag|Connor Scutt|avg=104.38|b=1}}
+|-
+|style="text-align:right"| {{PDCFlagR|Ross Smith|avg=82.93}}
+| {{dart score|1|5}}
+|style="text-align:left"| {{PDCFlag|Ritchie Edhouse|avg=103.99|b=1}}
+|}
+
+10 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Dave Chisnall|avg=80.45}}
+| {{dart score|2|5}}
+|style="text-align:left"| {{PDCFlag|Ross Smith|avg=89.00|b=1}}
+|-
+|style="text-align:right"| {{PDCFlagR|Ritchie Edhouse|avg=84.03|b=1}}
+| {{dart score|5|2}}
+|style="text-align:left"| {{PDCFlag|Connor Scutt|avg=85.87}}
+|}
+
+11 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Dave Chisnall|avg=86.16}}
+| {{dart score|2|5}}
+|style="text-align:left"| {{PDCFlag|Ritchie Edhouse|avg=105.00|b=1}}
+|-
+|style="text-align:right"| {{PDCFlagR|Ross Smith|avg=97.60|b=1}}
+| {{dart score|5|0}}
+|style="text-align:left"| {{PDCFlag|Connor Scutt|avg=85.42}}
+|}
+
+{{col-end}}
+{{col-begin}}
+{{col-2}}
+
+=== Group E ===
+{| class="wikitable" style="text-align:center; margin: 1em auto 1em auto, align:left"
+|-
+!width=20|Pos.
+!width=185|Player
+!width=20|P
+!width=20|W
+!width=20|L
+!width=20|LF
+!width=20|LA
+!width=25|{{nowrap|+/−}}
+!width=20|Pts
+!width=70|Status
+|- style="background:#CCFFCC;"
+| 1 ||style="text-align:left"| {{PDCFlag|Jermaine Wattimena|b=1}} || 3 || 3 || 0 || 15 || 7 || +8 || '''6''' || rowspan=2|'''Q'''
+|- style="background:#CCFFCC;"
+| 2 ||style="text-align:left"| {{PDCFlag|Mike De Decker|b=1}} || 3 || 2 || 1 || 12 || 7 || +5 || '''4'''
+|- style="background:#FFccCC;" 
+| 3 ||style="text-align:left"| {{PDCFlag|Michael Smith|txt=(2)}} || 3 || 1 || 2 || 6 || 12 || –6 || '''2''' || rowspan=2| '''Eliminated'''
+|- style="background:#FFccCC;"
+| 4 ||style="text-align:left"| {{PDCFlag|Mensur Suljovic}} || 3 || 0 || 3 || 8 || 15 || –7 || '''0'''
+|}
+
+9 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Michael Smith|avg=99.80|b=1}}
+| {{dart score|5|2}}
+|style="text-align:left"| {{PDCFlag|Mensur Suljovic|avg=98.62}}
+|-
+|style="text-align:right"| {{PDCFlagR|Mike De Decker|avg=99.06}}
+| {{dart score|2|5}}
+|style="text-align:left"| {{PDCFlag|Jermaine Wattimena|avg=104.32|b=1}}
+|}
+
+10 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Mike De Decker|avg=88.77|b=1}}
+| {{dart score|5|2}}
+|style="text-align:left"| {{PDCFlag|Mensur Suljovic|avg=78.66}}
+|-
+|style="text-align:right"| {{PDCFlagR|Michael Smith|avg=92.93}}
+| {{dart score|1|5}}
+|style="text-align:left"| {{PDCFlag|Jermaine Wattimena|avg=97.50|b=1}}
+|}
+
+12 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Jermaine Wattimena|avg=95.95|b=1}}
+| {{dart score|5|4}}
+|style="text-align:left"| {{PDCFlag|Mensur Suljovic|avg=98.77}}
+|-
+|style="text-align:right"| {{PDCFlagR|Michael Smith|avg=90.91}}
+| {{dart score|0|5}}
+|style="text-align:left"| {{PDCFlag|Mike De Decker|avg=100.20|b=1}}
+|}
+
+{{col-2}}
+
+=== Group F ===
+{| class="wikitable" style="text-align:center; margin: 1em auto 1em auto, align:left"
+|-
+!width=20|Pos.
+!width=185|Player
+!width=20|P
+!width=20|W
+!width=20|L
+!width=20|LF
+!width=20|LA
+!width=25|{{nowrap|+/−}}
+!width=20|Pts
+!width=70|{{nowrap|Status}}
+|- style="background:#CCFFCC;"
+| 1 ||style="text-align:left"| {{PDCFlag|Luke Littler|b=1}} || 3 || 3 || 0 || 15 || 4 ||+11 || '''6''' || rowspan=2|'''Q'''
+|- style="background:#CCFFCC;"
+| 2 ||style="text-align:left"| {{PDCFlag|Dimitri Van den Bergh|txt=(7)|b=1}} || 3 || 2 || 1 || 11 || 7 || +4 || '''4'''
+|- style="background:#FFccCC;"
+| 3 ||style="text-align:left"| {{PDCFlag|Keane Barry}}|| 3 || 1 || 2 || 6 || 13 || –7 || '''2''' || rowspan=2| '''Eliminated'''
+|- style="background:#FFccCC;"
+| 4 ||style="text-align:left"| {{PDCFlag|Lourence Ilagan}} || 3 || 0 || 3 || 7 || 15 || –8 || '''0'''
+|}
+
+9 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Dimitri Van den Bergh|avg=86.76|b=1}}
+| {{dart score|5|1}}
+|style="text-align:left"| {{PDCFlag|Lourence Ilagan|avg=82.71}}
+|-
+|style="text-align:right"| {{PDCFlagR|Luke Littler|avg=112.16|b=1}}
+| {{dart score|5|0}}
+|style="text-align:left"| {{PDCFlag|Keane Barry|avg=93.10}}
+|}
+
+10 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Keane Barry|avg=88.93|b=1}}
+| {{dart score|5|3}}
+|style="text-align:left"| {{PDCFlag|Lourence Ilagan|avg=96.63}}
+|-
+|style="text-align:right"| {{PDCFlagR|Dimitri Van den Bergh|avg=92.78}}
+| {{dart score|1|5}}
+|style="text-align:left"| {{PDCFlag|Luke Littler|avg=106.98|b=1}}
+|}
+
+12 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Luke Littler|avg=102.05|b=1}}
+| {{dart score|5|3}}
+|style="text-align:left"| {{PDCFlag|Lourence Ilagan|avg=91.57}}
+|-
+|style="text-align:right"| {{PDCFlagR|Dimitri Van den Bergh|avg=104.58|b=1}}
+| {{dart score|5|1}}
+|style="text-align:left"| {{PDCFlag|Keane Barry|avg=83.96}}
+|}
+
+{{col-end}}
+{{col-begin}}
+{{col-2}}
+
+=== Group G ===
+{| class="wikitable" style="text-align:center; margin: 1em auto 1em auto, align:left"
+|-
+!width=20|Pos.
+!width=185|Player
+!width=20|P
+!width=20|W
+!width=20|L
+!width=20|LF
+!width=20|LA
+!width=25|{{nowrap|+/−}}
+!width=20|Pts
+!width=70|Status
+|- style="background:#CCFFCC;"
+| 1 ||style="text-align:left"| {{PDCFlag|Gary Anderson|b=1}} || 3 || 3 || 0 || 15 || 7 || +8 || '''6''' || rowspan=2|'''Q'''
+|- style="background:#CCFFCC;"
+| 2 ||style="text-align:left"| {{PDCFlag|Ryan Joyce|b=1}}|| 3 || 2  || 1 || 11 || 12 || –1 || '''4'''
+|- style="background:#FFccCC;"
+| 3 ||style="text-align:left"| {{PDCFlag|Michael van Gerwen|txt=(3)}} || 3 || 1 || 2 || 13 || 10 || +3 || '''2''' || rowspan=2 |'''Eliminated'''
+|- style="background:#FFccCC;"
+| 4 ||style="text-align:left"| {{PDCFlag|Noa-Lynn van Leuven}} || 3 || 0 || 3 || 5 || 15 || −10 || '''0'''
+|}
+
+9 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Gary Anderson|avg=113.20|b=1}}
+| {{dart score|5|1}}
+|style="text-align:left"| {{PDCFlag|Ryan Joyce|avg=89.85}}
+|-
+|style="text-align:right"| {{PDCFlagR|Michael van Gerwen|avg=96.35|b=1}}
+| {{dart score|5|0}}
+|style="text-align:left"| {{PDCFlag|Noa-Lynn van Leuven|avg=86.48}}
+|}
+
+10 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Ryan Joyce|avg=87.36|b=1}}
+| {{dart score|5|3}}
+|style="text-align:left"| {{PDCFlag|Noa-Lynn van Leuven|avg=81.39}}
+|-
+|style="text-align:right"| {{PDCFlagR|Michael van Gerwen|avg=90.12}}
+| {{dart score|4|5}}
+|style="text-align:left"| {{PDCFlag|Gary Anderson|avg=105.19|b=1}}
+|}
+
+12 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Gary Anderson|avg=95.75|b=1}}
+| {{dart score|5|2}}
+|style="text-align:left"| {{PDCFlag|Noa-Lynn van Leuven|avg=85.85}}
+|-
+|style="text-align:right"| {{PDCFlagR|Michael van Gerwen|avg=93.43}}
+| {{dart score|4|5}}
+|style="text-align:left"| {{PDCFlag|Ryan Joyce|b=1|avg=93.45}}
+|}
+
+{{col-2}}
+
+=== Group H ===
+{| class="wikitable" style="text-align:center; margin: 1em auto 1em auto, align:left"
+|-
+!width=20|Pos.
+!width=185|Player
+!width=20|P
+!width=20|W
+!width=20|L
+!width=20|LF
+!width=20|LA
+!width=25|{{nowrap|+/−}}
+!width=20|Pts
+!width=70|Status
+|- style="background:#CCFFCC;"
+| 1 ||style="text-align:left"| {{PDCFlag|Gian van Veen|b=1}}  || 3 || 3 || 0 || 15 || 7 || +8 || '''6''' || rowspan=2|'''Q'''
+|- style="background:#CCFFCC;"
+| 2 ||style="text-align:left"| {{PDCFlag|Stephen Bunting|b=1|txt=(6)}} || 3 || 2 || 1 || 11 || 11 || 0 || '''4'''
+|- style="background:#FFccCC;"
+| 3 ||style="text-align:left"| {{PDCFlag|Josh Rock}} || 3 || 1 || 2 || 9 || 13 || –4 || '''2''' ||Rowspan=2|'''Eliminated'''
+|-  style="background:#FFccCC;"
+| 4 ||style="text-align:left"| {{PDCFlag|Wessel Nijman}} || 3 || 0 || 3 || 11 || 15 || –4 || '''0'''
+|-
+|}
+
+9 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Stephen Bunting|avg=103.02|b=1}}
+| {{dart score|5|4}}
+|style="text-align:left"| {{PDCFlag|Wessel Nijman|avg=106.51}}
+|-
+|style="text-align:right"| {{PDCFlagR|Josh Rock|avg=105.83}}
+| {{dart score|2|5}}
+|style="text-align:left"| {{PDCFlag|Gian van Veen|avg=110.39|b=1}}
+|}
+
+10 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Josh Rock|avg=99.06|b=1}}
+| {{dart score|5|3}}
+|style="text-align:left"| {{PDCFlag|Wessel Nijman|avg=105.39}}
+|-
+|style="text-align:right"| {{PDCFlagR|Stephen Bunting|avg=104.17}}
+|{{dart score|1|5}}
+|style="text-align:left"| {{PDCFlag|Gian van Veen|avg=114.71|b=1}}
+|}
+
+12 November
+{| style="text-align:center"
+|-
+!width=223|
+!width=100|
+!width=223|
+|-
+|style="text-align:right"| {{PDCFlagR|Gian van Veen|avg=103.99|b=1}}
+| {{dart score|5|4}}
+|style="text-align:left"| {{PDCFlag|Wessel Nijman|avg=111.10}}
+|-
+|style="text-align:right"| {{PDCFlagR|Stephen Bunting|avg=106.66|b=1}}
+| {{dart score|5|2}}
+|style="text-align:left"| {{PDCFlag|Josh Rock|avg=99.64}}
+|}
+
+{{col-end}}
+
+==Knockout stage==
+{{16TeamBracket
+| RD1={{nowrap|'''Second round''' ''(best of 19 legs)''<br>13–14 November<ref name=SlamKOResults>{{cite web |title=Results of Grand Slam of Darts 2024 - Mastercaller |url=https://mastercaller.com/tournaments/grand-slam-of-darts/2024/results |access-date=11 November 2024 |website=Mastercaller}}</ref><ref>{{cite web |last=Wellens |first=Megan |date=15 November 2024 |title=Grand Slam of Darts 2024: Luke Littler sensationally fights back against Mike De Decker to book quarter-final spot as Gary Anderson also progresses |url=https://www.skysports.com/darts/news/12288/13254292/grand-slam-of-darts-2024-luke-littler-sensationally-fights-back-against-mike-de-decker-to-book-quarter-final-spot |access-date=16 November 2024 |website=Sky Sports}}</ref>}}
+| RD2={{nowrap|'''Quarter-finals''' ''(best of 31 legs)''<br>15–16 November<ref name=SlamKOResults/><ref>{{cite web |last=Wellens |first=Megan |date=16 November 2024 |title=Grand Slam of Darts 2024: Rob Cross suffers shock defeat to Martin Lukeman in quarter-finals as Mickey Mansell survives Cameron Menzies scare |url=https://www.skysports.com/darts/news/12288/13254674/grand-slam-of-darts-2024-rob-cross-suffers-shock-defeat-to-martin-lukeman-in-quarter-finals-as-mickey-mansell-survives-cameron-menzies-scare |access-date=16 November 2024 |website=Sky Sports}}</ref>}}
+| RD3={{nowrap|'''Semi-finals''' ''(best of 31 legs)''<br>17 November}}
+| RD4={{nowrap|'''Final''' ''(best of 31 legs)''<br>17 November<ref name=BBCF/>}}
+| team-width = 300
+| boldwinner = high
+| RD1-seed01 = A1
+| RD1-team01 = {{PDCFlag|James Wade|avg=95.92}}
+| RD1-score01= 9
+| RD1-seed02 = B2
+| RD1-team02 = {{PDCFlag|Cameron Menzies|avg=93.50}}
+| RD1-score02= 10
+| RD1-seed03 = B1
+| RD1-team03 = {{PDCFlag|Danny Noppert|avg=95.71}} (8)
+| RD1-score03= 7
+| RD1-seed04 = A2
+| RD1-team04 = {{PDCFlag|Mickey Mansell|avg=99.05}}
+| RD1-score04= 10
+| RD1-seed05 = C1
+| RD1-team05 = {{PDCFlag|Martin Lukeman|avg=95.75}} 
+| RD1-score05= 10
+| RD1-seed06 = D2
+| RD1-team06 = {{PDCFlag|Ross Smith|avg=94.85}}
+| RD1-score06= 5
+| RD1-seed07 = D1
+| RD1-team07 = {{PDCFlag|Ritchie Edhouse|avg=94.13}}
+| RD1-score07= 4
+| RD1-seed08 = C2
+| RD1-team08 = {{PDCFlag|Rob Cross|avg=98.68}} (4)
+| RD1-score08= 10
+| RD1-seed09 = E1
+| RD1-team09 = {{PDCFlag|Jermaine Wattimena|avg=91.19}}
+| RD1-score09= 10
+| RD1-seed10 = F2
+| RD1-team10 = {{PDCFlag|Dimitri Van den Bergh|avg=91.90}}{{nowrap| (7)}}
+| RD1-score10= 9
+| RD1-seed11 = F1
+| RD1-team11 = {{PDCFlag|Luke Littler|avg=103.48}}
+| RD1-score11= 10
+| RD1-seed12 = E2
+| RD1-team12 = {{PDCFlag|Mike De Decker|avg=104.49}}
+| RD1-score12= 9
+| RD1-seed13 = G1
+| RD1-team13 = {{PDCFlag|Gary Anderson|avg=99.95}}
+| RD1-score13= 10
+| RD1-seed14 = H2
+| RD1-team14 = {{PDCFlag|Stephen Bunting|avg=98.96}} (6)
+| RD1-score14= 6
+| RD1-seed15 = H1
+| RD1-team15 = {{PDCFlag|Gian van Veen|avg=106.45}}
+| RD1-score15= 10
+| RD1-seed16 = G2
+| RD1-team16 = {{PDCFlag|Ryan Joyce|avg=93.84}}
+| RD1-score16= 2
+| RD2-seed01 = B2
+| RD2-team01 = {{PDCFlag|Cameron Menzies|avg=88.21}}
+| RD2-score01= 15
+| RD2-seed02 = A2
+| RD2-team02 = {{PDCFlag|Mickey Mansell|avg=91.19}}
+| RD2-score02= 16
+| RD2-seed03 = C1
+| RD2-team03 = {{PDCFlag|Martin Lukeman|avg=98.34}}
+| RD2-score03= 16
+| RD2-seed04 = C2
+| RD2-team04 = {{PDCFlag|Rob Cross|avg=94.63}} (4)
+| RD2-score04= 11
+| RD2-seed05 = E1
+| RD2-team05 = {{PDCFlag|Jermaine Wattimena|avg=92.69}}
+| RD2-score05= 2
+| RD2-seed06 = F1
+| RD2-team06 = {{PDCFlag|Luke Littler|avg=105.11}}
+| RD2-score06= 16
+| RD2-seed07 = G1
+| RD2-team07 = {{PDCFlag|Gary Anderson|avg=99.13}}
+| RD2-score07= 16
+| RD2-seed08 = H1
+| RD2-team08 = {{PDCFlag|Gian van Veen|avg=97.38}}
+| RD2-score08= 14
+| RD3-seed01 = A2
+| RD3-team01 = {{PDCFlag|Mickey Mansell|avg=92.28}}
+| RD3-score01= 12
+| RD3-seed02 = C1
+| RD3-team02 = {{PDCFlag|Martin Lukeman|avg=99.66}}
+| RD3-score02= 16
+| RD3-seed03 = F1
+| RD3-team03 = {{PDCFlag|Luke Littler|avg=103.81}}
+| RD3-score03= 16
+| RD3-seed04 = G1
+| RD3-team04 = {{PDCFlag|Gary Anderson|avg=100.17}}
+| RD3-score04= 15
+| RD4-seed01 = C1
+| RD4-team01 = {{PDCFlag|Martin Lukeman|avg=93.42}}
+| RD4-score01= 3
+| RD4-seed02 = F1
+| RD4-team02 = {{PDCFlag|Luke Littler|avg=107.08}}
+| RD4-score02= 16
+}}
+
+==Top averages==
+The table lists all players who achieved an [[High dart average|average]] of at least 100 in a match.<ref name="SlamGS">{{cite web |title=Groupstage of Grand Slam of Darts 2024 - Mastercaller |url=https://mastercaller.com/tournaments/grand-slam-of-darts/2024/groupstage|access-date=11 November 2024 |website=Mastercaller}}</ref><ref name=SlamKOResults/> If any player has multiple records, this is indicated by the number in brackets.
+{| class ="wikitable sortable"
+|-
+! #
+! Player
+! Round
+! Average
+! Result
+|-
+|1
+|{{PDCFlag|Gian van Veen}}
+|Rowspan=6|{{nowrap|Group Stage}}
+|114.71
+|style="background:#CCFFCC;|'''Won'''
+|-
+|2
+|{{PDCFlag|Gary Anderson}}
+|113.20
+|style="background:#CCFFCC;|'''Won'''
+|-
+|3
+|{{PDCFlag|Luke Littler}}
+|112.16
+|style="background:#CCFFCC;|'''Won'''
+|-
+|4
+|{{PDCFlag|Wessel Nijman}}
+|111.10
+|style="background:#FFccCC;|''Lost''
+|-
+|5
+|{{PDCFlag|Gian van Veen}}(2)
+|110.39
+|style="background:#CCFFCC;|'''Won'''
+|-
+|6
+|{{PDCFlag|Martin Schindler}}
+|109.15
+|style="background:#FFccCC;|''Lost''
+|-
+|7
+|{{PDCFlag|Luke Littler}}(2)
+|{{nowrap|Final}}
+|107.08
+|style="background:#CCFFCC;|'''Won'''
+|-
+|8
+|{{PDCFlag|Luke Littler}}(3)
+|rowspan="3"|{{nowrap|Group Stage}}
+|106.98
+|style="background:#CCFFCC;|'''Won'''
+|-
+|9
+|{{PDCFlag|Stephen Bunting}}
+|106.66
+|style="background:#CCFFCC;|'''Won'''
+|-
+|10
+|{{PDCFlag|Wessel Nijman}}(2)
+|106.51
+|style="background:#FFccCC;|''Lost''
+|-
+|11
+|{{PDCFlag|Gian van Veen}}(3)
+|{{nowrap|Second Round}}
+|106.45
+|style="background:#CCFFCC;|'''Won'''
+|-
+|12
+|{{PDCFlag|Danny Noppert}}
+|rowspan=4|{{nowrap|Group Stage}}
+|106.28
+|style="background:#CCFFCC;|'''Won'''
+|-
+|13
+|{{PDCFlag|Josh Rock}}
+|105.83
+|style="background:#FFccCC;|''Lost''
+|-
+|14
+|{{PDCFlag|Wessel Nijman}}(3)
+|105.39
+|style="background:#FFccCC;|''Lost''
+|-
+|15
+|{{PDCFlag|Gary Anderson}}(2)
+|105.19
+|style="background:#CCFFCC;|'''Won'''
+|-
+|16
+|{{PDCFlag|Luke Littler}}(4)
+|{{nowrap|Quarter final}}
+|105.11
+|style="background:#CCFFCC;|'''Won'''
+|-
+|17
+|{{PDCFlag|Ritchie Edhouse}}
+|rowspan="2"|{{nowrap|Group Stage}}
+|105.00
+|style="background:#CCFFCC;|'''Won'''
+|-
+|18
+|{{PDCFlag|Dimitri Van den Bergh}}
+|104.58
+|style="background:#CCFFCC;|'''Won'''
+|-
+|19
+|{{PDCFlag|Mike De Decker}}
+|{{nowrap|Second Round}}
+|104.49
+|style="background:#FFccCC;|''Lost''
+|-
+|20
+|{{PDCFlag|Connor Scutt}}
+|rowspan="6"|{{nowrap|Group Stage}}
+|104.38
+|style="background:#ccffCC;|'''Won'''
+|-
+|21
+|{{PDCFlag|Jermaine Wattimena}}
+|104.32
+|style="background:#CCFFCC;|'''Won'''
+|-
+|22
+|{{PDCFlag|Stephen Bunting}}(2)
+|104.17
+|style="background:#FFccCC;|''Lost''
+|-
+|rowspan="2"|23
+|{{PDCFlag|Ritchie Edhouse}}(2)
+|103.99
+|style="background:#CCFFCC;|'''Won'''
+|-
+|{{PDCFlag|Gian van Veen}}(4)
+|103.99
+|style="background:#CCFFCC;|'''Won'''
+|-
+|24
+|{{PDCFlag|Stephen Bunting}}(3)
+|103.82
+|style="background:#CCFFCC;|'''Won'''
+|-
+|25
+|{{PDCFlag|Luke Littler}}(5)
+|{{nowrap|Semi Final}}
+|103.81
+|style="background:#CCFFCC;|'''Won'''
+|-
+|26
+|{{PDCFlag|Luke Littler}}(6)
+|{{nowrap|Second Round}}
+|103.48
+|style="background:#CCFFCC;|'''Won'''
+|-
+|27
+|{{PDCFlag|James Wade}}
+|rowspan="5"|{{nowrap|Group Stage}}
+|103.12
+|style="background:#FFccCC;|''Lost''
+|-
+|28
+|{{PDCFlag|Luke Littler}}(7)
+|102.05
+|style="background:#CCFFCC;|'''Won'''
+|-
+|29
+|{{PDCFlag|Luke Humphries}}
+|101.52
+|style="background:#CCFFCC;|'''Won'''
+|-
+|30
+|{{PDCFlag|Mickey Mansell}}
+|100.87
+|style="background:#CCFFCC;|'''Won'''
+|-
+|31
+|{{PDCFlag|Mike De Decker}}(2)
+|100.20
+|style="background:#CCFFCC;|'''Won'''
+|-
+|32
+|{{PDCFlag|Gary Anderson}}(3)
+|{{nowrap|Semi Final}}
+|100.17
+|style="background:#FFccCC|''Lost''
+|}
+
+== References ==
+{{Reflist|30em}}
+
+== External links ==
+*[https://www.pdc.tv/tournament/cazoo-grand-slam-darts-1 Official website]
+
+{{Grand Slam of Darts}}
+{{2024 in PDC darts}}
+
+[[Category:Grand Slam of Darts|2024]]
+[[Category:2020s in the West Midlands (county)|2024]]
+[[Category:2024 in darts|Grand Slam]]
+[[Category:2024 in English sport|Grand Slam of Darts]]
+[[Category:November 2024 sports events in the United Kingdom|Grand Slam of Darts]]

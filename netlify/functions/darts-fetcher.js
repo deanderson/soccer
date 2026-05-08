@@ -282,8 +282,11 @@ async function fetchPremierLeagueNight(tournament) {
 // aren't reliably present in wikitext).
 
 function parseScoreCell(text) {
-  // Wiki cells use en-dash, hyphen, or various spacings: "10 – 3", "10-3", "13 - 11"
-  const m = text.match(/(\d+)\s*[–\-]\s*(\d+)/);
+  if (!text) return null;
+  // Strip wikitext bold/italic markers — wins are wrapped in '''N'''.
+  const cleaned = String(text).replace(/'{2,}/g, '');
+  // Score formats: "10 – 3", "10-3", "13 - 11" (en-dash, hyphen, ASCII dash)
+  const m = cleaned.match(/(\d+)\s*[\u2013\u2014\-]\s*(\d+)/);
   if (!m) return null;
   return { s1: parseInt(m[1], 10), s2: parseInt(m[2], 10) };
 }
@@ -305,55 +308,132 @@ function normalizeRound(label) {
 
 // Parse the Schedule section into match rows. Returns an array of:
 //   { matchNum, round, avg1, score, avg2, dateStr, year }
+//
+// Wiki structure (real):
+//   - Date headings: {{hidden begin|...title=Saturday, 19 July}} ... {{hidden end}}
+//   - Tables with cells like {{PDCFlag|Name|avg=104.44|b=1}} containing pipes
+//   - Round column uses rowspan=4|1 — round value only on first match in group
 function parseSchedule(wikitext, year) {
   const out = [];
 
   // The Schedule section ends at the next ==Header== of equal level.
   const start = wikitext.search(/==\s*Schedule\s*==/i);
-  if (start < 0) return out;
-
-  // Search forward for the next ==Top-Level== heading (not ===subsection===).
-  const rest = wikitext.slice(start);
-  const endMatch = rest.slice(2).match(/\n==[^=]/);
-  const sectionText = endMatch
-    ? rest.slice(0, 2 + endMatch.index)
-    : rest;
-
-  // Find each date subsection: ===Saturday, 19 July===  (English month, day).
-  const dateRe = /===\s*([A-Za-z]+,\s*\d{1,2}\s+[A-Za-z]+)\s*===/g;
-  const marks = [];
-  let m;
-  while ((m = dateRe.exec(sectionText)) !== null) {
-    marks.push({ dateStr: m[1].trim(), index: m.index });
+  if (start < 0) {
+    // Some pages don't have an explicit Schedule heading — schedule sits
+    // directly under another heading. Fall back to scanning whole wikitext.
+    console.log(`[matchplay parser] no '==Schedule==' heading; scanning whole wikitext`);
   }
+  const sectionText = start >= 0 ? wikitext.slice(start) : wikitext;
 
-  for (let i = 0; i < marks.length; i++) {
-    const startIdx = marks[i].index;
-    const endIdx   = i + 1 < marks.length ? marks[i + 1].index : sectionText.length;
-    const block    = sectionText.slice(startIdx, endIdx);
-    const dateStr  = marks[i].dateStr;
+  // Find each date "block" via {{hidden begin|...title=Saturday, 19 July}}
+  // ... {{hidden end}} or {{hiddenend}}.
+  const blockRe = /\{\{hidden begin\|[^}]*title\s*=\s*([A-Za-z]+,\s*\d{1,2}\s+[A-Za-z]+)\s*\}\}([\s\S]*?)\{\{hidden\s*end\}\}/gi;
+  const blocks = [];
+  let bm;
+  while ((bm = blockRe.exec(sectionText)) !== null) {
+    blocks.push({ dateStr: bm[1].trim(), body: bm[2] });
+  }
+  console.log(`[matchplay parser] found ${blocks.length} date blocks`);
 
-    // Each row in the table starts with `|-` and the cells are pipe-separated.
-    // Use both `||` (inline) and `|` at line-start (block form).
-    // Strategy: find every `| nn ||` pattern at the start of a row.
-    const rowRe = /\|\s*(\d{1,2})\s*\|\|\s*([^|\n]+?)\s*\|\|\s*([^|\n]+?)\s*\|\|\s*([^|\n]+?)\s*\|\|\s*([^|\n]+?)(?:\s*\|\||$)/g;
-    let r;
-    while ((r = rowRe.exec(block)) !== null) {
-      const matchNum = parseInt(r[1], 10);
-      const round    = normalizeRound(r[2]);
-      const avg1     = parseAvgCell(r[3]);
-      const score    = parseScoreCell(r[4]);
-      const avg2     = parseAvgCell(r[5]);
+  for (const { dateStr, body } of blocks) {
+    const beforeCount = out.length;
+
+    // Split into rows on `|-` (the row separator in wikitext tables).
+    // The first chunk is table header / before first row — skip it.
+    const rows = body.split(/\n\s*\|-\s*[^\n]*\n/);
+
+    // Track the current "active" round value because of rowspan.
+    let currentRound = null;
+
+    for (const row of rows) {
+      // Each row text may contain multiple cells separated by `||` OR newline-pipe.
+      // But because PDCFlag templates contain `|`, a naive split on `||` works
+      // only because PDCFlag uses single `|` inside `{{...}}` and `||` is
+      // outside. Same for `rowspan=N|N` — single pipe inside an attribute.
+      //
+      // Strategy: find `||` separators that are NOT inside `{{...}}`.
+      // Simpler version: replace `{{...}}` with placeholders, split, restore.
+
+      const placeholders = [];
+      const masked = row.replace(/\{\{[^{}]*(?:\{\{[^{}]*\}\}[^{}]*)*\}\}/g, (match) => {
+        placeholders.push(match);
+        return `\x00P${placeholders.length - 1}\x00`;
+      });
+
+      // Now split on `||` safely.
+      const rawCells = masked.split(/\s*\|\|\s*/);
+      // Restore templates and trim leading `|` from first cell.
+      const cells = rawCells.map(c =>
+        c.replace(/\x00P(\d+)\x00/g, (_, i) => placeholders[parseInt(i, 10)])
+         .replace(/^\|\s*/, '')
+         .trim()
+      );
+
+      if (cells.length < 4) continue;
+      const matchNumRaw = cells[0];
+      const matchNum = parseInt(matchNumRaw, 10);
+      if (!Number.isFinite(matchNum)) continue;
+
+      // Round handling. Possible cell shapes:
+      //   "rowspan=4|1"      — first row of a rowspan group
+      //   "rowspan=4|QF"     — same, named round
+      //   "1"                — bare round value, no rowspan
+      //   "QF"               — bare named round
+      // If the cell starts with rowspan, capture the round and remember it.
+      // If it's bare, just use it. Otherwise, this row is INSIDE a rowspan
+      // group, so the round cell is missing — use the remembered round.
+      let round = null;
+      const roundCell = cells[1] || '';
+      const rowspanMatch = roundCell.match(/^rowspan\s*=\s*\d+\s*\|\s*(.+)$/i);
+      if (rowspanMatch) {
+        round = normalizeRound(rowspanMatch[1]);
+        currentRound = round;
+      } else if (/^[A-Za-z0-9]+$/.test(roundCell.trim())) {
+        round = normalizeRound(roundCell);
+        currentRound = round;
+      } else {
+        // No round cell here — must be a continuation row inside a rowspan.
+        // The cells shift left by 1 (no round cell present).
+        round = currentRound;
+      }
+
+      // Determine cell offsets based on whether round cell is present.
+      // With round:    [matchNum, round, p1, score, p2, ...]
+      // Without round: [matchNum, p1, score, p2, ...]
+      const hasRoundCell = cells[1] !== undefined && (rowspanMatch || /^[A-Za-z0-9]+$/.test(roundCell.trim()));
+      const p1Idx    = hasRoundCell ? 2 : 1;
+      const scoreIdx = hasRoundCell ? 3 : 2;
+      const p2Idx    = hasRoundCell ? 4 : 3;
+
+      const p1Cell = cells[p1Idx]    || '';
+      const scCell = cells[scoreIdx] || '';
+      const p2Cell = cells[p2Idx]    || '';
+
+      const score = parseScoreCell(scCell);
       if (!score) continue;
+
       out.push({
-        matchNum, round, avg1, avg2,
+        matchNum,
+        round:    round || 'R?',
+        avg1:     parseAvgFromPDCFlag(p1Cell),
+        avg2:     parseAvgFromPDCFlag(p2Cell),
         s1: score.s1, s2: score.s2,
         dateStr, year,
       });
     }
+
+    const added = out.length - beforeCount;
+    console.log(`[matchplay parser] ${dateStr}: parsed ${added} matches`);
   }
 
   return out;
+}
+
+// Extract avg from {{PDCFlag|Name|avg=104.44|b=1}} or similar.
+function parseAvgFromPDCFlag(cellText) {
+  if (!cellText) return null;
+  const m = cellText.match(/avg\s*=\s*(\d+\.\d+)/i);
+  return m ? parseFloat(m[1]) : null;
 }
 
 // Group matches into sessions. With ≤4 matches on a date it's a single
