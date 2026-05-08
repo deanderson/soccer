@@ -12,6 +12,11 @@ const PROVIDERS = {
   'Premier League Darts': {
     DEFAULT: { name: 'PDC TV', baseUrl: 'https://www.pdc.tv', affiliateParams: null },
   },
+  // World Matchplay (and most other PDC majors) broadcast on PDC TV globally.
+  // Add per-country overrides later if/when affiliate deals make sense.
+  'World Matchplay': {
+    DEFAULT: { name: 'PDC TV', baseUrl: 'https://www.pdc.tv', affiliateParams: null },
+  },
 
   // ----- CRICKET -----
   // IPL has clearly different rights per region. Sources (May 2026): Sky for

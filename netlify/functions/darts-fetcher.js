@@ -561,10 +561,18 @@ async function fetchDarts() {
     return { recent: [], upcoming: [] };
   }
 
-  const results = await Promise.allSettled(activeTournaments.map(t => {
-    if (t.format === 'premier-league-night')   return fetchPremierLeagueNight(t);
-    if (t.format === 'knockout-multi-session') return fetchKnockoutMultiSession(t);
-    return Promise.resolve({ recent: [], upcoming: [] });
+  const results = await Promise.allSettled(activeTournaments.map(async t => {
+    let result;
+    if (t.format === 'premier-league-night')        result = await fetchPremierLeagueNight(t);
+    else if (t.format === 'knockout-multi-session') result = await fetchKnockoutMultiSession(t);
+    else                                            result = { recent: [], upcoming: [] };
+    // Mark forceActive games so the recency cutoff below skips them. This lets
+    // historical test data (e.g. last year's Matchplay) flow through for parser
+    // validation without bumping the global cutoff.
+    if (t.forceActive) {
+      result.recent.forEach(g => { g._bypassCutoff = true; });
+    }
+    return result;
   }));
 
   for (const r of results) {
@@ -577,10 +585,12 @@ async function fetchDarts() {
   }
 
   // Trim recent to last ~21 days (darts has fewer events than other sports;
-  // a wider window keeps two-three Premier League nights visible)
+  // a wider window keeps two-three Premier League nights visible). Games tagged
+  // with _bypassCutoff (test/historical fixtures) are kept regardless.
   const cutoff = now - 21 * 86400000;
   const recent = allRecent
-    .filter(g => g.ts >= cutoff)
+    .filter(g => g._bypassCutoff || g.ts >= cutoff)
+    .map(g => { delete g._bypassCutoff; return g; })
     .sort((a, b) => a.ts - b.ts);
 
   const upcoming = allUpcoming
