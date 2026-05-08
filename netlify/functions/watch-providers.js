@@ -32,7 +32,24 @@ const PROVIDERS = {
     // showing no button.
   },
 
-  // Future: PSL (Willow US, FanCode IN), bilaterals usually unbroadcast.
+  // PSL has the same per-country rights pattern as IPL. Notable differences:
+  // not broadcast in India (geopolitics), ESPN handles AU/NZ, ARY in UK
+  // (not Sky). Willow still covers North America. No DEFAULT.
+  'PSL': {
+    US: { name: 'Willow TV',   baseUrl: 'https://www.willow.tv',     affiliateParams: null },
+    CA: { name: 'Willow TV',   baseUrl: 'https://www.willow.tv',     affiliateParams: null },
+    GB: { name: 'ARY Digital', baseUrl: 'https://aryzap.com',        affiliateParams: null },
+    PK: { name: 'Tapmad',      baseUrl: 'https://www.tapmad.com',    affiliateParams: null },
+    AU: { name: 'ESPN',        baseUrl: 'https://www.espn.com.au',   affiliateParams: null },
+    NZ: { name: 'ESPN',        baseUrl: 'https://www.espn.com.au',   affiliateParams: null },
+    BD: { name: 'T Sports',    baseUrl: 'https://www.tsports.com',   affiliateParams: null },
+    LK: { name: 'Dialog TV',   baseUrl: 'https://www.dialog.lk',     affiliateParams: null },
+    // No IN entry — PSL is not broadcast/streamed in India.
+    // No DEFAULT — geo-locked rights, hide button rather than misdirect.
+  },
+
+  // Future: bilateral series (Germany v Austria, etc) typically have no
+  // global broadcast deals. Adding them is rarely worth the lookup work.
 };
 
 // Build the final URL. If affiliateParams is set later, append as query string.

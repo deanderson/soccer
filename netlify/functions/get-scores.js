@@ -1198,15 +1198,23 @@ exports.handler = async function (event, context) {
     });
   }
 
-  // Attach a `watch` field { name, url } to Must Watch games where we have a
-  // provider mapping for the given country. Hidden entirely otherwise — a
-  // button that goes nowhere useful is worse than no button.
+  // Attach a `watch` field { name, url } to games good enough to recommend
+  // (watchworthy, scorefest, or watchable) where we have a provider mapping
+  // for the given country. Lower-quality classes (defensive, blowout) get no
+  // button — those aren't recommendations.
+  //
+  // The frontend decides whether to actually render the button. Currently:
+  // - Top Picks bar: renders button on every pick (Must Watch + Watchable)
+  // - Main game grid: renders only on Must Watch (avoids visual noise)
+  // The backend just needs to make sure `g.watch` is present whenever the
+  // frontend MIGHT want it.
   function attachWatchToGames(games, country) {
+    const SHOW_WATCH = new Set(['watchworthy', 'scorefest', 'watchable']);
     return games.map(g => {
       // Strip any pre-existing watch field (defensive — shouldn't be there
       // for country-aware leagues, but a stale one would survive otherwise).
       const { watch: _drop, ...rest } = g;
-      if (g.confidence?.cls !== 'watchworthy') return rest;
+      if (!SHOW_WATCH.has(g.confidence?.cls)) return rest;
       const provider = lookupProvider(g.league, country);
       return provider ? { ...rest, watch: provider } : rest;
     });

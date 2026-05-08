@@ -31,18 +31,39 @@ const SPORT_KEYS = {
 // Convert one game object from the blob into a row for the `games` table.
 // Returns null if the game can't be archived (missing id, etc.) — caller skips.
 function gameToRow(game, sport, league) {
-  if (!game || !game.id) return null;
-
-  // Cricket and tennis don't always have numeric h/a scores. Coerce or null.
-  const homeScore = Number.isFinite(game.h) ? game.h : null;
-  const awayScore = Number.isFinite(game.a) ? game.a : null;
+  if (!game) return null;
 
   // Match timestamp — every fetcher writes `ts` in unix milliseconds.
-  // If a game has no ts (shouldn't happen but defensive), skip it.
+  // If a game has no ts, we can't archive it sensibly.
   if (!Number.isFinite(game.ts)) return null;
 
+  // Tennis games don't have an `id` field — they're identified in the frontend
+  // by player+tournament+round+ts. Synthesize a stable id from those so we can
+  // upsert idempotently. Sports that already have an id (everything else) use
+  // theirs unchanged.
+  let id = game.id;
+  if (!id) {
+    const parts = [
+      sport,
+      (game.tournament || game.league || 'tour').replace(/\s+/g, '_'),
+      (game.home || 'h').replace(/\s+/g, '_'),
+      (game.away || 'a').replace(/\s+/g, '_'),
+      game.ts,
+    ];
+    id = parts.join('-');
+  }
+
+  // Numeric scores when present, null otherwise. Tennis stores set scores in
+  // game.sets[] (in raw_data); cricket stores result strings in game.status.
+  const homeScore = Number.isFinite(game.h) ? game.h
+                  : Number.isFinite(game.homeSets) ? game.homeSets
+                  : null;
+  const awayScore = Number.isFinite(game.a) ? game.a
+                  : Number.isFinite(game.awaySets) ? game.awaySets
+                  : null;
+
   return {
-    id:                 game.id,
+    id,
     sport,
     league:             game.league || league || 'unknown',
     home:               game.home || 'unknown',

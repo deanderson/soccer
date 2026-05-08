@@ -28,10 +28,6 @@
   header{padding:40px 0 28px;border-bottom:1px solid var(--border);margin-bottom:28px;}
   h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,7vw,60px);letter-spacing:0.04em;line-height:1;white-space:nowrap;}
   h1 .dim{color:var(--muted);} h1 .accent{color:var(--green);}
-  .spoiler-pill{display:inline-flex;align-items:center;gap:6px;background:var(--green-bg);border:1px solid rgba(63,185,80,0.3);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--green);margin-top:10px;cursor:pointer;transition:all 0.2s;font-family:'Outfit',sans-serif;}
-  .spoiler-pill:hover{background:rgba(63,185,80,0.15);}
-  .spoiler-pill.off{background:rgba(125,133,144,0.1);border-color:rgba(125,133,144,0.3);color:var(--muted);}
-  .spoiler-pill.off .dot{background:var(--muted);animation:none;}
   .spoiler-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 22px;font-size:13px;font-weight:700;color:var(--text);box-shadow:0 4px 24px rgba(0,0,0,0.5);z-index:200;opacity:0;transition:opacity 0.2s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;}
   .spoiler-toast.show{opacity:1;}
   .spoiler-toast.toast-error{border-color:var(--red);color:var(--red);background:var(--red-bg);}
@@ -287,7 +283,6 @@
         <p style="font-size:14px;color:var(--muted);margin-top:6px;font-weight:400;letter-spacing:0.01em;">Skip the boring games. No spoilers.</p>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
-        <button id="spoiler-pill" class="spoiler-pill" onclick="toggleSpoilerMode()"><div class="dot"></div> Spoiler-Free Mode: <span id="spoiler-status">ON</span></button>
         <div class="last-updated"><div class="last-updated-dot"></div><span id="last-updated-text">Loading...</span><button class="refresh-btn" id="refresh-btn" onclick="refreshNow()" title="Refresh scores">↻</button></div>
       </div>
     </div>
@@ -1178,7 +1173,10 @@
             : `data-h="${g.h}" data-a="${g.a}"`;
         const dateLabel = g.date || g.dateStr || '';
         const leagueLabel = g.league || g.leagueName || g.tournament || '';
-        const watchBtn = (g.watch && g.cat.cls === 'watchworthy')
+        // In Top Picks every card is a deliberate recommendation, so show the
+        // watch button on Watchable backfill picks too — not just Must Watch.
+        // Main grid keeps the watchworthy-only gate to avoid button overload.
+        const watchBtn = g.watch
           ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
           : '';
         return `
@@ -1401,29 +1399,8 @@
       </div>`;
   }
 
-  // ── SPOILER MODE ───────────────────────────────────────────────────────
-  let spoilerMode = localStorage.getItem('spoilerMode') !== 'off';
-
-  function toggleSpoilerMode() {
-    spoilerMode = !spoilerMode;
-    localStorage.setItem('spoilerMode', spoilerMode ? 'on' : 'off');
-    const pill = document.getElementById('spoiler-pill');
-    const status = document.getElementById('spoiler-status');
-    pill.classList.toggle('off', !spoilerMode);
-    status.textContent = spoilerMode ? 'ON' : 'OFF';
-    showToast(spoilerMode ? '🛡 Spoiler-Free Mode ON' : '👁 Spoiler-Free Mode OFF — scores visible');
-  }
-
-  // Apply saved spoiler mode state on load
-  function initSpoilerPill() {
-    if (!spoilerMode) {
-      const pill = document.getElementById('spoiler-pill');
-      const status = document.getElementById('spoiler-status');
-      pill.classList.add('off');
-      status.textContent = 'OFF';
-    }
-  }
-
+  // showToast — used for various ephemeral notifications (refresh status,
+  // copy-to-clipboard confirmations, etc.).
   let toastTimer;
   function showToast(msg, type = '') {
     const toast = document.getElementById('spoiler-toast');
@@ -1438,15 +1415,11 @@
     }, 3000);
   }
 
-  function spoilerBlocked(btn) {
-    if (!spoilerMode) return false;
-    showToast('🛡 Turn off Spoiler-Free Mode to reveal scores');
-    // Briefly shake the pill to draw attention
-    const pill = document.getElementById('spoiler-pill');
-    pill.style.transform = 'scale(1.08)';
-    setTimeout(() => pill.style.transform = '', 200);
-    return true;
-  }
+  // Reveal buttons are the only spoiler protection now — tapping them is
+  // already a deliberate action. Keeping this stub lets old call sites
+  // (toggleScore, toggleCricketScore, etc.) keep their existing shape
+  // without a frontend rewrite.
+  function spoilerBlocked(_btn) { return false; }
 
   function toggleScore(btn, h, a) {
     if (spoilerBlocked(btn)) return;
@@ -1752,7 +1725,6 @@
     renderTopPicks();
   }
 
-  initSpoilerPill();
   loadScores();
 
   // PWA service worker registration
