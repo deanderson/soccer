@@ -896,11 +896,16 @@ exports.handler = async function (event, context) {
   }
 
   async function fetchNHLWithTimeline() {
-    const data = await fetchESPN(`${BASE}/hockey/nhl/scoreboard?dates=${espnDate(-14)}-${espnDate(0)}&limit=200`);
-    const events = normalizeEvents(data, "NHL");
+    // Fetch recent (past 14 days) and upcoming (next 4 days) separately.
+    const [recentData, upcomingData] = await Promise.all([
+      fetchESPN(`${BASE}/hockey/nhl/scoreboard?dates=${espnDate(-14)}-${espnDate(0)}&limit=200`),
+      fetchESPN(`${BASE}/hockey/nhl/scoreboard?dates=${espnDate(1)}-${espnDate(4)}&limit=100`),
+    ]);
+    const recentEvents   = normalizeEvents(recentData,   "NHL");
+    const upcomingEvents = normalizeEvents(upcomingData, "NHL");
 
-    const recent = events.filter(g => g.status === "final" && g.ts >= twoWeeksAgo).sort((a, b) => b.ts - a.ts);
-    const upcoming = events.filter(g => g.status === "upcoming" && g.ts >= now).sort((a, b) => a.ts - b.ts).slice(0, 50);
+    const recent   = recentEvents.filter(g => g.status === "final" && g.ts >= twoWeeksAgo).sort((a, b) => b.ts - a.ts);
+    const upcoming = upcomingEvents.filter(g => g.status === "upcoming" && g.ts >= now).sort((a, b) => a.ts - b.ts).slice(0, 50);
 
     // Hard pre-filter: 3+ goal margin = Skip, no need for expensive timeline fetch
     const candidates = recent.filter(g => g.id && Math.abs(g.h - g.a) < 3).slice(0, 30);
@@ -1009,11 +1014,18 @@ exports.handler = async function (event, context) {
 
 
   async function fetchNBAWithTimeline() {
-    const data = await fetchESPN(`${BASE}/basketball/nba/scoreboard?dates=${espnDate(-14)}-${espnDate(0)}&limit=200`);
-    const events = normalizeEvents(data, "NBA");
+    // Fetch recent (past 14 days) and upcoming (next 4 days) separately.
+    // The recent fetch feeds timeline enrichment; the upcoming fetch surfaces
+    // scheduled games for the "Coming Up This Week" section.
+    const [recentData, upcomingData] = await Promise.all([
+      fetchESPN(`${BASE}/basketball/nba/scoreboard?dates=${espnDate(-14)}-${espnDate(0)}&limit=200`),
+      fetchESPN(`${BASE}/basketball/nba/scoreboard?dates=${espnDate(1)}-${espnDate(4)}&limit=100`),
+    ]);
+    const recentEvents   = normalizeEvents(recentData,   "NBA");
+    const upcomingEvents = normalizeEvents(upcomingData, "NBA");
 
-    const recent = events.filter(g => g.status === "final" && g.ts >= twoWeeksAgo).sort((a, b) => b.ts - a.ts);
-    const upcoming = events.filter(g => g.status === "upcoming" && g.ts >= now).sort((a, b) => a.ts - b.ts).slice(0, 50);
+    const recent   = recentEvents.filter(g => g.status === "final" && g.ts >= twoWeeksAgo).sort((a, b) => b.ts - a.ts);
+    const upcoming = upcomingEvents.filter(g => g.status === "upcoming" && g.ts >= now).sort((a, b) => a.ts - b.ts).slice(0, 50);
 
     // Analyze all games except clear blowouts — skip diff>=20
     const candidates = recent.filter(g => g.id && Math.abs(g.h - g.a) < 20).slice(0, 30);
@@ -1054,11 +1066,19 @@ exports.handler = async function (event, context) {
   }
 
   async function fetchWNBAWithTimeline() {
-    const data = await fetchESPN(`${BASE}/basketball/wnba/scoreboard?dates=${espnDate(-14)}-${espnDate(0)}&limit=200`);
-    const events = normalizeEvents(data, "WNBA");
+    // Fetch recent (past 14 days) and upcoming (next 4 days) separately.
+    // The recent fetch feeds timeline enrichment; the upcoming fetch surfaces
+    // scheduled games with broadcast info for the "Coming Up This Week"
+    // section. Both go through normalizeEvents which extracts geoBroadcasts.
+    const [recentData, upcomingData] = await Promise.all([
+      fetchESPN(`${BASE}/basketball/wnba/scoreboard?dates=${espnDate(-14)}-${espnDate(0)}&limit=200`),
+      fetchESPN(`${BASE}/basketball/wnba/scoreboard?dates=${espnDate(1)}-${espnDate(4)}&limit=100`),
+    ]);
+    const recentEvents   = normalizeEvents(recentData,   "WNBA");
+    const upcomingEvents = normalizeEvents(upcomingData, "WNBA");
 
-    const recent = events.filter(g => g.status === "final" && g.ts >= twoWeeksAgo).sort((a, b) => b.ts - a.ts);
-    const upcoming = events.filter(g => g.status === "upcoming" && g.ts >= now).sort((a, b) => a.ts - b.ts).slice(0, 50);
+    const recent   = recentEvents.filter(g => g.status === "final" && g.ts >= twoWeeksAgo).sort((a, b) => b.ts - a.ts);
+    const upcoming = upcomingEvents.filter(g => g.status === "upcoming" && g.ts >= now).sort((a, b) => a.ts - b.ts).slice(0, 50);
 
     // Skip clear blowouts in timeline enrichment. WNBA blowout threshold scaled
     // from NBA's 20: roughly 15. Saves API calls on games that won't tier up.

@@ -53,6 +53,15 @@ const PROVIDERS = {
     // No DEFAULT — geo-locked rights, hide button rather than misdirect.
   },
 
+  // ----- WNBA -----
+  // WNBA League Pass is the canonical home for replays — every regular-season
+  // game is on demand for subscribers (with a free tier for the past week of
+  // games). Single global entry; WNBA doesn't have the per-country licensing
+  // mess that cricket does.
+  'WNBA': {
+    DEFAULT: { name: 'WNBA League Pass', baseUrl: 'https://watch.wnba.com', affiliateParams: null },
+  },
+
   // Future: bilateral series (Germany v Austria, etc) typically have no
   // global broadcast deals. Adding them is rarely worth the lookup work.
 };
