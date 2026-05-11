@@ -111,6 +111,52 @@ footer{border-top:1px solid var(--rule);padding-top:32px;font-family:'JetBrains 
   .bar-wrap{height:24px}
   .stat .num{font-size:28px}
 }
+
+/* Revenue section */
+.disclaimer{background:rgba(194,65,12,.08);border-left:3px solid var(--rust);padding:16px 20px;margin-bottom:28px;font-family:'Inter',sans-serif;font-size:13px;color:var(--ink-dim);line-height:1.55}
+.disclaimer strong{color:var(--ink);font-family:'Fraunces',serif;font-style:italic;font-weight:500}
+.rev-controls{background:var(--panel);border:1px solid var(--rule);padding:24px;margin-bottom:32px;display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.rev-control{display:flex;flex-direction:column;gap:10px}
+.rev-control-head{display:flex;justify-content:space-between;align-items:baseline}
+.rev-control label{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+.rev-control .rpm-val{font-family:'Fraunces',serif;font-size:24px;color:var(--amber-bright);font-weight:400}
+.rev-control input[type=range]{appearance:none;background:transparent;height:20px;cursor:pointer}
+.rev-control input[type=range]::-webkit-slider-runnable-track{height:4px;background:var(--rule);border-radius:2px}
+.rev-control input[type=range]::-moz-range-track{height:4px;background:var(--rule);border-radius:2px}
+.rev-control input[type=range]::-webkit-slider-thumb{appearance:none;width:18px;height:18px;background:var(--amber);border-radius:50%;margin-top:-7px;cursor:pointer}
+.rev-control input[type=range]::-moz-range-thumb{width:18px;height:18px;background:var(--amber);border-radius:50%;border:none;cursor:pointer}
+.rev-control .range-bounds{display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--ink-faint);margin-top:-4px}
+.preset-row{display:flex;gap:6px;margin-top:14px;grid-column:1/-1}
+
+.rev-totals{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule);border:1px solid var(--rule);margin-bottom:40px}
+.rev-total{background:var(--panel);padding:28px 24px;text-align:left;position:relative}
+.rev-total.featured{background:linear-gradient(135deg, rgba(233,162,59,.08), var(--panel))}
+.rev-total .scenario{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:14px}
+.rev-total.featured .scenario{color:var(--amber)}
+.rev-total .amount{font-family:'Fraunces',serif;font-size:42px;font-weight:300;letter-spacing:-.02em;color:var(--ink);line-height:1}
+.rev-total.featured .amount{color:var(--amber-bright)}
+.rev-total .rpms{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--ink-faint);margin-top:10px;letter-spacing:.05em}
+
+.rev-split{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-bottom:40px}
+.rev-card{background:var(--panel);border:1px solid var(--rule);padding:28px}
+.rev-card h3{font-family:'Fraunces',serif;font-weight:400;font-size:20px;margin-bottom:6px}
+.rev-card .sub{font-size:12px;color:var(--ink-dim);margin-bottom:24px}
+.rev-card .big-num{font-family:'Fraunces',serif;font-size:38px;font-weight:300;letter-spacing:-.02em;color:var(--ink)}
+.rev-card .pct{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--amber);margin-top:6px}
+
+.rev-table{width:100%;border-collapse:collapse;margin-top:8px}
+.rev-table th{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-faint);text-align:left;padding:10px 12px 10px 0;border-bottom:1px solid var(--rule);font-weight:500}
+.rev-table th.right{text-align:right}
+.rev-table td{padding:13px 12px 13px 0;border-bottom:1px solid var(--rule);font-size:14px}
+.rev-table td.right{text-align:right;font-family:'JetBrains Mono',monospace}
+.rev-table .topic-name-cell{font-family:'Fraunces',serif;font-size:15px;color:var(--ink)}
+.rev-table .rev-amount{color:var(--amber-bright);font-weight:500}
+
+@media(max-width:780px){
+  .rev-controls{grid-template-columns:1fr}
+  .rev-totals{grid-template-columns:1fr}
+  .rev-split{grid-template-columns:1fr}
+}
 </style>
 </head>
 <body>
@@ -181,6 +227,99 @@ footer{border-top:1px solid var(--rule);padding-top:32px;font-family:'JetBrains 
     <div class="desc">Brighter = higher average views per video in that combination.</div>
     <div class="chart-box"><canvas id="chartCross"></canvas></div>
   </div>
+</section>
+
+
+<section>
+  <div class="section-head">
+    <h2>Estimated <em>ad revenue</em></h2>
+    <div class="num-label">PUBLIC ESTIMATE · MOVE SLIDERS</div>
+  </div>
+
+  <div class="disclaimer">
+    <strong>Estimates only.</strong> Real ad revenue is only visible inside YouTube Studio. These figures use public view counts × an industry-standard RPM (revenue per 1,000 views) range. Actual numbers could be 50% off either direction. Brand sponsorships, channel memberships, and other income are <em>not</em> included — those typically dwarf ad revenue for creators at this scale. Default assumes US/family-entertainment audience; adjust the sliders to test other scenarios.
+  </div>
+
+  <div class="rev-controls">
+    <div class="rev-control">
+      <div class="rev-control-head">
+        <label>Long-form RPM</label>
+        <span class="rpm-val">$<span id="longRpmVal">2.50</span></span>
+      </div>
+      <input type="range" id="longRpm" min="0.50" max="6.00" step="0.10" value="2.50">
+      <div class="range-bounds"><span>$0.50</span><span>$6.00</span></div>
+    </div>
+    <div class="rev-control">
+      <div class="rev-control-head">
+        <label>Shorts RPM</label>
+        <span class="rpm-val">$<span id="shortsRpmVal">0.060</span></span>
+      </div>
+      <input type="range" id="shortsRpm" min="0.01" max="0.25" step="0.005" value="0.06">
+      <div class="range-bounds"><span>$0.01</span><span>$0.25</span></div>
+    </div>
+    <div class="preset-row">
+      <button class="ctrl" data-preset="low">Conservative · $1.50 / $0.04</button>
+      <button class="ctrl active" data-preset="mid">Mid · $2.50 / $0.06</button>
+      <button class="ctrl" data-preset="high">Optimistic · $4.00 / $0.10</button>
+    </div>
+  </div>
+
+  <div class="rev-totals">
+    <div class="rev-total">
+      <div class="scenario">Conservative scenario</div>
+      <div class="amount" id="revLow">$0</div>
+      <div class="rpms">$1.50 long · $0.04 shorts</div>
+    </div>
+    <div class="rev-total featured">
+      <div class="scenario">★ Current scenario</div>
+      <div class="amount" id="revMid">$0</div>
+      <div class="rpms" id="revMidRpms">$2.50 long · $0.06 shorts</div>
+    </div>
+    <div class="rev-total">
+      <div class="scenario">Optimistic scenario</div>
+      <div class="amount" id="revHigh">$0</div>
+      <div class="rpms">$4.00 long · $0.10 shorts</div>
+    </div>
+  </div>
+
+  <div class="rev-split">
+    <div class="rev-card">
+      <h3>From long-form videos</h3>
+      <div class="sub">Where almost all the ad revenue comes from</div>
+      <div class="big-num" id="revLong">$0</div>
+      <div class="pct" id="revLongPct">0% of total · 0 videos</div>
+    </div>
+    <div class="rev-card">
+      <h3>From Shorts</h3>
+      <div class="sub">High view counts, low per-view payout</div>
+      <div class="big-num" id="revShorts">$0</div>
+      <div class="pct" id="revShortsPct">0% of total · 0 videos</div>
+    </div>
+  </div>
+
+  <div class="chart-card wide" style="margin-bottom:32px">
+    <h3>Estimated revenue by topic</h3>
+    <div class="sub" style="font-family:'Inter',sans-serif;font-size:12px;color:var(--ink-dim);margin-bottom:20px">Long-form and Shorts revenue, stacked. Updates live as you move the sliders.</div>
+    <div class="chart-box"><canvas id="chartRevByTopic"></canvas></div>
+  </div>
+
+  <div class="chart-card wide" style="margin-bottom:32px">
+    <h3>Estimated revenue over time</h3>
+    <div class="sub" style="font-family:'Inter',sans-serif;font-size:12px;color:var(--ink-dim);margin-bottom:20px">Monthly estimate based on videos published that month and their cumulative views to date.</div>
+    <div class="chart-box"><canvas id="chartRevByMonth"></canvas></div>
+  </div>
+
+  <div class="chart-card wide">
+    <h3>Top earning videos (estimated)</h3>
+    <div class="sub" style="font-family:'Inter',sans-serif;font-size:12px;color:var(--ink-dim);margin-bottom:16px">The 15 highest revenue contributors under the current RPM assumption.</div>
+    <table class="rev-table">
+      <thead><tr>
+        <th>Title</th><th>Format</th><th>Topic</th><th class="right">Views</th><th class="right">Est. Revenue</th>
+      </tr></thead>
+      <tbody id="revTopBody"></tbody>
+    </table>
+  </div>
+
 </section>
 
 <section>
@@ -377,6 +516,164 @@ new Chart(document.getElementById('chartCross'),{
     }
   }
 });
+
+// === REVENUE ESTIMATION ===
+const longRpmEl = document.getElementById('longRpm');
+const shortsRpmEl = document.getElementById('shortsRpm');
+const longRpmVal = document.getElementById('longRpmVal');
+const shortsRpmVal = document.getElementById('shortsRpmVal');
+
+let revByTopicChart, revByMonthChart;
+
+function calcRev(v, longRpm, shortsRpm){
+  const rpm = v.dur <= 61 ? shortsRpm : longRpm;
+  return (v.v / 1000) * rpm;
+}
+
+function fmtMoney(n){
+  if(n>=1e6) return '$'+(n/1e6).toFixed(2)+'M';
+  if(n>=1e3) return '$'+(n/1e3).toFixed(1)+'K';
+  return '$'+Math.round(n).toLocaleString('en-US');
+}
+function fmtMoneyFull(n){
+  return '$'+Math.round(n).toLocaleString('en-US');
+}
+
+function updateRevenue(){
+  const longRpm = parseFloat(longRpmEl.value);
+  const shortsRpm = parseFloat(shortsRpmEl.value);
+  longRpmVal.textContent = longRpm.toFixed(2);
+  shortsRpmVal.textContent = shortsRpm.toFixed(3);
+
+  // Totals at three scenarios
+  const totalLow = DATA.videos.reduce((s,v)=>s+calcRev(v,1.50,0.04),0);
+  const totalMid = DATA.videos.reduce((s,v)=>s+calcRev(v,longRpm,shortsRpm),0);
+  const totalHigh = DATA.videos.reduce((s,v)=>s+calcRev(v,4.00,0.10),0);
+
+  document.getElementById('revLow').textContent = fmtMoney(totalLow);
+  document.getElementById('revMid').textContent = fmtMoney(totalMid);
+  document.getElementById('revHigh').textContent = fmtMoney(totalHigh);
+  document.getElementById('revMidRpms').textContent = `$${longRpm.toFixed(2)} long · $${shortsRpm.toFixed(3)} shorts`;
+
+  // Format split
+  const longVids = DATA.videos.filter(v=>v.dur>61);
+  const shortsVids = DATA.videos.filter(v=>v.dur<=61);
+  const longRev = longVids.reduce((s,v)=>s+calcRev(v,longRpm,shortsRpm),0);
+  const shortsRev = shortsVids.reduce((s,v)=>s+calcRev(v,longRpm,shortsRpm),0);
+  const total = longRev + shortsRev;
+
+  document.getElementById('revLong').textContent = fmtMoneyFull(longRev);
+  document.getElementById('revLongPct').textContent = `${(longRev/total*100).toFixed(1)}% of total · ${longVids.length} videos`;
+  document.getElementById('revShorts').textContent = fmtMoneyFull(shortsRev);
+  document.getElementById('revShortsPct').textContent = `${(shortsRev/total*100).toFixed(1)}% of total · ${shortsVids.length} videos`;
+
+  // By topic chart
+  const topicRev = {};
+  DATA.topics.forEach(t=>topicRev[t.topic]={long:0,shorts:0});
+  DATA.videos.forEach(v=>{
+    if(!topicRev[v.topic]) return;
+    const r = calcRev(v, longRpm, shortsRpm);
+    if(v.dur<=61) topicRev[v.topic].shorts += r;
+    else topicRev[v.topic].long += r;
+  });
+  const topicNames = Object.keys(topicRev).sort((a,b)=>
+    (topicRev[b].long+topicRev[b].shorts)-(topicRev[a].long+topicRev[a].shorts)
+  );
+
+  if(revByTopicChart) revByTopicChart.destroy();
+  revByTopicChart = new Chart(document.getElementById('chartRevByTopic'),{
+    type:'bar',
+    data:{
+      labels: topicNames,
+      datasets:[
+        {label:'Long-form',data:topicNames.map(t=>Math.round(topicRev[t].long)),backgroundColor:'#e9a23b',borderRadius:1},
+        {label:'Shorts',data:topicNames.map(t=>Math.round(topicRev[t].shorts)),backgroundColor:'#7c2d52',borderRadius:1},
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:true,position:'top',labels:{color:'#a89c8a',font:{family:"'JetBrains Mono', monospace",size:10},boxWidth:10,boxHeight:10}},
+        tooltip:{
+          backgroundColor:'#1f1c18',titleColor:'#f4ede3',bodyColor:'#a89c8a',borderColor:'#2a251f',borderWidth:1,padding:12,
+          callbacks:{label:c=>`${c.dataset.label}: ${fmtMoneyFull(c.parsed.y)}`}
+        }
+      },
+      scales:{
+        x:{stacked:true,grid:{color:'rgba(168,156,138,0.08)',drawBorder:false},ticks:{maxRotation:35,minRotation:35}},
+        y:{stacked:true,grid:{color:'rgba(168,156,138,0.08)',drawBorder:false},ticks:{callback:v=>fmtMoney(v)},beginAtZero:true}
+      }
+    }
+  });
+
+  // By month
+  const monthRev = {};
+  DATA.months.forEach(m=>monthRev[m.ym]=0);
+  DATA.videos.forEach(v=>{
+    if(monthRev[v.ym]!==undefined) monthRev[v.ym] += calcRev(v,longRpm,shortsRpm);
+  });
+  const monthLabels = DATA.months.map(m=>m.ym);
+
+  if(revByMonthChart) revByMonthChart.destroy();
+  revByMonthChart = new Chart(document.getElementById('chartRevByMonth'),{
+    type:'bar',
+    data:{
+      labels:monthLabels,
+      datasets:[{
+        data:monthLabels.map(m=>Math.round(monthRev[m])),
+        backgroundColor:'#e9a23b',borderRadius:1
+      }]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#1f1c18',titleColor:'#f4ede3',bodyColor:'#a89c8a',borderColor:'#2a251f',borderWidth:1,padding:12,
+          callbacks:{label:c=>`Est. revenue: ${fmtMoneyFull(c.parsed.y)}`}
+        }
+      },
+      scales:{
+        x:{grid:{color:'rgba(168,156,138,0.08)',drawBorder:false},ticks:{maxRotation:0,autoSkipPadding:20}},
+        y:{grid:{color:'rgba(168,156,138,0.08)',drawBorder:false},ticks:{callback:v=>fmtMoney(v)},beginAtZero:true}
+      }
+    }
+  });
+
+  // Top earners table
+  const topEarners = DATA.videos.map(v=>({...v, rev:calcRev(v,longRpm,shortsRpm)}))
+    .sort((a,b)=>b.rev-a.rev).slice(0,15);
+  document.getElementById('revTopBody').innerHTML = topEarners.map(v=>{
+    const url = `https://youtube.com/watch?v=${v.id}`;
+    return `<tr>
+      <td><a class="vt-title" href="${url}" target="_blank" rel="noopener" style="font-size:14px">${v.t}</a></td>
+      <td><span class="pill">${v.fmt.split(' ')[0]}</span></td>
+      <td><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--ink-dim)">${v.topic}</span></td>
+      <td class="right">${fmt(v.v)}</td>
+      <td class="right rev-amount">${fmtMoneyFull(v.rev)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// Slider events
+longRpmEl.addEventListener('input', updateRevenue);
+shortsRpmEl.addEventListener('input', updateRevenue);
+
+// Preset buttons
+document.querySelectorAll('[data-preset]').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('[data-preset]').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    const presets = {low:[1.50,0.04],mid:[2.50,0.06],high:[4.00,0.10]};
+    const [l,s] = presets[b.dataset.preset];
+    longRpmEl.value = l;
+    shortsRpmEl.value = s;
+    updateRevenue();
+  });
+});
+
+updateRevenue();
+
 </script>
 </body>
 </html>
