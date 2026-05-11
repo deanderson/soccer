@@ -110,6 +110,10 @@
   .upcoming-card{background:var(--purple-bg);border:1px solid rgba(188,140,255,0.2);border-left:3px solid var(--purple)!important;border-radius:12px;padding:14px 18px;margin-bottom:9px;display:flex;align-items:center;gap:14px;animation:fadeUp 0.35s ease both;}
   .upcoming-badge{display:flex;align-items:center;gap:5px;background:rgba(188,140,255,0.12);border:1px solid rgba(188,140,255,0.25);color:var(--purple);padding:5px 12px;border-radius:7px;font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0;}
   .kickoff-time{font-size:11px;color:var(--purple);font-weight:500;margin-top:2px;}
+  /* Broadcast info on upcoming game cards — where to watch. Muted treatment
+     so it sits below the matchup/kickoff without competing for attention. */
+  .broadcast-info{font-size:11px;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
+  .broadcast-sub{color:var(--muted);font-size:10px;opacity:0.8;}
 
   .teams{flex:1;min-width:0;}
   .matchup{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -143,10 +147,15 @@
      In game cards (flex-wrap), flex-basis:100% forces a full row. In top-pick-cards
      (block layout), it naturally fills the width. Hidden by default; shown via
      display:flex on cycle. */
-  .insight-reveal{display:none;flex-basis:100%;flex-wrap:wrap;gap:6px;margin-top:6px;order:50;}
+  .insight-reveal{display:none;flex-basis:100%;flex-wrap:wrap;gap:6px;margin-top:6px;order:50;align-items:center;}
   .top-pick-card .insight-reveal{margin-top:8px;}
   .insight-tag{display:inline-block;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:4px 9px;font-size:11px;color:var(--muted);font-family:'Outfit',sans-serif;line-height:1.2;}
   .insight-tag--empty{font-style:italic;}
+  /* "× hide" affordance inside the insights area. Lets users dismiss
+     insights without revealing the score. Deliberately subtle so it
+     doesn't compete with the insight tags. */
+  .insight-hide{background:transparent;border:none;color:var(--muted);font-size:11px;font-family:'Outfit',sans-serif;cursor:pointer;padding:4px 6px;margin-left:auto;opacity:0.6;transition:opacity 0.15s;}
+  .insight-hide:hover{opacity:1;color:var(--text);}
 
   /* Must Watch — green (scorefest + watchworthy both show green) */
   .scorefest  {border-left:3px solid var(--green) !important;}
@@ -273,8 +282,14 @@
   .sport-tabs::-webkit-scrollbar{display:none;}
   .sport-tab{flex:0 0 auto;padding:14px 14px;text-align:center;cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);background:transparent;border:none;font-family:'Outfit',sans-serif;transition:background 0.2s,color 0.2s;display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;letter-spacing:0.01em;}
   .sport-tab:not(:last-child){border-right:1px solid var(--border);}
+  /* A tab immediately followed by a group divider shouldn't draw its own
+     right border — the divider replaces the visual separator. */
+  .sport-tab:has(+ .sport-tab-divider){border-right:none;}
   .sport-tab:hover{color:var(--text);background:var(--card);}
   .sport-tab.active{background:var(--card);color:var(--text);box-shadow:inset 0 -2px 0 var(--green);}
+  /* Group divider: subtle dot separating identity sports from major sports.
+     Sits aligned with tab heights, slightly muted. */
+  .sport-tab-divider{flex:0 0 auto;display:flex;align-items:center;justify-content:center;padding:0 8px;color:var(--border);font-size:20px;user-select:none;font-family:'Outfit',sans-serif;line-height:1;}
   .tab-count{background:rgba(255,255,255,0.08);border-radius:10px;padding:1px 6px;font-size:10px;color:var(--muted);font-weight:600;}
   .sport-tab.active .tab-count{background:var(--green-bg);color:var(--green);}
 
@@ -698,16 +713,20 @@
   let allData = {};
 
   // ── SPORT VISIBILITY (feature #5) ──────────────────────────────────────
+  // group: 'identity' = sports where this site has a real curatorial niche.
+  //        'major'    = conventional US/global majors covered by every site.
+  // Visual grouping in the tab strip reflects the site's positioning without
+  // labeling it explicitly (a subtle dot divider does the work).
   const ALL_SPORTS = [
-    { key:'football', label:'⚽ Football'    },
-    { key:'cricket',  label:'🏏 Cricket (T20)' },
-    { key:'wnba',     label:'🏀 WNBA'        },
-    { key:'darts',    label:'🎯 Darts'       },
-    { key:'nba',      label:'🏀 NBA'         },
-    { key:'nfl',      label:'🏈 NFL'         },
-    { key:'mlb',      label:'⚾ MLB'         },
-    { key:'nhl',      label:'🏒 NHL'         },
-    { key:'tennis',   label:'🎾 Tennis'      },
+    { key:'football', label:'⚽ Football',      group:'identity' },
+    { key:'cricket',  label:'🏏 Cricket (T20)', group:'identity' },
+    { key:'wnba',     label:'🏀 WNBA',          group:'identity' },
+    { key:'darts',    label:'🎯 Darts',         group:'identity' },
+    { key:'nba',      label:'🏀 NBA',           group:'major'    },
+    { key:'nfl',      label:'🏈 NFL',           group:'major'    },
+    { key:'mlb',      label:'⚾ MLB',           group:'major'    },
+    { key:'nhl',      label:'🏒 NHL',           group:'major'    },
+    { key:'tennis',   label:'🎾 Tennis',        group:'major'    },
   ];
 
   // Load hidden sports from localStorage
@@ -723,11 +742,21 @@
       activeSport = visibleSports[0]?.key || 'football';
     }
 
-    tabsEl.innerHTML = visibleSports.map(s => `
-        <button class="sport-tab ${s.key === activeSport ? 'active' : ''}"
+    // Render tabs with a subtle dot divider between sport groups (identity
+    // vs major). The divider is skipped if either group is empty (all hidden).
+    let html = '';
+    let prevGroup = null;
+    for (const s of visibleSports) {
+      if (prevGroup && s.group !== prevGroup) {
+        html += '<span class="sport-tab-divider" aria-hidden="true">·</span>';
+      }
+      html += `<button class="sport-tab ${s.key === activeSport ? 'active' : ''}"
           onclick="switchSport('${s.key}',this)">${s.label}
           <span class="tab-count" id="${s.key}-count">—</span>
-        </button>`).join('');
+        </button>`;
+      prevGroup = s.group;
+    }
+    tabsEl.innerHTML = html;
 
     togglesEl.innerHTML = ALL_SPORTS.map(s => `
       <div class="sport-toggle ${hiddenSports.has(s.key)?'hidden-sport':''}"
@@ -1161,54 +1190,58 @@
       if (unit === 'runs') return num >= 12 ? 'High-scoring game' : null;
     }
     // Margins: "1 goal margin", "3 pt margin", "2 run margin"
-    // For "pt margin" the meaning differs by sport — close in NBA is ≤5, but
-    // ≤3 in NFL means basically tied. Football "goal margin" 1 is close.
+    // CRITICAL: phrases must describe the *texture* of the closeness (down to
+    // the wire, close finish), never imply a specific small margin. Saying
+    // "Decided by a possession" tells the user the margin was 1-3 pts —
+    // that's a spoiler. "Down to the wire" describes flow without leaking
+    // the number. Always prefer texture over precision.
     m = label.match(/^(\d+)\s+(goal|pt|run)\s+margin$/);
     if (m) {
       const n = parseInt(m[1], 10);
       const unit = m[2];
       if (unit === 'goal') {
-        if (n <= 1) return 'Decided by one';
-        if (n === 2) return 'Decided late';
+        if (n <= 2) return 'Close finish';
         return null;
       }
       if (unit === 'run') {
-        if (n <= 1) return 'Decided by one';
-        if (n === 2) return 'Decided late';
+        if (n <= 2) return 'Close finish';
         return null;
       }
       if (unit === 'pt') {
-        // Basketball: ≤5 close, 6-10 competitive. NFL: ≤3 close, 4-7 competitive.
+        // Basketball: ≤5 close, 6-10 competitive. NFL: ≤7 close.
+        // Avoid "by a possession" / "by a field goal" — too margin-specific.
         if (sport === 'nba' || sport === 'wnba') {
-          if (n <= 2)  return 'Decided by a possession';
           if (n <= 5)  return 'Down to the wire';
           if (n <= 10) return 'Came down to the closing minutes';
           return null;
         }
         if (sport === 'nfl') {
-          if (n <= 3) return 'Decided by a field goal';
-          if (n <= 7) return 'One-score game';
+          if (n <= 7) return 'Down to the wire';
           return null;
         }
-        // Default
-        if (n <= 3) return 'Decided late';
-        if (n <= 7) return 'Within striking distance';
+        // Default for other point-margin sports
+        if (n <= 7) return 'Close finish';
         return null;
       }
     }
     // Cricket wkts/runs result. Important: the unit (wkts vs runs) tells you
     // which side won (wkts = chasing team won, runs = defending team won), so
     // phrasings must describe closeness without disclosing direction.
+    // Also: don't use different phrases for nearby margins — a user who learns
+    // "down to the wire" means ≤2 wkts vs "close finish" means 3-4 wkts is
+    // doing margin inference. Collapse to coarse closeness bands.
     m = label.match(/^Won by (\d+) (wkts|runs)$/);
     if (m) {
       const n = parseInt(m[1], 10);
       const unit = m[2];
-      if (unit === 'wkts' && n <= 2) return 'Decided down to the wire';
-      if (unit === 'wkts' && n <= 4) return 'Close finish';
-      if (unit === 'wkts')           return 'Comfortable margin';
-      if (unit === 'runs' && n <= 10) return 'Decided down to the wire';
-      if (unit === 'runs' && n <= 20) return 'Close finish';
-      if (unit === 'runs')            return 'Comfortable margin';
+      if (unit === 'wkts') {
+        if (n <= 4) return 'Close finish';
+        return 'Comfortable margin';
+      }
+      if (unit === 'runs') {
+        if (n <= 20) return 'Close finish';
+        return 'Comfortable margin';
+      }
       return null;
     }
     // Lead changes: "5 lead changes", "15 lead changes"
@@ -1252,6 +1285,72 @@
     }
 
     return phrases;
+  }
+
+  // Render the inner HTML of the .insight-reveal div for a game. Includes
+  // the phrase tags and a trailing "× hide" link so users can dismiss
+  // insights without revealing the score.
+  function buildInsightHTML(factors, sport) {
+    const phrases = getInsightPhrases(factors, sport);
+    const tagsHTML = phrases.length
+      ? phrases.map(p => `<span class="insight-tag">${p}</span>`).join('')
+      : '<span class="insight-tag insight-tag--empty">Trust the verdict.</span>';
+    const hideLink = '<button class="insight-hide" onclick="event.stopPropagation();hideReveal(this)" title="Hide without revealing score">× hide</button>';
+    return tagsHTML + hideLink;
+  }
+
+  // Broadcast info for upcoming games. Returns null when nothing useful to
+  // show; otherwise an object {icon, text, sublabel} for the card to render.
+  // Strategy: prioritize National TV > National streaming > Local-only fallback.
+  // For local-only games (most WNBA games on any given day), point users at
+  // WNBA League Pass since their local market is unknown.
+  //
+  // Streaming services that are subscription-required get a "(subscription)"
+  // sublabel; ad-supported / cable channels don't. This is a heuristic, not
+  // exhaustive — adding services as we encounter them.
+  const SUBSCRIPTION_STREAMERS = new Set([
+    'Peacock', 'ESPN+', 'Disney+', 'Amazon Prime', 'Prime Video',
+    'Paramount+', 'Max', 'Apple TV+', 'NBA TV',
+  ]);
+
+  function getBroadcastInfo(game) {
+    if (!game) return null;
+    const geo = Array.isArray(game.geoBroadcasts) ? game.geoBroadcasts : [];
+
+    // No data at all → "TBD" state
+    if (geo.length === 0 && !game.broadcast) {
+      return { icon: '📺', text: 'Broadcast TBD', sublabel: '' };
+    }
+
+    // Find a National broadcast (TV preferred over Streaming)
+    const national    = geo.filter(b => b?.market?.type === 'National');
+    const nationalTV  = national.find(b => b?.type?.shortName === 'TV');
+    const nationalStr = national.find(b => b?.type?.shortName === 'Streaming');
+
+    if (nationalTV) {
+      const net = nationalTV.media?.shortName || 'national TV';
+      return { icon: '📺', text: net, sublabel: '' };
+    }
+    if (nationalStr) {
+      const net = nationalStr.media?.shortName || 'streaming';
+      const isPaid = SUBSCRIPTION_STREAMERS.has(net);
+      return { icon: '💻', text: net, sublabel: isPaid ? 'subscription' : '' };
+    }
+
+    // No national broadcast — local-only game. WNBA League Pass is the
+    // out-of-market answer.
+    return {
+      icon: '📍',
+      text: 'Local broadcast only',
+      sublabel: 'WNBA League Pass for out-of-market',
+    };
+  }
+
+  function buildBroadcastHTML(game) {
+    const info = getBroadcastInfo(game);
+    if (!info) return '';
+    const sub = info.sublabel ? ` <span class="broadcast-sub">(${info.sublabel})</span>` : '';
+    return `<div class="broadcast-info">${info.icon} ${info.text}${sub}</div>`;
   }
 
 
@@ -1532,10 +1631,7 @@
         const scoreStr = tpScoreStr(g).replace(/"/g, '&quot;');
         const isTennis  = g.sport === 'tennis';
         const isCricket = g.sport === 'cricket';
-        const phrases = getInsightPhrases(g.confidence?.factors, g.sport);
-        const insightHTML = phrases.length
-          ? phrases.map(p => `<span class="insight-tag">${p}</span>`).join('')
-          : '<span class="insight-tag insight-tag--empty">Trust the verdict.</span>';
+        const insightHTML = buildInsightHTML(g.confidence?.factors, g.sport);
         // For cricket/tennis the score is a single string; pass it as h with
         // empty a. For other sports pass numeric h and a separately. The
         // string goes into a JS-literal inside an onclick="..."  attribute, so
@@ -1745,10 +1841,7 @@
     const watchBtn = (g.watch && g.cat.cls === 'watchworthy')
       ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
       : '';
-    const phrases = getInsightPhrases(g.confidence?.factors, sport || g.sport);
-    const insightHTML = phrases.length
-      ? phrases.map(p => `<span class="insight-tag">${p}</span>`).join('')
-      : '<span class="insight-tag insight-tag--empty">Trust the verdict.</span>';
+    const insightHTML = buildInsightHTML(g.confidence?.factors, sport || g.sport);
     return `
       <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${isBestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
         <div class="teams" style="flex:1;min-width:0;">
@@ -1767,12 +1860,14 @@
   }
 
   function upcomingCardHTML(g, i) {
+    const broadcast = (g.geoBroadcasts !== undefined || g.broadcast) ? buildBroadcastHTML(g) : '';
     return `
       <div class="upcoming-card" style="animation-delay:${i*0.04}s">
         <div class="teams">
           <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
           <div class="game-meta">${g.league}</div>
           <div class="kickoff-time">🕐 ${g.time}</div>
+          ${broadcast}
         </div>
         <div class="upcoming-badge">📅 Upcoming</div>
       </div>`;
@@ -1864,6 +1959,23 @@
     }
   }
 
+  // Reset card to fully-hidden state. Used by the inline "× hide" link inside
+  // the insights area so users can dismiss insights without first revealing
+  // the score. The main reveal button is found via the card and reset.
+  function hideReveal(linkEl) {
+    const card = linkEl.closest('.game-card, .top-pick-card');
+    if (!card) return;
+    const insightEl = card.querySelector('.insight-reveal');
+    const scoreEl   = card.querySelector('.score-reveal, .tp-score');
+    const mainBtn   = card.querySelector('.reveal-btn, .tp-reveal');
+    if (insightEl) insightEl.style.display = 'none';
+    if (scoreEl)   scoreEl.style.display   = 'none';
+    if (mainBtn) {
+      mainBtn.textContent = '👁 Insights';
+      mainBtn.dataset.state = '0';
+    }
+  }
+
   function renderCricket() {
     const { recent, upcoming } = allData.cricket;
     const container = document.getElementById('cricket-games');
@@ -1896,10 +2008,7 @@
           const watchBtn = (g.watch && g.cat.cls === 'watchworthy')
             ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
             : '';
-          const phrases = getInsightPhrases(g.confidence?.factors, 'cricket');
-          const insightHTML = phrases.length
-            ? phrases.map(p => `<span class="insight-tag">${p}</span>`).join('')
-            : '<span class="insight-tag insight-tag--empty">Trust the verdict.</span>';
+          const insightHTML = buildInsightHTML(g.confidence?.factors, 'cricket');
           html += `
             <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${g===bestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
               <div class="teams" style="flex:1;min-width:0;">
@@ -1992,10 +2101,7 @@
             const gameId = makeGameId(g);
             const isWatched = watched.has(gameId);
             const safeId = gameId.replace(/'/g, "\\'");
-            const phrases = getInsightPhrases(g.confidence?.factors, 'tennis');
-            const insightHTML = phrases.length
-              ? phrases.map(p => `<span class="insight-tag">${p}</span>`).join('')
-              : '<span class="insight-tag insight-tag--empty">Trust the verdict.</span>';
+            const insightHTML = buildInsightHTML(g.confidence?.factors, 'tennis');
             html += `
               <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${g===bestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
                 <div class="teams" style="flex:1;min-width:0;">

@@ -95,7 +95,14 @@ exports.handler = async function (event, context) {
     "STATUS_SCHEDULED", "STATUS_PREGAME",
   ]);
 
+  // Sports where broadcast data is shown in the UI. We only capture
+  // geoBroadcasts for these to avoid bloating the blob with unused data
+  // for sports like NHL/MLB where we don't surface broadcast info.
+  // To add a sport, list its league name here and update the frontend.
+  const BROADCAST_SPORTS = new Set(['WNBA']);
+
   function normalizeEvents(data, leagueName) {
+    const wantsBroadcast = BROADCAST_SPORTS.has(leagueName);
     return (data.events || []).map(ev => {
       const comp   = ev.competitions?.[0];
       const home   = comp?.competitors?.find(c => c.homeAway === "home");
@@ -104,7 +111,16 @@ exports.handler = async function (event, context) {
       const date   = new Date(ev.date);
       // Use UTC date as the grouping key so all leagues bucket consistently
       const utcDate = `${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,'0')}-${String(date.getUTCDate()).padStart(2,'0')}`;
-      return {
+      // Broadcast data — only attached for sports in BROADCAST_SPORTS.
+      // ESPN provides:
+      //  - broadcast (string): populated only for nationally televised
+      //    games (e.g., "NBC/Peacock"). Empty otherwise.
+      //  - geoBroadcasts (array): structured list with type (TV/Streaming),
+      //    market (National/Home/Away), media (network name), region.
+      // Frontend decides how to display; we pass through verbatim.
+      const broadcast     = wantsBroadcast ? (comp?.broadcast || ev.broadcast || '') : undefined;
+      const geoBroadcasts = wantsBroadcast && Array.isArray(comp?.geoBroadcasts) ? comp.geoBroadcasts : undefined;
+      const out = {
         id:     ev.id ?? null,
         home:   home?.team?.displayName ?? "TBD",
         away:   away?.team?.displayName ?? "TBD",
@@ -119,6 +135,9 @@ exports.handler = async function (event, context) {
               : "other",
         ts: date.getTime(),
       };
+      if (broadcast     !== undefined) out.broadcast     = broadcast;
+      if (geoBroadcasts !== undefined) out.geoBroadcasts = geoBroadcasts;
+      return out;
     });
   }
 
