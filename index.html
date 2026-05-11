@@ -26,7 +26,7 @@
   .wrap{max-width:900px;margin:0 auto;padding:0 16px 80px;position:relative;z-index:1;}
 
   header{padding:40px 0 28px;border-bottom:1px solid var(--border);margin-bottom:28px;}
-  h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,7vw,60px);letter-spacing:0.04em;line-height:1;white-space:nowrap;}
+  h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(24px,5vw,40px);letter-spacing:0.04em;line-height:1;white-space:nowrap;}
   h1 .dim{color:var(--muted);} h1 .accent{color:var(--green);}
   .spoiler-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 22px;font-size:13px;font-weight:700;color:var(--text);box-shadow:0 4px 24px rgba(0,0,0,0.5);z-index:200;opacity:0;transition:opacity 0.2s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;}
   .spoiler-toast.show{opacity:1;}
@@ -117,6 +117,10 @@
   .game-meta{font-size:11px;color:var(--muted);margin-top:2px;}
   @media(max-width:480px){
     .game-card{padding:12px 14px;gap:10px;}
+    /* Match desktop's Skip compaction on mobile too — specificity matches the
+       desktop rule, so it wins inside the media query. */
+    .game-card.blowout,
+    .game-card.defensive{padding:8px 14px;}
     .matchup{font-size:14px;white-space:normal;overflow:visible;text-overflow:unset;line-height:1.3;}
     .game-meta{font-size:12px;}
     .cat-badge{font-size:12px;padding:5px 10px;}
@@ -134,6 +138,15 @@
   .watch-btn{display:flex;align-items:center;justify-content:center;gap:6px;flex-basis:100%;order:99;background:var(--green-bg);border:1px solid rgba(63,185,80,0.35);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;color:var(--green);text-decoration:none;white-space:nowrap;transition:background 0.15s,border-color 0.15s;font-family:'Outfit',sans-serif;margin-top:4px;}
   .watch-btn:hover{background:rgba(63,185,80,0.2);border-color:var(--green);}
   .score-reveal{font-size:16px;font-weight:700;font-family:'Bebas Neue',sans-serif;letter-spacing:0.05em;display:none;flex-shrink:0;min-width:52px;text-align:center;}
+
+  /* Insight tags — appear when the user taps "Insights" before revealing score.
+     In game cards (flex-wrap), flex-basis:100% forces a full row. In top-pick-cards
+     (block layout), it naturally fills the width. Hidden by default; shown via
+     display:flex on cycle. */
+  .insight-reveal{display:none;flex-basis:100%;flex-wrap:wrap;gap:6px;margin-top:6px;order:50;}
+  .top-pick-card .insight-reveal{margin-top:8px;}
+  .insight-tag{display:inline-block;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:4px 9px;font-size:11px;color:var(--muted);font-family:'Outfit',sans-serif;line-height:1.2;}
+  .insight-tag--empty{font-style:italic;}
 
   /* Must Watch — green (scorefest + watchworthy both show green) */
   .scorefest  {border-left:3px solid var(--green) !important;}
@@ -155,6 +168,16 @@
   .defensive  {border-left:3px solid rgba(248,81,73,0.4) !important;}
   .defensive   .cat-badge{background:rgba(248,81,73,0.06);color:var(--muted);border:1px solid rgba(248,81,73,0.15);}
   .defensive   .score-reveal{color:var(--muted);}
+
+  /* Compact layout for Skip cards. User has been told not to watch — give
+     them less screen real estate. Tighter padding, hide date/league subtitle
+     (the section date headers and league groupings already place the game). */
+  .game-card.blowout,
+  .game-card.defensive{padding:10px 16px;}
+  .game-card.blowout .matchup,
+  .game-card.defensive .matchup{font-size:14px;color:var(--muted);font-weight:500;}
+  .game-card.blowout .game-meta,
+  .game-card.defensive .game-meta{display:none;}
 
   /* Sub-reason badge shown inside card */
   .sub-badge{font-size:10px;color:var(--muted);margin-top:2px;}
@@ -212,7 +235,8 @@
 
   /* ALL GAMES DIVIDER */
   .all-games-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;margin-top:8px;}
-  .all-games-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:0.06em;color:var(--muted);}
+  .all-games-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:0.06em;color:var(--text);}
+  .all-games-title span{color:var(--yellow);}
   .all-games-header::after{content:'';flex:1;height:1px;background:var(--border);}
 
 
@@ -280,7 +304,7 @@
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;">
       <div>
         <h1>SPOILER <span class="accent">FREE</span> SCORES</h1>
-        <p style="font-size:14px;color:var(--muted);margin-top:6px;font-weight:400;letter-spacing:0.01em;">Skip the boring games. No spoilers.</p>
+        <p style="font-size:14px;color:var(--muted);margin-top:6px;font-weight:400;letter-spacing:0.01em;">Find the games worth watching, without spoilers.</p>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
         <div class="last-updated"><div class="last-updated-dot"></div><span id="last-updated-text">Loading...</span><button class="refresh-btn" id="refresh-btn" onclick="refreshNow()" title="Refresh scores">↻</button></div>
@@ -307,7 +331,7 @@
 
     <!-- ALL GAMES -->
     <div class="all-games-header">
-      <div class="all-games-title">ALL GAMES</div>
+      <div class="all-games-title">ALL <span>GAMES</span></div>
     </div>
 
     <!-- SETTINGS -->
@@ -344,6 +368,12 @@
     <div class="sport-panel" id="panel-nba">
       <div class="filters" id="nba-filters"></div>
       <div id="nba-games"></div>
+    </div>
+
+    <!-- WNBA -->
+    <div class="sport-panel" id="panel-wnba">
+      <div class="filters" id="wnba-filters"></div>
+      <div id="wnba-games"></div>
     </div>
 
     <!-- NFL -->
@@ -404,6 +434,16 @@
     if (total <= 200)              return makeCat('defensive');
     if (diff >= 16)                return makeCat('blowout');
     if (diff <= 7)                 return makeCat('watchworthy');
+    return                                makeCat('watchable');
+  }
+
+  function categorizeWNBA(h, a) {
+    // WNBA scoring profile is lower than NBA's. Thresholds scaled ~0.73x.
+    const total = h+a, diff = Math.abs(h-a);
+    if (total >= 170 && diff <= 5) return makeCat('scorefest');
+    if (total <= 140)              return makeCat('defensive');
+    if (diff >= 12)                return makeCat('blowout');
+    if (diff <= 5)                 return makeCat('watchworthy');
     return                                makeCat('watchable');
   }
 
@@ -505,6 +545,7 @@
     nhl:      { cat: (h,a) => categorizeNHL(h,a),      filterDefs: FILTER_DEFS },
     mlb:      { cat: (h,a) => categorizeMLB(h,a),      filterDefs: FILTER_DEFS },
     nba:      { cat: (h,a) => categorizeNBA(h,a),       filterDefs: FILTER_DEFS },
+    wnba:     { cat: (h,a) => categorizeWNBA(h,a),      filterDefs: FILTER_DEFS },
     nfl:      { cat: (h,a) => categorizeNFL(h,a),      filterDefs: FILTER_DEFS },
     cricket:  { filterDefs: CRICKET_FILTER_DEFS }, // cricket uses its own render path
     tennis:   { filterDefs: TENNIS_FILTER_DEFS  }, // tennis uses its own render path
@@ -552,6 +593,13 @@
       {key:'watchable',   label:'Watchable',     color:'var(--muted)',  icon:'😐'},
     ],
     nba: [
+      {key:'scorefest',   label:'Score Fest',    color:'var(--orange)', icon:'🔥'},
+      {key:'defensive',   label:'Low Action',    color:'var(--blue)',   icon:'🧱'},
+      {key:'blowout',     label:'Blowouts',      color:'var(--red)',    icon:'🎯'},
+      {key:'watchworthy', label:'Worth Watching',color:'var(--green)',  icon:'👀'},
+      {key:'watchable',   label:'Watchable',     color:'var(--muted)',  icon:'😐'},
+    ],
+    wnba: [
       {key:'scorefest',   label:'Score Fest',    color:'var(--orange)', icon:'🔥'},
       {key:'defensive',   label:'Low Action',    color:'var(--blue)',   icon:'🧱'},
       {key:'blowout',     label:'Blowouts',      color:'var(--red)',    icon:'🎯'},
@@ -607,6 +655,13 @@
       {icon:'👀', title:'Worth Watching', desc:'Within 7 points. Came down to the wire.'},
       {icon:'😐', title:'Watchable',      desc:'Everything else. Decent game.'},
     ],
+    wnba: [
+      {icon:'🔥', title:'Score Fest',     desc:'170+ combined points and within 5. High-octane game.'},
+      {icon:'🧱', title:'Low Action',     desc:'140 or fewer combined points. Slow, defensive game.'},
+      {icon:'🎯', title:'Blowout',        desc:'Won by 12+ points. One team was never in it.'},
+      {icon:'👀', title:'Worth Watching', desc:'Within 5 points. Came down to the wire.'},
+      {icon:'😐', title:'Watchable',      desc:'Everything else. Decent game.'},
+    ],
     nfl: [
       {icon:'🔥', title:'Score Fest',     desc:'50+ combined points and within 7. Both offenses went off.'},
       {icon:'🧱', title:'Defensive',      desc:'20 or fewer total points. Defences showed up.'},
@@ -634,6 +689,7 @@
     nhl:      { cat: 'all' },
     mlb:      { cat: 'all' },
     nba:      { cat: 'all' },
+    wnba:     { cat: 'all' },
     nfl:      { cat: 'all' },
     cricket:  { cat: 'all' },
     tennis:   { cat: 'all', tour: 'all' },
@@ -645,6 +701,7 @@
   const ALL_SPORTS = [
     { key:'football', label:'⚽ Football'    },
     { key:'cricket',  label:'🏏 Cricket (T20)' },
+    { key:'wnba',     label:'🏀 WNBA'        },
     { key:'darts',    label:'🎯 Darts'       },
     { key:'nba',      label:'🏀 NBA'         },
     { key:'nfl',      label:'🏈 NFL'         },
@@ -808,7 +865,7 @@
 
   // ── LOAD ───────────────────────────────────────────────────────────────
   // Map from frontend sport key to API response key
-  const API_KEY = { football:'soccer', nhl:'nhl', mlb:'mlb', nba:'nba', nfl:'nfl', cricket:'cricket', tennis:'tennis', darts:'darts' };
+  const API_KEY = { football:'soccer', nhl:'nhl', mlb:'mlb', nba:'nba', wnba:'wnba', nfl:'nfl', cricket:'cricket', tennis:'tennis', darts:'darts' };
 
   const TIMELINE_CAT_MAP = {
     scorefest:   makeCat('scorefest'),
@@ -1004,7 +1061,7 @@
   // ── TOP PICKS HERO ─────────────────────────────────────────────────────
   const SPORT_LABELS = {
     football:'⚽ Football', nhl:'🏒 NHL', mlb:'⚾ MLB',
-    nba:'🏀 NBA', nfl:'🏈 NFL', cricket:'🏏 Cricket', tennis:'🎾 Tennis'
+    nba:'🏀 NBA', wnba:'🏀 WNBA', nfl:'🏈 NFL', cricket:'🏏 Cricket', tennis:'🎾 Tennis'
   };
 
   // Priority order for picks: scorefest > watchworthy > watchable
@@ -1026,6 +1083,177 @@
       return b.ts - a.ts;
     });
   }
+
+  // Translate engine factor labels into spoiler-safe, user-friendly phrases.
+  // The engine's labels are mechanical ("1 goal margin", "Tied/OT") and some
+  // factors are outright spoilers ("Comeback" tells you who won). This pass
+  // suppresses spoilers, rephrases mechanical labels into natural language,
+  // and returns the top 2-3 phrases (by absolute point contribution).
+  //
+  // Returns array of strings. Empty array means "no insights to show" — caller
+  // should fall back to a generic message like "Trust the verdict."
+  const INSIGHT_MAP = {
+    // SPOILERS — suppress entirely (engine still uses them; UI doesn't show)
+    '⚡ Comeback':      null,
+    '⚡ Late drama':    null,   // softly hints at when drama happened — borderline; suppress to be safe
+
+    // DRAMA SIGNALS — these are great for users
+    '⚡ Overtime':      'Went to overtime',
+    '⚡ Back & forth':  'Back-and-forth game',
+    '⚡ Last over finish': 'Came down to the last over',
+    '⚡ Close chase':   'Tense run chase',
+    '⚡ High scoring':  'Lots of runs scored',
+    '⚡ 9-darter on night': 'A nine-darter happened',
+
+    // CLOSENESS SIGNALS
+    'Deciding leg':    'Went to a deciding leg',
+    'Close match':     'Closely contested',
+    'Competitive':     'Stayed competitive',
+    'Tied/OT':         'Went the distance',
+    'Draw':            'Ended level',
+    '5-set epic':      'A 5-set marathon',
+    '3-set match':     'Went to 3 sets',
+    'Tiebreak + close sets': 'Tiebreak in close sets',
+    'Tiebreak(s)':     'Decided in a tiebreak',
+
+    // LOPSIDED SIGNALS — fine to show, they help users skip
+    'Lopsided':        'One-sided result',
+    'Large margin':    'Wide margin',
+    'Blowout margin':  'Blowout',
+    'Blowout':         'Blowout',
+    'Comfortable win': 'Comfortable winner',
+    'Straight sets':   'Straight sets',
+    'Bagel set':       'Included a 6-0 set',
+    'Whitewash':       'A clean sweep',
+
+    // SCORING ENVIRONMENT
+    'Very low scoring': 'Low-scoring affair',
+    'Low scoring':     'Low-scoring affair',
+    'Both 100+ avg':   'Elite shooting from both',
+    'One 100+ avg':    'One player at elite level',
+    'Both sub-90 avg': 'Off night for both players',
+
+    // ROUND CONTEXT
+    'Quarter-final':   'Quarter-final stakes',
+    'Semi-final':      'Semi-final stakes',
+    'Final':           'Tournament final',
+  };
+
+  // For dynamic labels like "5 goals", "8 pts", "3 pt margin" — match patterns.
+  // Sport context matters here: a "5 pt margin" is close in basketball but wide
+  // in football (NFL). A "171 pt" total is high in WNBA but low in NBA. So this
+  // function takes the sport to apply proportional thresholds where relevant.
+  function formatDynamicLabel(label, sport) {
+    // Score totals: "5 goals", "230 pts", "12 runs"
+    let m = label.match(/^(\d+)\s+(goals|pts|runs)$/);
+    if (m) {
+      const [, n, unit] = m;
+      const num = parseInt(n, 10);
+      if (unit === 'goals' && num >= 5) return 'High-scoring game';
+      if (unit === 'goals')             return null;   // 2-4 goals is unremarkable
+      // Basketball: NBA ~220 typical, WNBA ~160 typical. Different thresholds.
+      if (unit === 'pts') {
+        if (sport === 'wnba') return num >= 170 ? 'High-scoring game' : null;
+        if (sport === 'nba')  return num >= 230 ? 'High-scoring game' : null;
+        if (sport === 'nfl')  return num >= 50  ? 'High-scoring game' : null;
+        return num >= 50 ? 'High-scoring game' : null;
+      }
+      if (unit === 'runs') return num >= 12 ? 'High-scoring game' : null;
+    }
+    // Margins: "1 goal margin", "3 pt margin", "2 run margin"
+    // For "pt margin" the meaning differs by sport — close in NBA is ≤5, but
+    // ≤3 in NFL means basically tied. Football "goal margin" 1 is close.
+    m = label.match(/^(\d+)\s+(goal|pt|run)\s+margin$/);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      const unit = m[2];
+      if (unit === 'goal') {
+        if (n <= 1) return 'Decided by one';
+        if (n === 2) return 'Decided late';
+        return null;
+      }
+      if (unit === 'run') {
+        if (n <= 1) return 'Decided by one';
+        if (n === 2) return 'Decided late';
+        return null;
+      }
+      if (unit === 'pt') {
+        // Basketball: ≤5 close, 6-10 competitive. NFL: ≤3 close, 4-7 competitive.
+        if (sport === 'nba' || sport === 'wnba') {
+          if (n <= 2)  return 'Decided by a possession';
+          if (n <= 5)  return 'Down to the wire';
+          if (n <= 10) return 'Came down to the closing minutes';
+          return null;
+        }
+        if (sport === 'nfl') {
+          if (n <= 3) return 'Decided by a field goal';
+          if (n <= 7) return 'One-score game';
+          return null;
+        }
+        // Default
+        if (n <= 3) return 'Decided late';
+        if (n <= 7) return 'Within striking distance';
+        return null;
+      }
+    }
+    // Cricket wkts/runs result. Important: the unit (wkts vs runs) tells you
+    // which side won (wkts = chasing team won, runs = defending team won), so
+    // phrasings must describe closeness without disclosing direction.
+    m = label.match(/^Won by (\d+) (wkts|runs)$/);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      const unit = m[2];
+      if (unit === 'wkts' && n <= 2) return 'Decided down to the wire';
+      if (unit === 'wkts' && n <= 4) return 'Close finish';
+      if (unit === 'wkts')           return 'Comfortable margin';
+      if (unit === 'runs' && n <= 10) return 'Decided down to the wire';
+      if (unit === 'runs' && n <= 20) return 'Close finish';
+      if (unit === 'runs')            return 'Comfortable margin';
+      return null;
+    }
+    // Lead changes: "5 lead changes", "15 lead changes"
+    m = label.match(/^(\d+) lead changes$/);
+    if (m) {
+      const n = parseInt(m[1], 10);
+      if (n >= 15) return 'Constant lead changes';
+      if (n >= 8)  return 'Lots of lead changes';
+      return 'Multiple lead changes';
+    }
+    // Cricket innings total: "X run innings"
+    m = label.match(/^(\d+) run innings$/);
+    if (m) {
+      return 'A big innings total';
+    }
+    return null;
+  }
+
+  function getInsightPhrases(factors, sport) {
+    if (!Array.isArray(factors) || factors.length === 0) return [];
+
+    // Sort factors by absolute point contribution (most impactful first)
+    const ranked = [...factors].sort((a, b) =>
+      Math.abs(b.points || 0) - Math.abs(a.points || 0)
+    );
+
+    const phrases = [];
+    const seen = new Set();
+    for (const f of ranked) {
+      let phrase = null;
+      if (Object.prototype.hasOwnProperty.call(INSIGHT_MAP, f.label)) {
+        phrase = INSIGHT_MAP[f.label];   // may be null = suppress
+      } else {
+        phrase = formatDynamicLabel(f.label, sport);
+      }
+      if (!phrase) continue;
+      if (seen.has(phrase)) continue;     // dedupe (e.g. multiple "High-scoring")
+      seen.add(phrase);
+      phrases.push(phrase);
+      if (phrases.length >= 3) break;
+    }
+
+    return phrases;
+  }
+
 
   // Top Picks window state — tracked per-sport so switching tabs keeps each
   // sport's chosen window. Darts uses different options ('recent', 'all')
@@ -1304,11 +1532,18 @@
         const scoreStr = tpScoreStr(g).replace(/"/g, '&quot;');
         const isTennis  = g.sport === 'tennis';
         const isCricket = g.sport === 'cricket';
-        const revealAttr = isCricket
-          ? `data-cricket="${scoreStr}"`
-          : isTennis
-            ? `data-tennis="${scoreStr}"`
-            : `data-h="${g.h}" data-a="${g.a}"`;
+        const phrases = getInsightPhrases(g.confidence?.factors, g.sport);
+        const insightHTML = phrases.length
+          ? phrases.map(p => `<span class="insight-tag">${p}</span>`).join('')
+          : '<span class="insight-tag insight-tag--empty">Trust the verdict.</span>';
+        // For cricket/tennis the score is a single string; pass it as h with
+        // empty a. For other sports pass numeric h and a separately. The
+        // string goes into a JS-literal inside an onclick="..."  attribute, so
+        // apostrophes inside the score (e.g. team names) need escaping.
+        const escapedScore = scoreStr.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+        const cycleArgs = (isCricket || isTennis)
+          ? `'${escapedScore}',''`
+          : `${g.h},${g.a}`;
         const dateLabel = g.date || g.dateStr || '';
         const leagueLabel = g.league || g.leagueName || g.tournament || '';
         // In Top Picks every card is a deliberate recommendation, so show the
@@ -1325,7 +1560,8 @@
             <div class="tp-meta">${dateLabel}</div>
             <div class="tp-badge">${g.cat.icon} ${g.cat.label}${g.cat.badge ? ' · ' + g.cat.badge : ''}</div>
             ${watchBtn}
-            <button class="tp-reveal" ${revealAttr} onclick="revealTpCard(this)">👁 Reveal</button>
+            <button class="tp-reveal" onclick="cycleReveal(this,${cycleArgs})">👁 Insights</button>
+            <div class="insight-reveal">${insightHTML}</div>
             <div class="tp-score"></div>
           </div>`;
       }).join('')}
@@ -1386,7 +1622,7 @@
           .sort(([, a], [, b]) => b.maxTs - a.maxTs)
           .forEach(([, { games, label }]) => {
             html += `<div class="section-label">${label}</div>`;
-            html += sortByExcitement(games).map((g, i) => gameCardHTML(g, i, g===bestPick)).join('');
+            html += sortByExcitement(games).map((g, i) => gameCardHTML(g, i, g===bestPick, sport)).join('');
           });
       } else {
         // Specific league: group by UTC date key, newest first
@@ -1401,7 +1637,7 @@
           .sort(([, a], [, b]) => b.maxTs - a.maxTs)
           .forEach(([, { games, label }]) => {
             html += `<div class="section-label">${label}</div>`;
-            html += sortByExcitement(games).map((g, i) => gameCardHTML(g, i)).join('');
+            html += sortByExcitement(games).map((g, i) => gameCardHTML(g, i, false, sport)).join('');
           });
       }
 
@@ -1443,7 +1679,7 @@
         filtered.forEach(g => { if(!byDate[g.date]) byDate[g.date]=[]; byDate[g.date].push(g); });
         Object.keys(byDate).sort((a,b) => byDate[b][0].ts - byDate[a][0].ts).forEach(date => {
           html += `<div class="section-label">${date}</div>`;
-          html += sortByExcitement(byDate[date]).map((g,i) => gameCardHTML(g,i, g===bestPick)).join('');
+          html += sortByExcitement(byDate[date]).map((g,i) => gameCardHTML(g,i, g===bestPick, sport)).join('');
         });
       }
 
@@ -1502,13 +1738,17 @@
       </div>`;
   }
 
-  function gameCardHTML(g, i, isBestPick = false) {
+  function gameCardHTML(g, i, isBestPick = false, sport = null) {
     const gameId = makeGameId(g);
     const isWatched = watched.has(gameId);
     const safeId = gameId.replace(/'/g, "\\'");
     const watchBtn = (g.watch && g.cat.cls === 'watchworthy')
       ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
       : '';
+    const phrases = getInsightPhrases(g.confidence?.factors, sport || g.sport);
+    const insightHTML = phrases.length
+      ? phrases.map(p => `<span class="insight-tag">${p}</span>`).join('')
+      : '<span class="insight-tag insight-tag--empty">Trust the verdict.</span>';
     return `
       <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${isBestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
         <div class="teams" style="flex:1;min-width:0;">
@@ -1518,7 +1758,8 @@
         ${isBestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
         <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
         ${watchBtn}
-        <button class="reveal-btn" onclick="toggleScore(this,${g.h},${g.a})">👁 Reveal</button>
+        <button class="reveal-btn" onclick="cycleReveal(this,${g.h},${g.a})">👁 Insights</button>
+        <div class="insight-reveal">${insightHTML}</div>
         <div class="score-reveal"></div>
         <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
         ${debugPanelHTML(g)}
@@ -1580,6 +1821,49 @@
     else { el.textContent = scoreStr; el.style.display='block'; btn.textContent='🙈 Hide'; }
   }
 
+  // Three-state reveal cycle: hidden → insights → score → hidden.
+  // The card markup includes both an .insight-reveal div (pre-rendered) and
+  // a .score-reveal (game cards) or .tp-score (top picks) div for the score.
+  // This function manages which is visible based on the button's current state.
+  //
+  // For sports with custom score strings (cricket: status, tennis: set scores),
+  // we pass a string in place of h/a; the function detects and renders it.
+  function cycleReveal(btn, h, a) {
+    if (spoilerBlocked(btn)) return;
+    const card = btn.closest('.game-card, .top-pick-card');
+    if (!card) return;
+    const insightEl = card.querySelector('.insight-reveal');
+    const scoreEl   = card.querySelector('.score-reveal, .tp-score');
+    if (!insightEl || !scoreEl) return;
+
+    const state = btn.dataset.state || '0';
+    if (state === '0') {
+      // Hidden → show insights
+      insightEl.style.display = 'flex';
+      scoreEl.style.display   = 'none';
+      btn.textContent = 'Show Score →';
+      btn.dataset.state = '1';
+    } else if (state === '1') {
+      // Insights → show score
+      const isString = (typeof h === 'string') && (a === undefined || a === '');
+      if (isString) {
+        scoreEl.style.fontFamily = "'Outfit',sans-serif";
+        scoreEl.textContent = h;
+      } else {
+        scoreEl.textContent = `${h} – ${a}`;
+      }
+      scoreEl.style.display = 'block';
+      btn.textContent = '🙈 Hide';
+      btn.dataset.state = '2';
+    } else {
+      // Score → fully hidden
+      insightEl.style.display = 'none';
+      scoreEl.style.display   = 'none';
+      btn.textContent = '👁 Insights';
+      btn.dataset.state = '0';
+    }
+  }
+
   function renderCricket() {
     const { recent, upcoming } = allData.cricket;
     const container = document.getElementById('cricket-games');
@@ -1612,6 +1896,10 @@
           const watchBtn = (g.watch && g.cat.cls === 'watchworthy')
             ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
             : '';
+          const phrases = getInsightPhrases(g.confidence?.factors, 'cricket');
+          const insightHTML = phrases.length
+            ? phrases.map(p => `<span class="insight-tag">${p}</span>`).join('')
+            : '<span class="insight-tag insight-tag--empty">Trust the verdict.</span>';
           html += `
             <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${g===bestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
               <div class="teams" style="flex:1;min-width:0;">
@@ -1621,7 +1909,8 @@
               ${g===bestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
               <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
               ${watchBtn}
-              <button class="reveal-btn" onclick="toggleCricketScore(this,'${safeStatus}')">👁 Reveal</button>
+              <button class="reveal-btn" onclick="cycleReveal(this,'${safeStatus}','')">👁 Insights</button>
+              <div class="insight-reveal">${insightHTML}</div>
               <div class="score-reveal" style="font-family:'Outfit',sans-serif;font-size:11px;white-space:normal;max-width:160px;line-height:1.4;text-align:right;"></div>
               <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
               ${debugPanelHTML(g)}
@@ -1703,6 +1992,10 @@
             const gameId = makeGameId(g);
             const isWatched = watched.has(gameId);
             const safeId = gameId.replace(/'/g, "\\'");
+            const phrases = getInsightPhrases(g.confidence?.factors, 'tennis');
+            const insightHTML = phrases.length
+              ? phrases.map(p => `<span class="insight-tag">${p}</span>`).join('')
+              : '<span class="insight-tag insight-tag--empty">Trust the verdict.</span>';
             html += `
               <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${g===bestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
                 <div class="teams" style="flex:1;min-width:0;">
@@ -1711,7 +2004,8 @@
                 </div>
                 ${g===bestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
                 <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
-                <button class="reveal-btn" onclick="toggleTennisScore(this,'${safeScore}')">👁 Reveal</button>
+                <button class="reveal-btn" onclick="cycleReveal(this,'${safeScore}','')">👁 Insights</button>
+                <div class="insight-reveal">${insightHTML}</div>
                 <div class="score-reveal" style="font-family:'Outfit',sans-serif;font-size:11px;white-space:normal;max-width:130px;line-height:1.4;text-align:right;"></div>
                 <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
                 ${debugPanelHTML(g)}

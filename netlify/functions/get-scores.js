@@ -954,6 +954,41 @@ exports.handler = async function (event, context) {
     return { cat: null, leadChanges, largestLead, hasOT, hadComeback };
   }
 
+  // ── WNBA TIMELINE ENRICHMENT ──────────────────────────────────────────
+  // Mirrors NBA logic with thresholds scaled for WNBA scoring environment:
+  // typical WNBA total ~160 vs NBA ~220 (ratio ~0.73). Margins use the same
+  // rough proportional scaling. These thresholds are initial estimates and
+  // should be tuned after collecting a week of real games.
+  function categorizeWNBAByTimeline(summary, h, a) {
+    const diff  = Math.abs(h - a);
+    const total = h + a;
+
+    const teams = summary.boxscore?.teams || [];
+    let leadChanges = 0, largestLead = 0;
+    for (const team of teams) {
+      for (const stat of (team.statistics || [])) {
+        if (stat.name === 'leadChanges') leadChanges = Math.max(leadChanges, parseInt(stat.displayValue) || 0);
+        if (stat.name === 'largestLead') largestLead = Math.max(largestLead, parseInt(stat.displayValue) || 0);
+      }
+    }
+
+    // WNBA also plays 4 quarters then OT, so period > 4 means OT happened.
+    const hasOT = (summary.header?.competitions?.[0]?.status?.period ?? 4) > 4;
+
+    // Comeback: was down 8+ but won or kept it close (≤5 in WNBA vs ≤7 NBA)
+    const hadComeback = largestLead >= 8 && diff <= 5;
+
+    // Score Fest: 170+ total and close (≤5 margin)
+    if (total >= 170 && diff <= 5) return { cat: 'scorefest', leadChanges, largestLead, hasOT, hadComeback };
+
+    if (hasOT) return { cat: 'watchworthy', leadChanges, largestLead, hasOT, hadComeback };
+    if (hadComeback) return { cat: 'watchworthy', leadChanges, largestLead, hasOT, hadComeback };
+    if (leadChanges >= 8 && diff <= 5) return { cat: 'watchworthy', leadChanges, largestLead, hasOT, hadComeback };
+
+    return { cat: null, leadChanges, largestLead, hasOT, hadComeback };
+  }
+
+
   async function fetchNBAWithTimeline() {
     const data = await fetchESPN(`${BASE}/basketball/nba/scoreboard?dates=${espnDate(-14)}-${espnDate(0)}&limit=200`);
     const events = normalizeEvents(data, "NBA");
@@ -999,7 +1034,52 @@ exports.handler = async function (event, context) {
     return { recent: enrichedRecent, upcoming };
   }
 
-  // ── UNIFIED SCORING ENGINE ────────────────────────────────────────────
+  async function fetchWNBAWithTimeline() {
+    const data = await fetchESPN(`${BASE}/basketball/wnba/scoreboard?dates=${espnDate(-14)}-${espnDate(0)}&limit=200`);
+    const events = normalizeEvents(data, "WNBA");
+
+    const recent = events.filter(g => g.status === "final" && g.ts >= twoWeeksAgo).sort((a, b) => b.ts - a.ts);
+    const upcoming = events.filter(g => g.status === "upcoming" && g.ts >= now).sort((a, b) => a.ts - b.ts).slice(0, 50);
+
+    // Skip clear blowouts in timeline enrichment. WNBA blowout threshold scaled
+    // from NBA's 20: roughly 15. Saves API calls on games that won't tier up.
+    const candidates = recent.filter(g => g.id && Math.abs(g.h - g.a) < 15).slice(0, 30);
+
+    if (candidates.length === 0) return { recent, upcoming };
+
+    const summaries = await Promise.all(
+      candidates.map(g =>
+        fetchESPNSummary(
+          `https://site.web.api.espn.com/apis/site/v2/sports/basketball/wnba/summary?event=${g.id}&region=us&lang=en&contentorigin=espn`
+        ).catch(() => null)
+      )
+    );
+
+    const enrichedRecent = recent.map(g => {
+      if (!g.id) return g;
+      const idx = candidates.findIndex(c => c.id === g.id);
+      if (idx === -1 || !summaries[idx]) return g;
+      const result = categorizeWNBAByTimeline(summaries[idx], g.h, g.a);
+      const hints = [];
+      if (result.hadComeback) hints.push('comeback');
+      if (result.hasOT)       hints.push('overtime');
+      if (result.leadChanges >= 8) hints.push('back-and-forth');
+      return {
+        ...g,
+        timelineCat: result.cat || undefined,
+        dramaHints: hints,
+        debug: {
+          leadChanges: result.leadChanges,
+          largestLead: result.largestLead,
+          hasOT: result.hasOT,
+          hadComeback: result.hadComeback,
+        }
+      };
+    });
+
+    return { recent: enrichedRecent, upcoming };
+  }
+
   // One score drives everything: category, ranking, Top Picks order.
   // Thresholds: ≥70 = Must Watch, 40-69 = Watchable, <40 = Skip
   const SCORE_MUST_WATCH = 60; // ≥60 = Must Watch, 38-59 = Watchable, <38 = Skip
@@ -1068,6 +1148,22 @@ exports.handler = async function (event, context) {
       const lc = g.debug?.leadChanges ?? 0;
       if      (lc >= 15) { factors.push({ label: `${lc} lead changes`, points: 25 }); score += 25; }
       else if (lc >= 8)  { factors.push({ label: `${lc} lead changes`, points: 12 }); score += 12; }
+
+    } else if (sport === 'wnba') {
+      // WNBA scoring profile: typical total ~160 (vs NBA ~220), margins
+      // proportionally tighter. Thresholds scaled ~0.73x from NBA's.
+      // Initial v1 estimates — to be tuned after 1-2 weeks of real games.
+      if      (total >= 170) { factors.push({ label: `${total} pts`, points: 15 }); score += 15; }
+      else if (total >= 155) { factors.push({ label: `${total} pts`, points: 8  }); score += 8;  }
+      if      (diff <= 3)  { factors.push({ label: `${diff} pt margin`, points: 25 }); score += 25; }
+      else if (diff <= 7)  { factors.push({ label: `${diff} pt margin`, points: 15 }); score += 15; }
+      else if (diff >= 15) { factors.push({ label: 'Blowout margin', points: -40 }); score -= 40; }
+      else if (diff >= 9)  { factors.push({ label: 'Large margin', points: -10 }); score -= 10; }
+      if (hasOT)       { factors.push({ label: '⚡ Overtime', points: 20 }); score += 20; }
+      if (hasComeback) { factors.push({ label: '⚡ Comeback', points: 20 }); score += 20; }
+      const lc = g.debug?.leadChanges ?? 0;
+      if      (lc >= 12) { factors.push({ label: `${lc} lead changes`, points: 25 }); score += 25; }
+      else if (lc >= 6)  { factors.push({ label: `${lc} lead changes`, points: 12 }); score += 12; }
 
     } else if (sport === 'tennis') {
       const sets = (g.homeSets ?? 0) + (g.awaySets ?? 0);
@@ -1182,6 +1278,7 @@ exports.handler = async function (event, context) {
     const mustWatch = sport === 'football' ? 60
                     : sport === 'nhl'      ? 48
                     : sport === 'nba'      ? 65
+                    : sport === 'wnba'     ? 65
                     : sport === 'cricket'  ? 38
                     : sport === 'mlb'      ? 45
                     : sport === 'tennis'   ? 65
@@ -1190,6 +1287,7 @@ exports.handler = async function (event, context) {
     const watchable = sport === 'football' ? 38
                     : sport === 'nhl'      ? 30
                     : sport === 'nba'      ? 28
+                    : sport === 'wnba'     ? 28
                     : sport === 'cricket'  ? 22
                     : sport === 'mlb'      ? 28
                     : sport === 'tennis'   ? 35
@@ -1265,6 +1363,7 @@ exports.handler = async function (event, context) {
     nhl:      async () => { const r = await fetchNHLWithTimeline();   return { nhl:     { ...r, recent: attachConfidence(r.recent,  'nhl')      } }; },
     mlb:      async () => { const r = await fetchSport(`${BASE}/baseball/mlb/scoreboard`, "MLB", 15); return { mlb: { ...r, recent: attachConfidence(r.recent, 'mlb') } }; },
     nba:      async () => { const r = await fetchNBAWithTimeline();   return { nba:     { ...r, recent: attachConfidence(r.recent,  'nba')      } }; },
+    wnba:     async () => { const r = await fetchWNBAWithTimeline();  return { wnba:    { ...r, recent: attachConfidence(r.recent,  'wnba')     } }; },
     nfl:      async () => { const r = await fetchSport(`${BASE}/football/nfl/scoreboard`, "NFL");     return { nfl: { ...r, recent: attachConfidence(r.recent, 'nfl') } }; },
     cricket:  async () => { const r = await fetchCricket();           return { cricket: { ...r, recent: attachConfidence(r.recent,  'cricket')  } }; },
     tennis:   async () => { const r = await fetchTennis();            return { tennis:  { ...r, recent: attachConfidence(r.recent,  'tennis')   } }; },
@@ -1275,11 +1374,12 @@ exports.handler = async function (event, context) {
   let fetchedAt = Date.now();
 
   if (sportParam === 'all' || !SPORT_FETCHERS[sportParam]) {
-    const [soccer, nhl, mlb, nba, nfl, cricket, tennis, darts] = await Promise.all([
+    const [soccer, nhl, mlb, nba, wnba, nfl, cricket, tennis, darts] = await Promise.all([
       fetchAllSoccer(),
       fetchNHLWithTimeline(),
       fetchSport(`${BASE}/baseball/mlb/scoreboard`,   "MLB", 15),
       fetchNBAWithTimeline(),
+      fetchWNBAWithTimeline(),
       fetchSport(`${BASE}/football/nfl/scoreboard`,   "NFL"),
       fetchCricket(),
       fetchTennis(),
@@ -1290,6 +1390,7 @@ exports.handler = async function (event, context) {
       nhl:     { ...nhl,     recent: attachConfidence(nhl.recent,     'nhl')      },
       mlb:     { ...mlb,     recent: attachConfidence(mlb.recent,     'mlb')      },
       nba:     { ...nba,     recent: attachConfidence(nba.recent,     'nba')      },
+      wnba:    { ...wnba,    recent: attachConfidence(wnba.recent,    'wnba')     },
       nfl:     { ...nfl,     recent: attachConfidence(nfl.recent,     'nfl')      },
       cricket: { ...cricket, recent: attachConfidence(cricket.recent, 'cricket')  },
       tennis:  { ...tennis,  recent: attachConfidence(tennis.recent,  'tennis')   },
