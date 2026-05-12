@@ -153,7 +153,7 @@
   .watch-btn:hover{background:rgba(63,185,80,0.2);border-color:var(--green);}
   .score-reveal{font-size:16px;font-weight:700;font-family:'Bebas Neue',sans-serif;letter-spacing:0.05em;display:none;flex-shrink:0;min-width:52px;text-align:center;}
 
-  /* Insight tags — appear when the user taps "Tell me more" before revealing score.
+  /* Insight tags — appear when the user taps "Why watch?" before revealing score.
      In game cards (flex-wrap), flex-basis:100% forces a full row. In top-pick-cards
      (block layout), it naturally fills the width. Hidden by default; shown via
      display:flex on cycle. */
@@ -166,6 +166,28 @@
      doesn't compete with the insight tags. */
   .insight-hide{background:transparent;border:none;color:var(--muted);font-size:11px;font-family:'Outfit',sans-serif;cursor:pointer;padding:4px 6px;margin-left:auto;opacity:0.6;transition:opacity 0.15s;}
   .insight-hide:hover{opacity:1;color:var(--text);}
+
+  /* Vote buttons — subtle thumbs up/down on every game card. Used to collect
+     anonymous feedback for manual tuning of the categorization engine.
+     Designed to be unobtrusive: small, low contrast until interacted with.
+     Once a vote is cast, both buttons lock (no re-voting from this device). */
+  .vote-btn{background:transparent;border:none;cursor:pointer;font-size:14px;padding:4px 6px;opacity:0.35;transition:opacity 0.15s,transform 0.1s;line-height:1;font-family:inherit;}
+  .vote-btn:hover{opacity:0.8;}
+  .vote-btn:active{transform:scale(0.92);}
+  .vote-btn.voted{opacity:1;}
+  .vote-btn.vote-locked{cursor:default;}
+  .vote-btn.vote-locked:hover{opacity:inherit;}
+  .vote-btn.vote-locked:not(.voted){opacity:0.15;}
+
+  /* Inline reason picker — appears after tapping 👎. Small horizontal list of
+     reason pills the user can tap. Tapping a reason submits the vote with
+     that reason; tapping × cancels without voting. */
+  .vote-reasons{display:none;flex-basis:100%;flex-wrap:wrap;gap:6px;margin-top:8px;order:60;align-items:center;}
+  .vote-reasons-label{font-size:11px;color:var(--muted);margin-right:4px;}
+  .vote-reason-btn{background:transparent;border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:3px 8px;font-size:11px;color:var(--muted);cursor:pointer;font-family:'Outfit',sans-serif;transition:all 0.15s;}
+  .vote-reason-btn:hover{background:rgba(255,255,255,0.06);color:var(--text);border-color:rgba(255,255,255,0.2);}
+  .vote-reason-cancel{background:transparent;border:none;color:var(--muted);font-size:13px;cursor:pointer;padding:2px 6px;opacity:0.5;}
+  .vote-reason-cancel:hover{opacity:1;}
 
   /* Must Watch — green (scorefest + watchworthy both show green) */
   .scorefest  {border-left:3px solid var(--green) !important;}
@@ -796,9 +818,147 @@
   // ── WATCHED GAMES (feature #3) ─────────────────────────────────────────
   let watched = new Set(JSON.parse(localStorage.getItem('watchedGames') || '[]'));
 
+  // Feedback state: Map of gameId → vote ('up' | 'down'). Backed by localStorage
+  // so a user's votes persist across reloads — we don't want them seeing fresh
+  // unvoted buttons on games they already voted on. The server is the source
+  // of truth for analysis; this is purely a UX cache.
+  let votedGames = new Map(JSON.parse(localStorage.getItem('votedGames') || '[]'));
+
+  function saveVotedGames() {
+    localStorage.setItem('votedGames', JSON.stringify([...votedGames]));
+  }
+
+  // Submit a vote to the server. Optimistic: we update the local UI
+  // immediately and only revert on a hard failure. Network/server errors are
+  // logged but don't bother the user — this is non-critical metadata.
+  async function submitFeedback(game, vote, downReason) {
+    const gameId = makeGameId(game);
+
+    // Idempotent guard — don't double-submit from the same device
+    if (votedGames.has(gameId)) return;
+
+    // Optimistic local update FIRST so UI feels instant
+    votedGames.set(gameId, vote);
+    saveVotedGames();
+
+    const payload = {
+      gameId,
+      sport: game.sport || game._sport || null,
+      league: game.league || null,
+      home: game.home || null,
+      away: game.away || null,
+      gameDate: game.date || game.dateStr || null,
+      engineCategory: game.cat?.cls || null,
+      engineScore: game.confidence?.score ?? null,
+      wasTopPick: currentTopPickIds.has(gameId),
+      wasBestPick: false,  // best pick state isn't a stable property of the game
+      vote,
+      downReason: downReason || null,
+    };
+
+    try {
+      const res = await fetch('/.netlify/functions/submit-feedback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        console.warn('submit-feedback: server returned', res.status);
+        // Don't revert local UI — the user's intent was registered locally.
+        // If they retry-vote later we'll send again (won't because votedGames blocks).
+      }
+    } catch (err) {
+      console.warn('submit-feedback: network error', err);
+      // Same — don't revert.
+    }
+  }
+
   function makeGameId(g) {
     return `${g.home}|${g.away}|${g.date || g.dateStr}`;
   }
+
+  // Vote button click handlers. Both look up the game from the data using the
+  // gameId attached to the card, fire submitFeedback, and update UI.
+  //
+  // 👍 votes are silent — just register and gray out the buttons.
+  // 👎 votes show an inline reason picker first; user picks a reason or skips.
+  function handleVoteUp(btn) {
+    const card = btn.closest('.game-card, .top-pick-card');
+    if (!card) return;
+    const gameId = card.dataset.gameId;
+    const game = findGameById(gameId);
+    if (!game) return;
+    if (votedGames.has(gameId)) return;
+
+    markCardVoted(card, 'up');
+    submitFeedback(game, 'up', null);
+  }
+
+  function handleVoteDown(btn) {
+    const card = btn.closest('.game-card, .top-pick-card');
+    if (!card) return;
+    const gameId = card.dataset.gameId;
+    if (votedGames.has(gameId)) return;
+
+    // Show inline reason picker. Either user picks a reason, or taps "skip"
+    // to submit without a reason, or taps × to cancel.
+    showReasonPicker(card);
+  }
+
+  function handleReasonPick(btn, reason) {
+    const card = btn.closest('.game-card, .top-pick-card');
+    if (!card) return;
+    const gameId = card.dataset.gameId;
+    const game = findGameById(gameId);
+    if (!game) return;
+    if (votedGames.has(gameId)) return;
+
+    // Hide picker
+    const picker = card.querySelector('.vote-reasons');
+    if (picker) picker.style.display = 'none';
+
+    markCardVoted(card, 'down');
+    submitFeedback(game, 'down', reason);
+  }
+
+  function handleReasonCancel(btn) {
+    const card = btn.closest('.game-card, .top-pick-card');
+    if (!card) return;
+    const picker = card.querySelector('.vote-reasons');
+    if (picker) picker.style.display = 'none';
+  }
+
+  function showReasonPicker(card) {
+    const picker = card.querySelector('.vote-reasons');
+    if (picker) picker.style.display = 'flex';
+  }
+
+  // Apply voted styling to both thumb buttons in a card. Picked thumb stays
+  // bright, other thumb fades.
+  function markCardVoted(card, vote) {
+    const upBtn = card.querySelector('.vote-up');
+    const downBtn = card.querySelector('.vote-down');
+    if (!upBtn || !downBtn) return;
+    upBtn.classList.add('vote-locked');
+    downBtn.classList.add('vote-locked');
+    if (vote === 'up')   upBtn.classList.add('voted');
+    if (vote === 'down') downBtn.classList.add('voted');
+  }
+
+  // Look up a game by its gameId across all loaded sport data. Linear scan
+  // but the data set is small (a few hundred games total).
+  function findGameById(gameId) {
+    for (const sportKey of Object.keys(allData)) {
+      const recent = allData[sportKey]?.recent || [];
+      for (const g of recent) {
+        if (makeGameId(g) === gameId) {
+          return { ...g, sport: sportKey, _sport: sportKey };
+        }
+      }
+    }
+    return null;
+  }
+
 
   function toggleWatched(btn, gameId) {
     const card = btn.closest('.game-card');
@@ -1338,16 +1498,15 @@
     return phrases;
   }
 
-  // Render the inner HTML of the .insight-reveal div for a game. Includes
-  // the phrase tags and a trailing "× hide" link so users can dismiss
-  // insights without revealing the score.
+  // Render the inner HTML of the .insight-reveal div for a game. Just the
+  // phrase tags — the main "Why watch?" button toggles them, so a separate
+  // hide affordance is redundant.
   function buildInsightHTML(factors, sport) {
     const phrases = getInsightPhrases(factors, sport);
     const tagsHTML = phrases.length
       ? phrases.map(p => `<span class="insight-tag">${p}</span>`).join('')
       : '<span class="insight-tag insight-tag--empty">Nothing notable.</span>';
-    const hideLink = '<button class="insight-hide" onclick="event.stopPropagation();hideReveal(this)" title="Hide without revealing score">× hide</button>';
-    return tagsHTML + hideLink;
+    return tagsHTML;
   }
 
   // Broadcast info for upcoming games. Returns null when nothing useful to
@@ -1877,7 +2036,7 @@
           ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
           : '';
         return `
-          <div class="top-pick-card ${g.cat.cls}${i === 0 ? ' best-pick' : ''}" style="animation-delay:${i*0.06}s">
+          <div class="top-pick-card ${g.cat.cls}${i === 0 ? ' best-pick' : ''}" data-game-id="${makeGameId(g).replace(/"/g, '&quot;')}" style="animation-delay:${i*0.06}s">
             <div class="tp-header-row">
               ${i === 0 ? `<span class="tp-best-pick-badge${g.isFallback ? ' is-fallback' : ''}">${g.isFallback ? '😐 Best Available' : '⭐ Best Pick'}</span>` : ''}
               <span class="tp-sport">${leagueLabel}</span>
@@ -1889,9 +2048,11 @@
             <div class="tp-meta">${dateLabel}</div>
             <div class="tp-badge">${g.cat.icon} ${g.cat.label}${g.cat.badge ? ' · ' + g.cat.badge : ''}</div>
             ${watchBtn}
-            <button class="tp-reveal" onclick="cycleReveal(this,${cycleArgs})">👁 Tell me more</button>
+            <button class="tp-reveal" onclick="toggleInsights(this)">👁 Why watch?</button>
+            <button class="tp-reveal score-btn" onclick="toggleScore(this,${cycleArgs})">Show Score</button>
             <div class="insight-reveal">${insightHTML}</div>
             <div class="tp-score"></div>
+            ${voteButtonsHTML(makeGameId(g))}
           </div>`;
       }).join('')}
     </div>${picks.length === 1 && nextWindow ? suggestionHTML : ''}`;
@@ -1999,27 +2160,43 @@
         return allowed.includes(g.cat.cls);
       });
 
+      // Build upcoming HTML once — used in different positions for WNBA vs others.
+      // For WNBA, upcoming sits right after Top Picks because the audience often
+      // wants "where can I watch tonight" — broadcast info on upcoming cards is
+      // the unique answer this site provides. For other sports, broadcast confusion
+      // is less of a fan pain point, so upcoming stays below past games as before.
+      let upcomingHTML = '';
+      if (upcoming.length > 0) {
+        upcomingHTML += `<div class="upcoming-divider">📅 Coming Up This Week</div>`;
+        const byDate = {};
+        upcoming.forEach(g => { if(!byDate[g.date]) byDate[g.date]=[]; byDate[g.date].push(g); });
+        Object.entries(byDate).forEach(([date, dayGames]) => {
+          upcomingHTML += `<div class="section-label">${date}</div>`;
+          upcomingHTML += dayGames.map((g,i) => upcomingCardHTML(g,i)).join('');
+        });
+      }
+
+      // Build past-games HTML
+      let pastHTML = '';
       if (filtered.length === 0) {
-        html += '<p class="no-games">Nothing here right now.</p>';
+        pastHTML += '<p class="no-games">Nothing here right now.</p>';
       } else {
         // Find the best pick — top game by excitement across all dates
         const bestPick = sortByExcitement(filtered)[0];
         const byDate = {};
         filtered.forEach(g => { if(!byDate[g.date]) byDate[g.date]=[]; byDate[g.date].push(g); });
         Object.keys(byDate).sort((a,b) => byDate[b][0].ts - byDate[a][0].ts).forEach(date => {
-          html += `<div class="section-label">${date}</div>`;
-          html += renderDateGames(byDate[date], bestPick, sport);
+          pastHTML += `<div class="section-label">${date}</div>`;
+          pastHTML += renderDateGames(byDate[date], bestPick, sport);
         });
       }
 
-      if (upcoming.length > 0) {
-        html += `<div class="upcoming-divider">📅 Coming Up This Week</div>`;
-        const byDate = {};
-        upcoming.forEach(g => { if(!byDate[g.date]) byDate[g.date]=[]; byDate[g.date].push(g); });
-        Object.entries(byDate).forEach(([date, dayGames]) => {
-          html += `<div class="section-label">${date}</div>`;
-          html += dayGames.map((g,i) => upcomingCardHTML(g,i)).join('');
-        });
+      // WNBA: upcoming first (broadcast-info utility), then past games
+      // Others: past first (catch-up utility), then upcoming
+      if (sport === 'wnba') {
+        html += upcomingHTML + pastHTML;
+      } else {
+        html += pastHTML + upcomingHTML;
       }
     }
 
@@ -2067,6 +2244,30 @@
       </div>`;
   }
 
+  // Render the thumb up/down buttons + downvote reason picker for a card.
+  // If this device already voted on this game, the appropriate thumb gets the
+  // "voted" class (kept bright) and the other is locked-faded.
+  function voteButtonsHTML(gameId) {
+    const prior = votedGames.get(gameId);
+    const locked = !!prior;
+    const upClass    = `vote-btn vote-up${prior === 'up' ? ' voted' : ''}${locked ? ' vote-locked' : ''}`;
+    const downClass  = `vote-btn vote-down${prior === 'down' ? ' voted' : ''}${locked ? ' vote-locked' : ''}`;
+    // If already voted, click is a no-op (button is locked); leave handler
+    // attached so the locked state is enforced consistently.
+    return `
+      <button class="${upClass}" title="Good rec" onclick="handleVoteUp(this)">👍</button>
+      <button class="${downClass}" title="Bad rec" onclick="handleVoteDown(this)">👎</button>
+      <div class="vote-reasons">
+        <span class="vote-reasons-label">Why?</span>
+        <button class="vote-reason-btn" onclick="handleReasonPick(this,'boring')">Boring / one-sided</button>
+        <button class="vote-reason-btn" onclick="handleReasonPick(this,'defensive')">Too defensive</button>
+        <button class="vote-reason-btn" onclick="handleReasonPick(this,'didnt_watch')">Didn't watch</button>
+        <button class="vote-reason-btn" onclick="handleReasonPick(this,'overhyped')">Score didn't match hype</button>
+        <button class="vote-reason-btn" onclick="handleReasonPick(this,'other')">Other</button>
+        <button class="vote-reason-cancel" onclick="handleReasonCancel(this)" title="Cancel">×</button>
+      </div>`;
+  }
+
   function gameCardHTML(g, i, isBestPick = false, sport = null) {
     const gameId = makeGameId(g);
     const isWatched = watched.has(gameId);
@@ -2077,7 +2278,7 @@
       : '';
     const insightHTML = buildInsightHTML(g.confidence?.factors, sport || g.sport);
     return `
-      <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${isBestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
+      <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${isBestPick?' best-pick':''}" data-game-id="${gameId.replace(/"/g, '&quot;')}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
         <div class="teams" style="flex:1;min-width:0;">
           <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
           <div class="game-meta">${g.date} · ${g.league}</div>
@@ -2085,10 +2286,12 @@
         ${isTopPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
         <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
         ${watchBtn}
-        <button class="reveal-btn" onclick="cycleReveal(this,${g.h},${g.a})">👁 Tell me more</button>
+        <button class="reveal-btn" onclick="toggleInsights(this)">👁 Why watch?</button>
+        <button class="reveal-btn score-btn" onclick="toggleScore(this,${g.h},${g.a})">Show Score</button>
         <div class="insight-reveal">${insightHTML}</div>
         <div class="score-reveal"></div>
         <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
+        ${voteButtonsHTML(gameId)}
         ${debugPanelHTML(g)}
       </div>`;
   }
@@ -2147,7 +2350,7 @@
       : '';
     const insightHTML = buildInsightHTML(g.confidence?.factors, 'cricket');
     return `
-      <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${isBestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
+      <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${isBestPick?' best-pick':''}" data-game-id="${gameId.replace(/"/g, '&quot;')}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
         <div class="teams" style="flex:1;min-width:0;">
           <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
           <div class="game-meta">${g.dateStr} · ${g.league}</div>
@@ -2155,10 +2358,12 @@
         ${isTopPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
         <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
         ${watchBtn}
-        <button class="reveal-btn" onclick="cycleReveal(this,'${safeStatus}','')">👁 Tell me more</button>
+        <button class="reveal-btn" onclick="toggleInsights(this)">👁 Why watch?</button>
+        <button class="reveal-btn score-btn" onclick="toggleScore(this,'${safeStatus}','')">Show Score</button>
         <div class="insight-reveal">${insightHTML}</div>
         <div class="score-reveal" style="font-family:'Outfit',sans-serif;font-size:11px;white-space:normal;max-width:160px;line-height:1.4;text-align:right;"></div>
         <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
+        ${voteButtonsHTML(gameId)}
         ${debugPanelHTML(g)}
       </div>`;
   }
@@ -2191,17 +2396,19 @@
     const safeId = gameId.replace(/'/g, "\\'");
     const insightHTML = buildInsightHTML(g.confidence?.factors, 'tennis');
     return `
-      <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${isBestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
+      <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${isBestPick?' best-pick':''}" data-game-id="${gameId.replace(/"/g, '&quot;')}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
         <div class="teams" style="flex:1;min-width:0;">
           <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
           <div class="game-meta">${g.date} · ${g.league}</div>
         </div>
         ${isTopPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
         <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
-        <button class="reveal-btn" onclick="cycleReveal(this,'${safeScore}','')">👁 Tell me more</button>
+        <button class="reveal-btn" onclick="toggleInsights(this)">👁 Why watch?</button>
+        <button class="reveal-btn score-btn" onclick="toggleScore(this,'${safeScore}','')">Show Score</button>
         <div class="insight-reveal">${insightHTML}</div>
         <div class="score-reveal" style="font-family:'Outfit',sans-serif;font-size:11px;white-space:normal;max-width:130px;line-height:1.4;text-align:right;"></div>
         <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
+        ${voteButtonsHTML(gameId)}
         ${debugPanelHTML(g)}
       </div>`;
   }
@@ -2291,29 +2498,39 @@
   }
 
   // Three-state reveal cycle: hidden → insights → score → hidden.
-  // The card markup includes both an .insight-reveal div (pre-rendered) and
-  // a .score-reveal (game cards) or .tp-score (top picks) div for the score.
-  // This function manages which is visible based on the button's current state.
-  //
-  // For sports with custom score strings (cricket: status, tennis: set scores),
-  // we pass a string in place of h/a; the function detects and renders it.
-  function cycleReveal(btn, h, a) {
-    if (spoilerBlocked(btn)) return;
+  // Insights and score are now independent toggles instead of a single
+  // cycling button. Why watch? opens insights (and closes them on second tap);
+  // Show Score reveals the score (and hides it). Users can have both visible,
+  // either alone, or neither — whatever matches how they want to consume the
+  // game.
+  function toggleInsights(btn) {
     const card = btn.closest('.game-card, .top-pick-card');
     if (!card) return;
     const insightEl = card.querySelector('.insight-reveal');
-    const scoreEl   = card.querySelector('.score-reveal, .tp-score');
-    if (!insightEl || !scoreEl) return;
+    if (!insightEl) return;
 
-    const state = btn.dataset.state || '0';
-    if (state === '0') {
-      // Hidden → show insights
+    const isVisible = insightEl.style.display === 'flex';
+    if (isVisible) {
+      insightEl.style.display = 'none';
+      btn.textContent = '👁 Why watch?';
+    } else {
       insightEl.style.display = 'flex';
-      scoreEl.style.display   = 'none';
-      btn.textContent = 'Show Score →';
-      btn.dataset.state = '1';
-    } else if (state === '1') {
-      // Hints visible → show score
+      btn.textContent = '× Hide';
+    }
+  }
+
+  function toggleScore(btn, h, a) {
+    if (spoilerBlocked(btn)) return;
+    const card = btn.closest('.game-card, .top-pick-card');
+    if (!card) return;
+    const scoreEl = card.querySelector('.score-reveal, .tp-score');
+    if (!scoreEl) return;
+
+    const isVisible = scoreEl.style.display === 'block';
+    if (isVisible) {
+      scoreEl.style.display = 'none';
+      btn.textContent = 'Show Score';
+    } else {
       const isString = (typeof h === 'string') && (a === undefined || a === '');
       if (isString) {
         scoreEl.style.fontFamily = "'Outfit',sans-serif";
@@ -2323,31 +2540,30 @@
       }
       scoreEl.style.display = 'block';
       btn.textContent = '🙈 Hide';
-      btn.dataset.state = '2';
-    } else {
-      // Score → fully hidden
-      insightEl.style.display = 'none';
-      scoreEl.style.display   = 'none';
-      btn.textContent = '👁 Tell me more';
-      btn.dataset.state = '0';
     }
   }
 
-  // Reset card to fully-hidden state. Used by the inline "× hide" link inside
-  // the insights area so users can dismiss insights without first revealing
-  // the score. The main reveal button is found via the card and reset.
+  // Legacy: cycleReveal still exists for any callers we missed (cricket/tennis
+  // helpers use the same render paths). Kept as a thin shim that opens
+  // insights first, then defers to score on subsequent taps via the two-button
+  // path. This is safe to remove once we audit all call sites.
+  function cycleReveal(btn, h, a) {
+    // Delegate: the button is the Why watch? button; just toggle insights.
+    toggleInsights(btn);
+  }
+
+  // Reset card to fully-hidden state. Both buttons reset to their initial labels.
   function hideReveal(linkEl) {
     const card = linkEl.closest('.game-card, .top-pick-card');
     if (!card) return;
     const insightEl = card.querySelector('.insight-reveal');
     const scoreEl   = card.querySelector('.score-reveal, .tp-score');
-    const mainBtn   = card.querySelector('.reveal-btn, .tp-reveal');
+    const whyBtn    = card.querySelector('.reveal-btn, .tp-reveal');
+    const scoreBtn  = card.querySelector('.score-btn');
     if (insightEl) insightEl.style.display = 'none';
     if (scoreEl)   scoreEl.style.display   = 'none';
-    if (mainBtn) {
-      mainBtn.textContent = '👁 Tell me more';
-      mainBtn.dataset.state = '0';
-    }
+    if (whyBtn)   whyBtn.textContent  = '👁 Why watch?';
+    if (scoreBtn) scoreBtn.textContent = 'Show Score';
   }
 
   function renderCricket() {
