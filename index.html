@@ -139,7 +139,6 @@
     .game-meta{font-size:12px;}
     .cat-badge{font-size:12px;padding:5px 10px;}
     .reveal-btn{font-size:12px;padding:5px 10px;}
-    .watched-btn{font-size:15px;}
   }
 
   .cat-badge{display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:7px;font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0;}
@@ -161,6 +160,11 @@
   .top-pick-card .insight-reveal{margin-top:8px;}
   .insight-tag{display:inline-block;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:6px;padding:4px 9px;font-size:11px;color:var(--muted);font-family:'Outfit',sans-serif;line-height:1.2;}
   .insight-tag--empty{font-style:italic;}
+  /* Show Score button inside the insights area. Right-aligned (margin-left:auto)
+     so insight tags stay on the left, score CTA on the right. Subtle styling so
+     it doesn't shout — the act of revealing the score is deliberate but minor. */
+  .insight-score-btn{margin-left:auto;background:transparent;border:1px solid rgba(255,255,255,0.12);color:var(--text);font-size:11px;font-family:'Outfit',sans-serif;cursor:pointer;padding:4px 10px;border-radius:6px;transition:background 0.15s,border-color 0.15s;}
+  .insight-score-btn:hover{background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.2);}
   /* "× hide" affordance inside the insights area. Lets users dismiss
      insights without revealing the score. Deliberately subtle so it
      doesn't compete with the insight tags. */
@@ -312,13 +316,6 @@
   .sport-toggle{display:flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-size:12px;font-weight:600;color:var(--text);transition:all 0.15s;user-select:none;}
   .sport-toggle.hidden-sport{opacity:0.4;background:transparent;}
   .sport-toggle:hover{border-color:rgba(255,255,255,0.2);}
-
-  /* WATCHED TOGGLE */
-  .watched-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:4px;opacity:0.3;transition:opacity 0.2s;flex-shrink:0;line-height:1;}
-  .watched-btn:hover{opacity:0.7;}
-  .watched-btn.watched{opacity:1;color:var(--green);}
-  .game-card.is-watched{opacity:0.4;}
-  .game-card.is-watched .matchup{text-decoration:line-through;}
 
   /* SCROLLING TABS — primary sport nav, big and obvious */
   .sport-tabs{display:flex;border:1px solid var(--border);border-radius:12px;overflow-x:auto;overflow-y:hidden;margin-bottom:20px;scrollbar-width:none;background:var(--surface);flex-wrap:nowrap;}
@@ -815,9 +812,6 @@
     document.getElementById('settings-panel').classList.toggle('open');
   }
 
-  // ── WATCHED GAMES (feature #3) ─────────────────────────────────────────
-  let watched = new Set(JSON.parse(localStorage.getItem('watchedGames') || '[]'));
-
   // Feedback state: Map of gameId → vote ('up' | 'down'). Backed by localStorage
   // so a user's votes persist across reloads — we don't want them seeing fresh
   // unvoted buttons on games they already voted on. The server is the source
@@ -959,29 +953,6 @@
     return null;
   }
 
-
-  function toggleWatched(btn, gameId) {
-    const card = btn.closest('.game-card');
-    if (watched.has(gameId)) {
-      watched.delete(gameId);
-      btn.textContent = '✓';
-      btn.classList.remove('watched');
-      card.classList.remove('is-watched');
-    } else {
-      watched.add(gameId);
-      btn.textContent = '✓';
-      btn.classList.add('watched');
-      card.classList.add('is-watched');
-    }
-    localStorage.setItem('watchedGames', JSON.stringify([...watched]));
-  }
-
-  function clearWatched() {
-    watched.clear();
-    localStorage.setItem('watchedGames', '[]');
-    document.querySelectorAll('.game-card.is-watched').forEach(c => c.classList.remove('is-watched'));
-    document.querySelectorAll('.watched-btn.watched').forEach(b => { b.classList.remove('watched'); b.textContent = '✓'; });
-  }
 
   // ── LAST UPDATED (feature #6) ──────────────────────────────────────────
   let loadedAt = null;
@@ -1498,15 +1469,24 @@
     return phrases;
   }
 
-  // Render the inner HTML of the .insight-reveal div for a game. Just the
-  // phrase tags — the main "Why watch?" button toggles them, so a separate
-  // hide affordance is redundant.
-  function buildInsightHTML(factors, sport) {
+  // Render the inner HTML of the .insight-reveal div for a game. Includes
+  // the phrase tags and a "Show Score →" button at the end. The score button
+  // lives INSIDE the insights area so that revealing the score requires
+  // first opening insights — a deliberate two-step that aligns with the
+  // site's spoiler-free promise (no accidental score reveals).
+  //
+  // scoreBtnArgs is the JS-literal string used inside the toggleScore call,
+  // e.g. "5,3" for sports with numeric h/a, or "'set scores','' " for cricket/
+  // tennis. Caller pre-builds it so this helper stays sport-agnostic.
+  function buildInsightHTML(factors, sport, scoreBtnArgs) {
     const phrases = getInsightPhrases(factors, sport);
     const tagsHTML = phrases.length
       ? phrases.map(p => `<span class="insight-tag">${p}</span>`).join('')
       : '<span class="insight-tag insight-tag--empty">Nothing notable.</span>';
-    return tagsHTML;
+    const scoreBtn = scoreBtnArgs
+      ? `<button class="insight-score-btn" onclick="toggleScore(this,${scoreBtnArgs})">Show Score →</button>`
+      : '';
+    return tagsHTML + scoreBtn;
   }
 
   // Broadcast info for upcoming games. Returns null when nothing useful to
@@ -1621,11 +1601,18 @@
     return TP_WINDOW_OPTIONS[sport] || TP_WINDOW_OPTIONS.default;
   }
 
-  // Per-sport selected window. Default = first option in that sport's list.
+  // Per-sport selected window. Default for normal sports = 'recent' because
+  // Top Picks gets a richer view across the past week than from one day —
+  // and a first-time visitor seeing populated picks is a better intro than
+  // "No standout games today." Darts uses its first option since darts only
+  // has 'recent' and 'all'.
   const tpWindowBySport = {};
   function getTpWindow() {
     const opts = tpOptionsFor(activeSport);
-    if (!tpWindowBySport[activeSport]) tpWindowBySport[activeSport] = opts[0].key;
+    if (!tpWindowBySport[activeSport]) {
+      const defaultKey = opts.find(o => o.key === 'recent')?.key || opts[0].key;
+      tpWindowBySport[activeSport] = defaultKey;
+    }
     return tpWindowBySport[activeSport];
   }
   function tpWindowMs() {
@@ -2018,7 +2005,6 @@
         const scoreStr = tpScoreStr(g).replace(/"/g, '&quot;');
         const isTennis  = g.sport === 'tennis';
         const isCricket = g.sport === 'cricket';
-        const insightHTML = buildInsightHTML(g.confidence?.factors, g.sport);
         // For cricket/tennis the score is a single string; pass it as h with
         // empty a. For other sports pass numeric h and a separately. The
         // string goes into a JS-literal inside an onclick="..."  attribute, so
@@ -2027,6 +2013,7 @@
         const cycleArgs = (isCricket || isTennis)
           ? `'${escapedScore}',''`
           : `${g.h},${g.a}`;
+        const insightHTML = buildInsightHTML(g.confidence?.factors, g.sport, cycleArgs);
         const dateLabel = g.date || g.dateStr || '';
         const leagueLabel = g.league || g.leagueName || g.tournament || '';
         // In Top Picks every card is a deliberate recommendation, so show the
@@ -2049,7 +2036,6 @@
             <div class="tp-badge">${g.cat.icon} ${g.cat.label}${g.cat.badge ? ' · ' + g.cat.badge : ''}</div>
             ${watchBtn}
             <button class="tp-reveal" onclick="toggleInsights(this)">👁 Why watch?</button>
-            <button class="tp-reveal score-btn" onclick="toggleScore(this,${cycleArgs})">Show Score</button>
             <div class="insight-reveal">${insightHTML}</div>
             <div class="tp-score"></div>
             ${voteButtonsHTML(makeGameId(g))}
@@ -2270,15 +2256,14 @@
 
   function gameCardHTML(g, i, isBestPick = false, sport = null) {
     const gameId = makeGameId(g);
-    const isWatched = watched.has(gameId);
     const isTopPick = currentTopPickIds.has(gameId);
     const safeId = gameId.replace(/'/g, "\\'");
     const watchBtn = (g.watch && g.cat.cls === 'watchworthy' && !shouldHideWatchProvider(g))
       ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
       : '';
-    const insightHTML = buildInsightHTML(g.confidence?.factors, sport || g.sport);
+    const insightHTML = buildInsightHTML(g.confidence?.factors, sport || g.sport, `${g.h},${g.a}`);
     return `
-      <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${isBestPick?' best-pick':''}" data-game-id="${gameId.replace(/"/g, '&quot;')}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
+      <div class="game-card ${g.cat.cls}${isBestPick?' best-pick':''}" data-game-id="${gameId.replace(/"/g, '&quot;')}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
         <div class="teams" style="flex:1;min-width:0;">
           <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
           <div class="game-meta">${g.date} · ${g.league}</div>
@@ -2287,10 +2272,8 @@
         <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
         ${watchBtn}
         <button class="reveal-btn" onclick="toggleInsights(this)">👁 Why watch?</button>
-        <button class="reveal-btn score-btn" onclick="toggleScore(this,${g.h},${g.a})">Show Score</button>
         <div class="insight-reveal">${insightHTML}</div>
         <div class="score-reveal"></div>
-        <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
         ${voteButtonsHTML(gameId)}
         ${debugPanelHTML(g)}
       </div>`;
@@ -2342,15 +2325,14 @@
   function cricketCardHTML(g, i, isBestPick) {
     const safeStatus = g.status.replace(/'/g, "\\'");
     const gameId = makeGameId(g);
-    const isWatched = watched.has(gameId);
     const isTopPick = currentTopPickIds.has(gameId);
     const safeId = gameId.replace(/'/g, "\\'");
     const watchBtn = (g.watch && g.cat.cls === 'watchworthy')
       ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
       : '';
-    const insightHTML = buildInsightHTML(g.confidence?.factors, 'cricket');
+    const insightHTML = buildInsightHTML(g.confidence?.factors, 'cricket', `'${safeStatus}',''`);
     return `
-      <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${isBestPick?' best-pick':''}" data-game-id="${gameId.replace(/"/g, '&quot;')}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
+      <div class="game-card ${g.cat.cls}${isBestPick?' best-pick':''}" data-game-id="${gameId.replace(/"/g, '&quot;')}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
         <div class="teams" style="flex:1;min-width:0;">
           <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
           <div class="game-meta">${g.dateStr} · ${g.league}</div>
@@ -2359,10 +2341,8 @@
         <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
         ${watchBtn}
         <button class="reveal-btn" onclick="toggleInsights(this)">👁 Why watch?</button>
-        <button class="reveal-btn score-btn" onclick="toggleScore(this,'${safeStatus}','')">Show Score</button>
         <div class="insight-reveal">${insightHTML}</div>
         <div class="score-reveal" style="font-family:'Outfit',sans-serif;font-size:11px;white-space:normal;max-width:160px;line-height:1.4;text-align:right;"></div>
-        <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
         ${voteButtonsHTML(gameId)}
         ${debugPanelHTML(g)}
       </div>`;
@@ -2391,12 +2371,11 @@
   function tennisCardHTML(g, i, isBestPick) {
     const safeScore = setScoreStr(g).replace(/'/g, "\\'");
     const gameId = makeGameId(g);
-    const isWatched = watched.has(gameId);
     const isTopPick = currentTopPickIds.has(gameId);
     const safeId = gameId.replace(/'/g, "\\'");
-    const insightHTML = buildInsightHTML(g.confidence?.factors, 'tennis');
+    const insightHTML = buildInsightHTML(g.confidence?.factors, 'tennis', `'${safeScore}',''`);
     return `
-      <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${isBestPick?' best-pick':''}" data-game-id="${gameId.replace(/"/g, '&quot;')}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
+      <div class="game-card ${g.cat.cls}${isBestPick?' best-pick':''}" data-game-id="${gameId.replace(/"/g, '&quot;')}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
         <div class="teams" style="flex:1;min-width:0;">
           <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
           <div class="game-meta">${g.date} · ${g.league}</div>
@@ -2404,10 +2383,8 @@
         ${isTopPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
         <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
         <button class="reveal-btn" onclick="toggleInsights(this)">👁 Why watch?</button>
-        <button class="reveal-btn score-btn" onclick="toggleScore(this,'${safeScore}','')">Show Score</button>
         <div class="insight-reveal">${insightHTML}</div>
         <div class="score-reveal" style="font-family:'Outfit',sans-serif;font-size:11px;white-space:normal;max-width:130px;line-height:1.4;text-align:right;"></div>
-        <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
         ${voteButtonsHTML(gameId)}
         ${debugPanelHTML(g)}
       </div>`;
@@ -2511,7 +2488,17 @@
 
     const isVisible = insightEl.style.display === 'flex';
     if (isVisible) {
+      // Collapse insights AND any visible score. Score lives outside the
+      // insights panel but is conceptually part of the same reveal flow —
+      // hiding "Why watch?" should restore the spoiler-free initial state.
       insightEl.style.display = 'none';
+      const scoreEl = card.querySelector('.score-reveal, .tp-score');
+      if (scoreEl && scoreEl.style.display === 'block') {
+        scoreEl.style.display = 'none';
+        // Reset the inline Show Score button back to its initial label.
+        const scoreBtn = card.querySelector('.insight-score-btn');
+        if (scoreBtn) scoreBtn.textContent = 'Show Score →';
+      }
       btn.textContent = '👁 Why watch?';
     } else {
       insightEl.style.display = 'flex';
@@ -2529,7 +2516,7 @@
     const isVisible = scoreEl.style.display === 'block';
     if (isVisible) {
       scoreEl.style.display = 'none';
-      btn.textContent = 'Show Score';
+      btn.textContent = 'Show Score →';
     } else {
       const isString = (typeof h === 'string') && (a === undefined || a === '');
       if (isString) {
