@@ -25,7 +25,7 @@
   body::before{content:'';position:fixed;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 60px,rgba(255,255,255,0.012) 60px,rgba(255,255,255,0.012) 61px);pointer-events:none;z-index:0;}
   .wrap{max-width:900px;margin:0 auto;padding:0 16px 80px;position:relative;z-index:1;}
 
-  header{padding:40px 0 28px;border-bottom:1px solid var(--border);margin-bottom:28px;}
+  header{padding:20px 0 14px;border-bottom:1px solid var(--border);margin-bottom:16px;}
   h1{font-family:'Bebas Neue',sans-serif;font-size:clamp(24px,5vw,40px);letter-spacing:0.04em;line-height:1;white-space:nowrap;}
   h1 .dim{color:var(--muted);} h1 .accent{color:var(--green);}
   .spoiler-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 22px;font-size:13px;font-weight:700;color:var(--text);box-shadow:0 4px 24px rgba(0,0,0,0.5);z-index:200;opacity:0;transition:opacity 0.2s;pointer-events:none;white-space:nowrap;max-width:90vw;text-align:center;}
@@ -41,8 +41,10 @@
   @keyframes spin{to{transform:rotate(360deg)}}
   .error-box{background:var(--red-bg);border:1px solid rgba(248,81,73,0.3);border-radius:10px;padding:20px;color:var(--red);font-size:14px;text-align:center;display:none;}
 
-  /* SPORT TABS */
-  .sport-tabs{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px;flex-wrap:wrap;}
+  /* SPORT TABS — base rule overridden below in SCROLLING TABS section.
+     Flex-wrap and overflow behavior set there to differentiate desktop
+     (nowrap, fits one row) from mobile (wrap, multi-row OK). */
+  .sport-tabs{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px;}
   /* sport tab styles defined below in scrolling tabs section */
 
   /* LEGEND */
@@ -80,11 +82,12 @@
   .section-label::after{content:'';flex:1;height:1px;background:var(--border);}
 
   /* SKIP COLLAPSE PILL — shown when ≥4 skip games on a date. Click to
-     expand the hidden tail. Muted treatment so it doesn't compete with
-     the verdict cards above. */
-  .skip-collapse{margin:6px 0 10px;}
-  .skip-collapse-pill{display:block;width:100%;background:transparent;border:1px dashed var(--border);color:var(--muted);padding:8px 12px;border-radius:8px;font-size:12px;font-family:'Outfit',sans-serif;font-weight:500;cursor:pointer;transition:color 0.15s,border-color 0.15s,background 0.15s;text-align:center;}
-  .skip-collapse-pill:hover{color:var(--text);border-color:var(--muted);background:rgba(255,255,255,0.02);}
+     expand the hidden tail. Styled like a Skip card (same bg, border,
+     border-radius, muted text) so it sits naturally in the rhythm of
+     the card list rather than reading as a separate UI control. */
+  .skip-collapse{margin:0 0 9px;}
+  .skip-collapse-pill{display:block;width:100%;background:var(--card);border:1px solid var(--border);color:var(--muted);padding:10px 16px;border-radius:12px;font-size:13px;font-family:'Outfit',sans-serif;font-weight:500;cursor:pointer;transition:color 0.15s,border-color 0.15s,background 0.15s;text-align:left;}
+  .skip-collapse-pill:hover{color:var(--text);border-color:var(--muted);}
 
   /* LEAGUE SUBHEADING — inside football tab */
   .league-heading{font-size:13px;font-weight:700;color:var(--blue);margin:28px 0 10px;display:flex;align-items:center;gap:8px;letter-spacing:0.02em;}
@@ -146,7 +149,7 @@
      row inside the card (flex-basis:100% forces a wrap), making the action
      read as a clear "here's where to watch" callout rather than competing
      with the reveal button for horizontal space. */
-  .watch-btn{display:flex;align-items:center;justify-content:center;gap:6px;flex-basis:100%;order:99;background:var(--green-bg);border:1px solid rgba(63,185,80,0.35);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;color:var(--green);text-decoration:none;white-space:nowrap;transition:background 0.15s,border-color 0.15s;font-family:'Outfit',sans-serif;margin-top:4px;}
+  .watch-btn{display:flex;align-items:center;justify-content:center;gap:6px;flex-basis:100%;order:99;background:transparent;border:1px solid rgba(63,185,80,0.35);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;color:var(--green);text-decoration:none;white-space:nowrap;transition:background 0.15s,border-color 0.15s;font-family:'Outfit',sans-serif;margin-top:4px;}
   .watch-btn:hover{background:rgba(63,185,80,0.2);border-color:var(--green);}
   .score-reveal{font-size:16px;font-weight:700;font-family:'Bebas Neue',sans-serif;letter-spacing:0.05em;display:none;flex-shrink:0;min-width:52px;text-align:center;}
 
@@ -219,9 +222,14 @@
   .tp-suggest-btn{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;color:var(--text);cursor:pointer;font-family:'Outfit',sans-serif;white-space:nowrap;transition:all 0.15s;}
   .tp-suggest-btn:hover{border-color:var(--green);color:var(--green);}
   .top-picks-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
+
+  /* Editorial kicker line above Top Picks — adds curatorial voice when the
+     day's situation is notable (loaded week, slim pickings, mixed picks).
+     Sits between the section header and the cards; muted to not compete. */
+  .tp-editorial{font-size:13px;color:var(--muted);margin-bottom:12px;font-style:italic;letter-spacing:0.01em;}
   .top-pick-card{
     background:var(--card);border:1px solid var(--border);
-    border-radius:12px;padding:14px 16px;position:relative;overflow:hidden;
+    border-radius:12px;padding:12px 14px;position:relative;overflow:hidden;
     animation:fadeUp 0.3s ease both;cursor:default;
     transition:transform 0.15s,box-shadow 0.15s;
   }
@@ -234,8 +242,14 @@
   .top-pick-card.defensive{border-left:3px solid rgba(248,81,73,0.4)!important;}
   .top-pick-card.blowout{border-left:3px solid rgba(248,81,73,0.4)!important;}
   .top-pick-card.best-pick{box-shadow:0 0 0 1px rgba(63,185,80,0.25),0 4px 20px rgba(63,185,80,0.1);}
-  .tp-sport{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
-  .tp-matchup{font-size:14px;font-weight:600;color:var(--text);margin-bottom:3px;line-height:1.35;}
+  .tp-header-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap;}
+  .tp-best-pick-badge{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--green);background:transparent;border:1px solid rgba(63,185,80,0.35);border-radius:4px;padding:2px 6px;}
+  .tp-best-pick-badge.is-fallback{color:var(--muted);background:rgba(125,133,144,0.1);border-color:rgba(125,133,144,0.25);}
+  .tp-sport{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);}
+  .tp-matchup{margin-bottom:3px;}
+  .tp-team{font-size:14px;font-weight:600;color:var(--text);line-height:1.25;overflow-wrap:break-word;}
+  .tp-team-second{font-size:14px;font-weight:600;color:var(--text);line-height:1.25;overflow-wrap:break-word;}
+  .tp-vs{color:var(--muted);font-weight:400;margin-right:2px;}
   .tp-meta{font-size:11px;color:var(--muted);margin-bottom:8px;}
   .tp-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:5px;font-size:10px;font-weight:700;margin-bottom:10px;}
   .watchworthy .tp-badge{background:var(--green-bg);color:var(--green);border:1px solid rgba(63,185,80,0.25);}
@@ -285,9 +299,9 @@
   .game-card.is-watched .matchup{text-decoration:line-through;}
 
   /* SCROLLING TABS — primary sport nav, big and obvious */
-  .sport-tabs{display:flex;border:1px solid var(--border);border-radius:12px;overflow-x:auto;overflow-y:hidden;margin-bottom:20px;scrollbar-width:none;background:var(--surface);}
+  .sport-tabs{display:flex;border:1px solid var(--border);border-radius:12px;overflow-x:auto;overflow-y:hidden;margin-bottom:20px;scrollbar-width:none;background:var(--surface);flex-wrap:nowrap;}
   .sport-tabs::-webkit-scrollbar{display:none;}
-  .sport-tab{flex:0 0 auto;padding:14px 14px;text-align:center;cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);background:transparent;border:none;font-family:'Outfit',sans-serif;transition:background 0.2s,color 0.2s;display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;letter-spacing:0.01em;}
+  .sport-tab{flex:0 0 auto;padding:14px 11px;text-align:center;cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);background:transparent;border:none;font-family:'Outfit',sans-serif;transition:background 0.2s,color 0.2s;display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;letter-spacing:0.01em;}
   .sport-tab:not(:last-child){border-right:1px solid var(--border);}
   /* A tab immediately followed by a group divider shouldn't draw its own
      right border — the divider replaces the visual separator. */
@@ -314,7 +328,8 @@
     .stat{padding:10px 8px;}
     .filter-btn{font-size:11px;padding:4px 10px;}
     .top-picks-grid{grid-template-columns:1fr;}
-    header{padding:20px 0 16px;}
+    header{padding:16px 0 12px;margin-bottom:14px;}
+    .sport-tabs{flex-wrap:wrap;overflow-x:hidden;}
   }
 </style>
 </head>
@@ -354,18 +369,6 @@
     <!-- ALL GAMES -->
     <div class="all-games-header">
       <div class="all-games-title">ALL <span>GAMES</span></div>
-    </div>
-
-    <!-- SETTINGS -->
-    <div class="settings-bar">
-      <button class="settings-btn" onclick="toggleSettings()" title="Sport Settings">⚙️ Sports</button>
-    </div>
-    <div class="settings-panel" id="settings-panel">
-      <div class="settings-title">Show / Hide Sports</div>
-      <div class="sport-toggles" id="sport-toggles"></div>
-      <div class="settings-actions">
-        <button class="settings-btn" onclick="clearWatched()" style="font-size:11px">🗑 Clear Watched Games</button>
-      </div>
     </div>
 
     <!-- SOCCER -->
@@ -741,7 +744,6 @@
 
   function buildSportTabs() {
     const tabsEl = document.getElementById('sport-tabs');
-    const togglesEl = document.getElementById('sport-toggles');
 
     // Fall back to first visible sport if saved sport is now hidden
     const visibleSports = ALL_SPORTS.filter(s => !hiddenSports.has(s.key));
@@ -764,12 +766,6 @@
       prevGroup = s.group;
     }
     tabsEl.innerHTML = html;
-
-    togglesEl.innerHTML = ALL_SPORTS.map(s => `
-      <div class="sport-toggle ${hiddenSports.has(s.key)?'hidden-sport':''}"
-        onclick="toggleSport('${s.key}',this)">${s.label}
-        ${hiddenSports.has(s.key) ? '<span style="color:var(--muted);font-size:10px">hidden</span>' : '✓'}
-      </div>`).join('');
 
     // Show saved sport panel
     document.querySelectorAll('.sport-panel').forEach(p => p.classList.remove('active'));
@@ -881,7 +877,7 @@
 
       if (res.status === 429) {
         const secs = result.remainingSecs || 60;
-        showToast(`⏱ Just refreshed — fresh in ${secs}s`, 'warn');
+        showToast(`⏱ Just refreshed — refresh again in ${secs}s`, 'warn');
         refreshCooldownUntil = Date.now() + secs * 1000;
         stopSpinner();
         return;
@@ -1047,6 +1043,14 @@
       ALL_SPORTS.forEach(s => processSportData(data, s.key));
 
       renderTopPicks();
+      // currentTopPickIds is now populated; re-render the active sport's
+      // inline games so Top Pick badges appear on matching cards. The
+      // initial render inside processSportData happens BEFORE renderTopPicks,
+      // so badges would be missing without this second pass.
+      if (activeSport === 'cricket')      renderCricket();
+      else if (activeSport === 'tennis')  renderTennis();
+      else if (activeSport === 'darts')   renderDarts();
+      else if (activeSport)               renderGames(activeSport);
 
       document.getElementById('loading').style.display = 'none';
       document.getElementById('main-content').style.display = 'block';
@@ -1491,6 +1495,13 @@
     tpWindow = w;
     renderTpTabs();
     renderTopPicks();
+    // Re-render the inline games so Top Pick badges reflect the new window.
+    // Sport-specific dispatcher used because different sports use different
+    // render entry points (renderCricket, renderTennis, renderDarts, renderGames).
+    if (activeSport === 'cricket')      renderCricket();
+    else if (activeSport === 'tennis')  renderTennis();
+    else if (activeSport === 'darts')   renderDarts();
+    else                                 renderGames(activeSport);
   }
 
   function getTopPicksGames() {
@@ -1644,12 +1655,134 @@
     return `${g.h} – ${g.a}`;
   }
 
+  // Set of game IDs currently shown in the Top Picks section. Used by the
+  // inline All Games render to badge games with "⭐ Top Pick" when they
+  // also appear in the curated Top Picks above. Recomputed every time
+  // renderTopPicks runs (e.g. when the user switches Today/Recent/This Week).
+  let currentTopPickIds = new Set();
+
+  // Empty-state lines cycled by day-of-year. Period of 8 doesn't share a
+  // factor with 7, so the same user doesn't see the same line every
+  // Wednesday. Lines vary in tone — some blunt, some patient, some
+  // reassuring — so the site feels like it has a person behind it even
+  // on weeks when nothing's worth watching.
+  const EMPTY_PICKS_LINES = [
+    "Nothing must-watch this week. Even we get quiet stretches.",
+    "Slow week. Nothing's begging to be watched.",
+    "No must-watch games this week — sometimes that's how it goes.",
+    "Quiet week in this sport. Check back.",
+    "Nothing standout right now. The good ones will be back.",
+    "This week's a wash. No drama to report.",
+    "No must-watch games found. Save your evening for something else.",
+    "Quiet stretch. Nothing demanding your time.",
+  ];
+  function getEmptyPicksLine() {
+    const start = new Date(new Date().getFullYear(), 0, 0);
+    const diff = Date.now() - start.getTime();
+    const dayOfYear = Math.floor(diff / 86400000);
+    return EMPTY_PICKS_LINES[dayOfYear % EMPTY_PICKS_LINES.length];
+  }
+
+  // Editorial line for the Top Picks section. Returns a string or null.
+  // Null = no line; let the picks speak for themselves. We only show a line
+  // when there's actually something notable to say:
+  //   - Today view with picks (context-specific framing)
+  //   - Any window with 4+ Must Watch (loaded)
+  //   - Any window with all-fallback picks (slim pickings)
+  //   - Any window with mix (Must Watch + backfill)
+  // For an ordinary 2-3 Must Watch in a wider window, no line — that's
+  // mundane, no kicker needed.
+  //
+  // Variants per state are cycled by day-of-year so the same data state
+  // produces different copy day to day. Period of 5 (variants per state)
+  // works fine since users rarely see the same state two days in a row.
+  function getEditorialLine(picks, window, sport) {
+    if (sport === 'darts') return null;  // sessions have different vocabulary; skip for now
+    if (!picks || picks.length === 0) return null;
+
+    const real = picks.filter(p => !p.isFallback).length;
+    const fb = picks.filter(p => p.isFallback).length;
+    const total = picks.length;
+
+    // Day-based variant picker (consistent within a day, varies day-to-day).
+    const start = new Date(new Date().getFullYear(), 0, 0);
+    const dayOfYear = Math.floor((Date.now() - start.getTime()) / 86400000);
+    const pick = (arr) => arr[dayOfYear % arr.length];
+
+    const windowWord = window === 'today' ? 'tonight'
+                     : window === 'recent' ? 'this week'
+                     : 'this week';
+
+    // STATE 1: All real picks, count = 1 (only meaningful for "today")
+    if (real === 1 && fb === 0 && window === 'today') {
+      return pick([
+        "One worth making time for tonight.",
+        "One standout pick tonight.",
+        "One game to watch tonight.",
+        "Just one tonight — worth it.",
+        "Tonight's only must-watch.",
+      ]);
+    }
+
+    // STATE 2: All real, count 2-3 — only show kicker on Today
+    if (real >= 2 && real <= 3 && fb === 0 && window === 'today') {
+      return pick([
+        `${real} Must Watch games tonight.`,
+        `${real} worth watching tonight.`,
+        `${real} games to catch tonight.`,
+        `${real} solid picks tonight.`,
+        `${real} games tonight — pick your night.`,
+      ]);
+    }
+
+    // STATE 3: 4+ Must Watch — always worth a "loaded" kicker
+    if (real >= 4) {
+      return pick([
+        `Loaded ${windowWord} — ${real} Must Watch games.`,
+        `Big ${windowWord}. ${real} games worth watching.`,
+        `${real} Must Watch ${windowWord} — clear your schedule.`,
+        `Stacked ${windowWord}. ${real} games to catch.`,
+        `${real} standout games ${windowWord}.`,
+      ]);
+    }
+
+    // STATE 4: Mix of Must Watch + backfill
+    if (real > 0 && fb > 0) {
+      return pick([
+        `${real} Must Watch ${windowWord}, plus ${fb} worth a look.`,
+        `${real} standout, ${fb} watchable.`,
+        `${real} Must Watch ${windowWord} — and a few more if you want them.`,
+        `${real} top picks plus ${fb} backup.`,
+      ]);
+    }
+
+    // STATE 5: All fallback (no Must Watch cleared the bar)
+    if (real === 0 && fb > 0) {
+      return pick([
+        `No Must Watch ${windowWord} — here's the closest thing.`,
+        `Slim pickings ${windowWord}. These are the best of the rest.`,
+        `Nothing standout ${windowWord} — these are the closest.`,
+        `Quiet ${windowWord}. Here's what's worth a look.`,
+      ]);
+    }
+
+    // Otherwise (e.g. 2-3 Must Watch in a wider window): no kicker, let the
+    // picks speak for themselves.
+    return null;
+  }
+
   function renderTopPicks() {
     const container = document.getElementById('top-picks-container');
     if (!container) return;
 
     renderTpTabs();
     const picks = getTopPicksGames();
+
+    // Update the set of pick IDs so inline renders can badge matching cards.
+    // Darts uses session-level picks (no individual matchups), so skip those.
+    currentTopPickIds = new Set(
+      picks.filter(g => !g.isDartsNight).map(g => makeGameId(g))
+    );
     // Suggestion engine: when this window is sparse, point to a wider one.
     // For non-darts the chain is today → recent → week. For darts: recent → all.
     let nextWindow, nextLabel;
@@ -1685,16 +1818,24 @@
       : '';
 
     if (picks.length === 0) {
+      const emptyLine = activeSport === 'darts'
+        ? 'No standout sessions this week.'
+        : getEmptyPicksLine();
       container.innerHTML = nextWindow
         ? `<div class="tp-empty-suggestion">
              <span>No standout ${activeSport === 'darts' ? 'sessions' : 'games'} ${isNarrowWindow && activeSport !== 'darts' ? 'today' : 'in this window'}.</span>
              <button class="tp-suggest-btn" onclick="setTpWindow('${nextWindow}')">Check ${nextLabel} →</button>
            </div>`
-        : `<div class="tp-empty">No standout ${activeSport === 'darts' ? 'sessions' : 'games this week'}.</div>`;
+        : `<div class="tp-empty">${emptyLine}</div>`;
       return;
     }
 
-    container.innerHTML = `<div class="top-picks-grid">
+    const editorialLine = getEditorialLine(picks, tpWindow, activeSport);
+    const editorialHTML = editorialLine
+      ? `<div class="tp-editorial">${editorialLine}</div>`
+      : '';
+
+    container.innerHTML = `${editorialHTML}<div class="top-picks-grid">
       ${picks.map((g, i) => {
         // Darts night cards: no matchup, no score reveal, just verdict.
         // The whole point is to recommend the night without naming players.
@@ -1704,8 +1845,10 @@
             : '';
           return `
             <div class="top-pick-card ${g.cat.cls}${i === 0 ? ' best-pick' : ''}" style="animation-delay:${i*0.06}s">
-              ${i === 0 ? `<div style="font-size:11px;font-weight:700;color:${g.isFallback ? 'var(--muted)' : 'var(--green)'};letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">${g.isFallback ? '😐 Best Available' : '⭐ Top Session'}</div>` : ''}
-              <div class="tp-sport">${g.league}</div>
+              <div class="tp-header-row">
+                ${i === 0 ? `<span class="tp-best-pick-badge${g.isFallback ? ' is-fallback' : ''}">${g.isFallback ? '😐 Best Available' : '⭐ Top Session'}</span>` : ''}
+                <span class="tp-sport">${g.league}</span>
+              </div>
               <div class="tp-matchup">${g.date}</div>
               <div class="tp-meta">${g.summary.hint}</div>
               <div class="tp-badge">${g.cat.icon} ${g.cat.label}</div>
@@ -1735,13 +1878,18 @@
           : '';
         return `
           <div class="top-pick-card ${g.cat.cls}${i === 0 ? ' best-pick' : ''}" style="animation-delay:${i*0.06}s">
-            ${i === 0 ? `<div style="font-size:11px;font-weight:700;color:${g.isFallback ? 'var(--muted)' : 'var(--green)'};letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;">${g.isFallback ? '😐 Best Available' : '⭐ Best Pick'}</div>` : ''}
-            <div class="tp-sport">${leagueLabel}</div>
-            <div class="tp-matchup">${g.home} vs ${g.away}</div>
+            <div class="tp-header-row">
+              ${i === 0 ? `<span class="tp-best-pick-badge${g.isFallback ? ' is-fallback' : ''}">${g.isFallback ? '😐 Best Available' : '⭐ Best Pick'}</span>` : ''}
+              <span class="tp-sport">${leagueLabel}</span>
+            </div>
+            <div class="tp-matchup">
+              <div class="tp-team">${g.home}</div>
+              <div class="tp-team-second"><span class="tp-vs">vs</span> ${g.away}</div>
+            </div>
             <div class="tp-meta">${dateLabel}</div>
             <div class="tp-badge">${g.cat.icon} ${g.cat.label}${g.cat.badge ? ' · ' + g.cat.badge : ''}</div>
             ${watchBtn}
-            <button class="tp-reveal" title="Spoiler-free hints about the game" onclick="cycleReveal(this,${cycleArgs})">👁 Tell me more</button>
+            <button class="tp-reveal" onclick="cycleReveal(this,${cycleArgs})">👁 Tell me more</button>
             <div class="insight-reveal">${insightHTML}</div>
             <div class="tp-score"></div>
           </div>`;
@@ -1789,7 +1937,7 @@
       if (state.football.league !== 'all') filtered = filtered.filter(g => g.league === state.football.league);
 
       if (filtered.length === 0) {
-        html += '<p class="no-games">No games found for this filter.</p>';
+        html += '<p class="no-games">Nothing in this filter right now.</p>';
       } else if (state.football.league === 'all') {
         const bestPick = sortByExcitement(filtered)[0];
         const byDate = {};
@@ -1852,7 +2000,7 @@
       });
 
       if (filtered.length === 0) {
-        html += '<p class="no-games">No games found for this category.</p>';
+        html += '<p class="no-games">Nothing here right now.</p>';
       } else {
         // Find the best pick — top game by excitement across all dates
         const bestPick = sortByExcitement(filtered)[0];
@@ -1922,6 +2070,7 @@
   function gameCardHTML(g, i, isBestPick = false, sport = null) {
     const gameId = makeGameId(g);
     const isWatched = watched.has(gameId);
+    const isTopPick = currentTopPickIds.has(gameId);
     const safeId = gameId.replace(/'/g, "\\'");
     const watchBtn = (g.watch && g.cat.cls === 'watchworthy' && !shouldHideWatchProvider(g))
       ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
@@ -1933,10 +2082,10 @@
           <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
           <div class="game-meta">${g.date} · ${g.league}</div>
         </div>
-        ${isBestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
+        ${isTopPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
         <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
         ${watchBtn}
-        <button class="reveal-btn" title="Spoiler-free hints about the game" onclick="cycleReveal(this,${g.h},${g.a})">👁 Tell me more</button>
+        <button class="reveal-btn" onclick="cycleReveal(this,${g.h},${g.a})">👁 Tell me more</button>
         <div class="insight-reveal">${insightHTML}</div>
         <div class="score-reveal"></div>
         <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
@@ -1991,6 +2140,7 @@
     const safeStatus = g.status.replace(/'/g, "\\'");
     const gameId = makeGameId(g);
     const isWatched = watched.has(gameId);
+    const isTopPick = currentTopPickIds.has(gameId);
     const safeId = gameId.replace(/'/g, "\\'");
     const watchBtn = (g.watch && g.cat.cls === 'watchworthy')
       ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
@@ -2002,10 +2152,10 @@
           <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
           <div class="game-meta">${g.dateStr} · ${g.league}</div>
         </div>
-        ${isBestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
+        ${isTopPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
         <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
         ${watchBtn}
-        <button class="reveal-btn" title="Spoiler-free hints about the game" onclick="cycleReveal(this,'${safeStatus}','')">👁 Tell me more</button>
+        <button class="reveal-btn" onclick="cycleReveal(this,'${safeStatus}','')">👁 Tell me more</button>
         <div class="insight-reveal">${insightHTML}</div>
         <div class="score-reveal" style="font-family:'Outfit',sans-serif;font-size:11px;white-space:normal;max-width:160px;line-height:1.4;text-align:right;"></div>
         <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
@@ -2037,6 +2187,7 @@
     const safeScore = setScoreStr(g).replace(/'/g, "\\'");
     const gameId = makeGameId(g);
     const isWatched = watched.has(gameId);
+    const isTopPick = currentTopPickIds.has(gameId);
     const safeId = gameId.replace(/'/g, "\\'");
     const insightHTML = buildInsightHTML(g.confidence?.factors, 'tennis');
     return `
@@ -2045,9 +2196,9 @@
           <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
           <div class="game-meta">${g.date} · ${g.league}</div>
         </div>
-        ${isBestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
+        ${isTopPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
         <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
-        <button class="reveal-btn" title="Spoiler-free hints about the game" onclick="cycleReveal(this,'${safeScore}','')">👁 Tell me more</button>
+        <button class="reveal-btn" onclick="cycleReveal(this,'${safeScore}','')">👁 Tell me more</button>
         <div class="insight-reveal">${insightHTML}</div>
         <div class="score-reveal" style="font-family:'Outfit',sans-serif;font-size:11px;white-space:normal;max-width:130px;line-height:1.4;text-align:right;"></div>
         <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
@@ -2212,7 +2363,7 @@
     let html = '';
 
     if (filtered.length === 0) {
-      html += '<p class="no-games">No T20 matches found for this category.</p>';
+      html += '<p class="no-games">Nothing in this filter right now.</p>';
     } else {
       // Group by league
       const byLeague = {};
@@ -2275,7 +2426,7 @@
     }
 
     if (filtered.length === 0) {
-      html += '<p class="no-games">No tennis matches found for this category.</p>';
+      html += '<p class="no-games">Nothing in this filter right now.</p>';
     } else {
       const byLeague = {};
       filtered.forEach(g => {
@@ -2391,7 +2542,7 @@
     let html = '';
 
     if (recent.length === 0) {
-      html += '<p class="no-games">No darts matches found.</p>';
+      html += '<p class="no-games">Nothing here right now.</p>';
     } else {
       // Group by tournament → date. Each (tournament, date) pair is a night
       // that gets summarized to a single card. We deliberately don't show
@@ -2439,7 +2590,7 @@
             });
 
         if (visibleNights.length === 0) {
-          html += '<p class="no-games">No nights match this filter.</p>';
+          html += '<p class="no-games">Nothing in this filter right now.</p>';
           return;
         }
 
@@ -2502,6 +2653,13 @@
     tabEl.classList.add('active');
     document.getElementById(`panel-${sport}`)?.classList.add('active');
     renderTopPicks();
+    // Re-render inline games for the newly-active sport so Top Pick
+    // badges reflect THIS sport's current picks (not whatever was rendered
+    // at initial page load before TP picks were known).
+    if (sport === 'cricket')      renderCricket();
+    else if (sport === 'tennis')  renderTennis();
+    else if (sport === 'darts')   renderDarts();
+    else                          renderGames(sport);
   }
 
   loadScores();

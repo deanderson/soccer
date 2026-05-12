@@ -19,39 +19,96 @@ exports.handler = async function (event, context) {
                     || event.headers?.['x-nf-country']
                     || '').toUpperCase() || null;
 
-  // For user-facing requests, try to serve from blob first
+  // Tiered blob serving with spike protection.
+  //
+  // Three tiers based on blob age:
+  //   <30 min:           serve fresh (normal happy path)
+  //   30 min – 4 hours:  serve stale silently (cron probably caught up;
+  //                      serve what we have to keep the site alive)
+  //   >4 hours, missing: live fetch (last resort; expensive)
+  //
+  // Plus a live-fetch lock: before doing the expensive live fetch, write
+  // a tiny lock blob. If another concurrent request sees a fresh lock
+  // (set <60s ago), it serves stale instead of starting its own fetch.
+  // This prevents 200 simultaneous users from triggering 200 ESPN
+  // fetches during a traffic spike when the blob is stale.
+  //
+  // The lock is advisory — there's a small race window where two
+  // instances both miss the lock and both write it. Acceptable: worst
+  // case we get 2-3 concurrent live fetches instead of 200.
+  const FRESH_MS = 30 * 60 * 1000;
+  const STALE_OK_MS = 4 * 60 * 60 * 1000;
+  const LOCK_TTL_MS = 60 * 1000;
+
   if (!isInternal) {
     try {
       const store = getStore('scores');
       const cached = await store.get('latest', { type: 'json' });
-      if (cached?.data && cached?.fetchedAt) {
-        const ageMs = Date.now() - cached.fetchedAt;
-        // Serve from cache if less than 20 minutes old (gives buffer for 15min schedule)
-        if (ageMs < 20 * 60 * 1000) {
-          // If sport-specific request, return just that sport's data
-          const subsetBody = sportParam !== 'all' && sportParam !== undefined
-            ? buildSportSubset(cached.data, sportParam)
-            : cached.data;
-          // Attach watch links per-request — the blob is shared across all
-          // users so it MUST stay country-neutral. Each user gets their own
-          // provider based on their detected country.
-          const personalized = attachWatchToBody(subsetBody, userCountry);
-          const body = { ...personalized, _meta: { userCountry, fetchedAt: cached.fetchedAt } };
-          return {
-            statusCode: 200,
-            headers: {
-              'Content-Type': 'application/json',
-              'Cache-Control': 'public, max-age=60',
-              'X-Cache': 'HIT',
-              'X-Fetched-At': new Date(cached.fetchedAt).toISOString(),
-            },
-            body: JSON.stringify(body),
-          };
-        }
+      const ageMs = cached?.fetchedAt ? Date.now() - cached.fetchedAt : Infinity;
+      const haveCache = !!cached?.data;
+      const isFresh = haveCache && ageMs < FRESH_MS;
+      const isStaleButUsable = haveCache && ageMs < STALE_OK_MS;
+
+      if (isFresh) {
+        // Happy path: fresh blob, serve it
+        return serveCached(cached, false);
       }
+
+      // Not fresh — need a live fetch OR fall back to stale. Check lock.
+      let lockHeld = false;
+      try {
+        const lock = await store.get('live-fetch-lock', { type: 'json' });
+        const lockAge = lock?.startedAt ? Date.now() - lock.startedAt : Infinity;
+        lockHeld = lockAge < LOCK_TTL_MS;
+      } catch (e) { /* lock read failure — treat as not held */ }
+
+      if (lockHeld) {
+        // Another instance is fetching. Serve whatever we have.
+        if (isStaleButUsable) return serveCached(cached, true);
+        // No usable cache and someone else is fetching — return 503-ish
+        return {
+          statusCode: 503,
+          headers: { 'Content-Type': 'application/json', 'Retry-After': '15' },
+          body: JSON.stringify({ error: 'Scores refreshing, try again in a few seconds' }),
+        };
+      }
+
+      // We can fetch. Take the lock first so others serve stale.
+      try {
+        await store.setJSON('live-fetch-lock', { startedAt: Date.now() });
+      } catch (e) { /* lock write failure — proceed anyway */ }
+
+      // If we have stale-but-usable cache, serve it now and let the
+      // cron / next live fetch catch up later. The cost of making the
+      // user wait 10-15s for a live fetch is worse than serving
+      // 1-hour-old data once.
+      if (isStaleButUsable) {
+        return serveCached(cached, true);
+      }
+
+      // No usable cache. Fall through to live fetch below.
     } catch (err) {
       console.log('Blob read failed, falling back to live fetch:', err.message);
     }
+  }
+
+  // Helper: serve the cached blob (fresh or stale).
+  function serveCached(cached, stale) {
+    const subsetBody = sportParam !== 'all' && sportParam !== undefined
+      ? buildSportSubset(cached.data, sportParam)
+      : cached.data;
+    const personalized = attachWatchToBody(subsetBody, userCountry);
+    const body = { ...personalized, _meta: { userCountry, fetchedAt: cached.fetchedAt, stale } };
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=60',
+        'X-Cache': stale ? 'HIT-STALE' : 'HIT',
+        'X-Fetched-At': new Date(cached.fetchedAt).toISOString(),
+      },
+      body: JSON.stringify(body),
+    };
   }
 
   // Helper to extract one sport's data from the full blob
