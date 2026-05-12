@@ -55,11 +55,14 @@ const PROVIDERS = {
 
   // ----- WNBA -----
   // WNBA League Pass is the canonical home for replays — every regular-season
-  // game is on demand for subscribers (with a free tier for the past week of
-  // games). Single global entry; WNBA doesn't have the per-country licensing
-  // mess that cricket does.
+  // game is on demand for subscribers the day after airing. Single global
+  // entry; WNBA doesn't have the per-country licensing mess that cricket
+  // does. Note: nationally televised games are NOT available on League Pass,
+  // only out-of-market local-broadcast games. For replays of national-TV
+  // games, users need the original broadcast network (NBC, ESPN, ION, etc.).
+  // The wnba.com/leaguepass URL is the canonical signup/info landing page.
   'WNBA': {
-    DEFAULT: { name: 'WNBA League Pass', baseUrl: 'https://watch.wnba.com', affiliateParams: null },
+    DEFAULT: { name: 'WNBA League Pass', baseUrl: 'https://www.wnba.com/leaguepass', affiliateParams: null },
   },
 
   // Future: bilateral series (Germany v Austria, etc) typically have no

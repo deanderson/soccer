@@ -1,10 +1,15 @@
-// On-demand refresh endpoint — called by the frontend refresh button
-// Triggers a fresh fetch asynchronously and returns immediately
-// 5-minute cooldown to prevent abuse
+// On-demand refresh endpoint — called by the frontend refresh button.
+// Triggers a fresh fetch asynchronously and returns immediately.
+//
+// Cooldown is per-USER-ACTION (60s), not per-blob-write. The previous version
+// gated on `existing.fetchedAt` which is updated by the 15-min cron — so user
+// clicks were almost always within the 5-min cooldown of the most recent cron
+// write, and the button always returned 429. Now we track user-triggered
+// refreshes separately in a small cooldown blob.
 
 const { connectLambda, getStore } = require('@netlify/blobs');
 
-const COOLDOWN_MS = 5 * 60 * 1000; // 5 minutes
+const COOLDOWN_MS = 60 * 1000; // 60s between user-triggered refreshes
 
 exports.handler = async function(event, context) {
   connectLambda(event);
@@ -16,26 +21,29 @@ exports.handler = async function(event, context) {
   const store = getStore('scores');
 
   try {
-    // Check cooldown
-    let existing = null;
+    // Check user-action cooldown — separate from blob age
+    let cooldown = null;
     try {
-      existing = await store.get('latest', { type: 'json' });
-    } catch (e) { /* no blob yet */ }
+      cooldown = await store.get('refresh-cooldown', { type: 'json' });
+    } catch (e) { /* no cooldown blob yet */ }
 
-    if (existing?.fetchedAt) {
-      const age = Date.now() - existing.fetchedAt;
+    if (cooldown?.lastUserRefreshAt) {
+      const age = Date.now() - cooldown.lastUserRefreshAt;
       if (age < COOLDOWN_MS) {
         const remainingSecs = Math.ceil((COOLDOWN_MS - age) / 1000);
         return {
           statusCode: 429,
           body: JSON.stringify({
             ok: false,
+            remainingSecs,
             message: `Please wait ${remainingSecs}s before refreshing again`,
-            fetchedAt: existing.fetchedAt,
           }),
         };
       }
     }
+
+    // Update cooldown FIRST so concurrent users don't all trigger fetches
+    await store.setJSON('refresh-cooldown', { lastUserRefreshAt: Date.now() });
 
     // Fire off the fetch without waiting — get-scores can take 10-20s with deep analysis
     // The frontend will reload from blob after a delay

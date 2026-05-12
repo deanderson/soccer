@@ -79,6 +79,13 @@
   .section-label{font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;margin-top:24px;display:flex;align-items:center;gap:8px;}
   .section-label::after{content:'';flex:1;height:1px;background:var(--border);}
 
+  /* SKIP COLLAPSE PILL — shown when ≥4 skip games on a date. Click to
+     expand the hidden tail. Muted treatment so it doesn't compete with
+     the verdict cards above. */
+  .skip-collapse{margin:6px 0 10px;}
+  .skip-collapse-pill{display:block;width:100%;background:transparent;border:1px dashed var(--border);color:var(--muted);padding:8px 12px;border-radius:8px;font-size:12px;font-family:'Outfit',sans-serif;font-weight:500;cursor:pointer;transition:color 0.15s,border-color 0.15s,background 0.15s;text-align:center;}
+  .skip-collapse-pill:hover{color:var(--text);border-color:var(--muted);background:rgba(255,255,255,0.02);}
+
   /* LEAGUE SUBHEADING — inside football tab */
   .league-heading{font-size:13px;font-weight:700;color:var(--blue);margin:28px 0 10px;display:flex;align-items:center;gap:8px;letter-spacing:0.02em;}
   .league-heading::after{content:'';flex:1;height:1px;background:rgba(56,139,253,0.2);}
@@ -143,7 +150,7 @@
   .watch-btn:hover{background:rgba(63,185,80,0.2);border-color:var(--green);}
   .score-reveal{font-size:16px;font-weight:700;font-family:'Bebas Neue',sans-serif;letter-spacing:0.05em;display:none;flex-shrink:0;min-width:52px;text-align:center;}
 
-  /* Insight tags — appear when the user taps "Insights" before revealing score.
+  /* Insight tags — appear when the user taps "Tell me more" before revealing score.
      In game cards (flex-wrap), flex-basis:100% forces a full row. In top-pick-cards
      (block layout), it naturally fills the width. Hidden by default; shown via
      display:flex on cycle. */
@@ -319,7 +326,7 @@
     <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;flex-wrap:wrap;">
       <div>
         <h1>SPOILER <span class="accent">FREE</span> SCORES</h1>
-        <p style="font-size:14px;color:var(--muted);margin-top:6px;font-weight:400;letter-spacing:0.01em;">Find the games worth watching, without spoilers.</p>
+        <p style="font-size:14px;color:var(--muted);margin-top:6px;font-weight:400;letter-spacing:0.01em;">Hand-picked games. Hidden scores.</p>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
         <div class="last-updated"><div class="last-updated-dot"></div><span id="last-updated-text">Loading...</span><button class="refresh-btn" id="refresh-btn" onclick="refreshNow()" title="Refresh scores">↻</button></div>
@@ -850,46 +857,86 @@
     }
   }
 
+  // Refresh button handler. Polls for blob freshness instead of a fixed
+  // wait — the original 18s timeout was hostile (real fetch usually takes
+  // 5-12s, sometimes faster). Polling closes the gap so the spinner stops
+  // as soon as new data is actually available.
   async function refreshNow() {
     const btn = document.getElementById('refresh-btn');
     if (!btn || btn.disabled) return;
 
+    const oldFetchedAt = loadedAt || 0;
     btn.disabled = true;
     btn.textContent = '↻';
     btn.classList.add('spinning');
+
+    const stopSpinner = () => {
+      btn.classList.remove('spinning');
+      btn.textContent = '↻';
+    };
 
     try {
       const res = await fetch('/.netlify/functions/refresh-scores', { method: 'POST' });
       const result = await res.json();
 
       if (res.status === 429) {
-        showToast(`⏱ ${result.message}`, 'warn');
-        if (result.fetchedAt) loadedAt = result.fetchedAt;
-        refreshCooldownUntil = result.fetchedAt ? result.fetchedAt + 5 * 60 * 1000 : Date.now() + 60 * 1000;
-      } else if (result.ok && result.background) {
-        // Background fetch triggered — wait then reload from blob
-        const waitMs = result.reloadAfterMs || 18000;
-        showToast('🔄 Refreshing scores...', 'success');
-        refreshCooldownUntil = Date.now() + 5 * 60 * 1000;
-        setTimeout(async () => {
-          await loadScores();
-          showToast('✓ Scores updated', 'success');
-        }, waitMs);
-      } else if (result.ok) {
-        showToast('✓ Scores refreshed', 'success');
-        refreshCooldownUntil = Date.now() + 5 * 60 * 1000;
-        await loadScores();
-      } else {
+        const secs = result.remainingSecs || 60;
+        showToast(`⏱ Just refreshed — fresh in ${secs}s`, 'warn');
+        refreshCooldownUntil = Date.now() + secs * 1000;
+        stopSpinner();
+        return;
+      }
+
+      if (!result.ok) {
         showToast('⚠️ Refresh failed, try again', 'error');
         btn.disabled = false;
+        stopSpinner();
+        return;
       }
+
+      // Background fetch is firing. Poll get-scores for X-Fetched-At header
+      // until we see a timestamp newer than what we had loaded. This avoids
+      // the fixed 18s wait — real fetches are often quicker.
+      showToast('🔄 Refreshing scores...', 'success');
+      refreshCooldownUntil = Date.now() + 60 * 1000;
+
+      const startedAt = Date.now();
+      const maxWaitMs = 25000;     // hard ceiling — give up if backend's stuck
+      const pollIntervalMs = 1500;
+
+      const poll = async () => {
+        if (Date.now() - startedAt > maxWaitMs) {
+          // Backend probably failed; load whatever's there
+          await loadScores();
+          showToast('⚠️ Refresh slower than expected', 'warn');
+          stopSpinner();
+          return;
+        }
+        try {
+          // Cache-bust query param prevents CDN from serving us a stale
+          // X-Fetched-At header. We only read the header, not the body,
+          // but the request still has to bypass cache to be useful.
+          const bust = Date.now();
+          const r = await fetch(`/.netlify/functions/get-scores?sport=all&_poll=${bust}`);
+          const fetchedAtHdr = r.headers.get('X-Fetched-At');
+          const newFetchedAt = fetchedAtHdr ? new Date(fetchedAtHdr).getTime() : 0;
+          if (newFetchedAt > oldFetchedAt) {
+            await loadScores();
+            showToast('✓ Scores updated', 'success');
+            stopSpinner();
+            return;
+          }
+        } catch (e) {
+          // Network blip — keep polling
+        }
+        setTimeout(poll, pollIntervalMs);
+      };
+      setTimeout(poll, 2000);  // give the backend a head start
     } catch (err) {
       showToast('⚠️ Refresh failed', 'error');
       btn.disabled = false;
+      stopSpinner();
     }
-
-    btn.classList.remove('spinning');
-    btn.textContent = '↻';
   }
 
   // ── LOAD ───────────────────────────────────────────────────────────────
@@ -1120,7 +1167,7 @@
   // and returns the top 2-3 phrases (by absolute point contribution).
   //
   // Returns array of strings. Empty array means "no insights to show" — caller
-  // should fall back to a generic message like "Trust the verdict."
+  // shows a fallback message ("Nothing notable.") for the empty state.
   const INSIGHT_MAP = {
     // SPOILERS — suppress entirely (engine still uses them; UI doesn't show)
     '⚡ Comeback':      null,
@@ -1294,7 +1341,7 @@
     const phrases = getInsightPhrases(factors, sport);
     const tagsHTML = phrases.length
       ? phrases.map(p => `<span class="insight-tag">${p}</span>`).join('')
-      : '<span class="insight-tag insight-tag--empty">Trust the verdict.</span>';
+      : '<span class="insight-tag insight-tag--empty">Nothing notable.</span>';
     const hideLink = '<button class="insight-hide" onclick="event.stopPropagation();hideReveal(this)" title="Hide without revealing score">× hide</button>';
     return tagsHTML + hideLink;
   }
@@ -1351,6 +1398,44 @@
     if (!info) return '';
     const sub = info.sublabel ? ` <span class="broadcast-sub">(${info.sublabel})</span>` : '';
     return `<div class="broadcast-info">${info.icon} ${info.text}${sub}</div>`;
+  }
+
+  // Should we suppress the "Watch on [provider]" button for this game?
+  //
+  // The watch provider (WNBA League Pass, etc.) is the canonical replay
+  // home for *most* games in a sport — but for nationally televised games
+  // it can be misleading. WNBA League Pass specifically does NOT carry
+  // games that aired on a national network (NBC, ESPN, ION, etc.); those
+  // replays live on the network's own platform.
+  //
+  // For WNBA games, `game.broadcast` is a string ESPN populates only for
+  // national broadcasts (e.g., "NBC/Peacock"). If it's set, the League
+  // Pass button would point users to a service that doesn't have the
+  // game. Suppress it; the broadcast-info line tells them where to go.
+  function shouldHideWatchProvider(game) {
+    if (!game) return false;
+    if (game.league === 'WNBA' && game.broadcast) return true;
+    return false;
+  }
+
+  // Format a millisecond timestamp as "8:00 PM EDT" style in the USER's
+  // local timezone. Critical: backend formatting runs on Netlify which
+  // defaults to UTC, producing useless "11:00 PM UTC" strings. Frontend
+  // formatting picks up the browser's actual timezone automatically when
+  // we don't pass a `timeZone` option to toLocaleTimeString.
+  function formatGameTime(ts) {
+    if (!ts) return '';
+    try {
+      const d = new Date(ts);
+      if (isNaN(d.getTime())) return '';
+      return d.toLocaleTimeString(undefined, {
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZoneName: 'short',
+      });
+    } catch {
+      return '';
+    }
   }
 
 
@@ -1645,7 +1730,7 @@
         // In Top Picks every card is a deliberate recommendation, so show the
         // watch button on Watchable backfill picks too — not just Must Watch.
         // Main grid keeps the watchworthy-only gate to avoid button overload.
-        const watchBtn = g.watch
+        const watchBtn = (g.watch && !shouldHideWatchProvider(g))
           ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
           : '';
         return `
@@ -1656,7 +1741,7 @@
             <div class="tp-meta">${dateLabel}</div>
             <div class="tp-badge">${g.cat.icon} ${g.cat.label}${g.cat.badge ? ' · ' + g.cat.badge : ''}</div>
             ${watchBtn}
-            <button class="tp-reveal" onclick="cycleReveal(this,${cycleArgs})">👁 Insights</button>
+            <button class="tp-reveal" title="Spoiler-free hints about the game" onclick="cycleReveal(this,${cycleArgs})">👁 Tell me more</button>
             <div class="insight-reveal">${insightHTML}</div>
             <div class="tp-score"></div>
           </div>`;
@@ -1718,7 +1803,7 @@
           .sort(([, a], [, b]) => b.maxTs - a.maxTs)
           .forEach(([, { games, label }]) => {
             html += `<div class="section-label">${label}</div>`;
-            html += sortByExcitement(games).map((g, i) => gameCardHTML(g, i, g===bestPick, sport)).join('');
+            html += renderDateGames(games, bestPick, sport);
           });
       } else {
         // Specific league: group by UTC date key, newest first
@@ -1733,7 +1818,7 @@
           .sort(([, a], [, b]) => b.maxTs - a.maxTs)
           .forEach(([, { games, label }]) => {
             html += `<div class="section-label">${label}</div>`;
-            html += sortByExcitement(games).map((g, i) => gameCardHTML(g, i, false, sport)).join('');
+            html += renderDateGames(games, null, sport);
           });
       }
 
@@ -1775,7 +1860,7 @@
         filtered.forEach(g => { if(!byDate[g.date]) byDate[g.date]=[]; byDate[g.date].push(g); });
         Object.keys(byDate).sort((a,b) => byDate[b][0].ts - byDate[a][0].ts).forEach(date => {
           html += `<div class="section-label">${date}</div>`;
-          html += sortByExcitement(byDate[date]).map((g,i) => gameCardHTML(g,i, g===bestPick, sport)).join('');
+          html += renderDateGames(byDate[date], bestPick, sport);
         });
       }
 
@@ -1838,7 +1923,7 @@
     const gameId = makeGameId(g);
     const isWatched = watched.has(gameId);
     const safeId = gameId.replace(/'/g, "\\'");
-    const watchBtn = (g.watch && g.cat.cls === 'watchworthy')
+    const watchBtn = (g.watch && g.cat.cls === 'watchworthy' && !shouldHideWatchProvider(g))
       ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
       : '';
     const insightHTML = buildInsightHTML(g.confidence?.factors, sport || g.sport);
@@ -1851,12 +1936,150 @@
         ${isBestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
         <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
         ${watchBtn}
-        <button class="reveal-btn" onclick="cycleReveal(this,${g.h},${g.a})">👁 Insights</button>
+        <button class="reveal-btn" title="Spoiler-free hints about the game" onclick="cycleReveal(this,${g.h},${g.a})">👁 Tell me more</button>
         <div class="insight-reveal">${insightHTML}</div>
         <div class="score-reveal"></div>
         <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
         ${debugPanelHTML(g)}
       </div>`;
+  }
+
+  // Partition a sorted game list into visible (non-skip + top 2 skip) and
+  // hidden (rest of skip). Used by all sport renderers that want Skip
+  // collapsing. Returns {visible, hidden}. bestPick is promoted to visible
+  // even if it's a Skip game in the hidden tail.
+  function partitionSkipCollapse(games, bestPick) {
+    const sorted = sortByExcitement(games);
+    const isSkip = (g) => g.cat?.cls === 'blowout' || g.cat?.cls === 'defensive';
+    const nonSkip = sorted.filter(g => !isSkip(g));
+    const skip    = sorted.filter(g => isSkip(g));
+    if (skip.length < 4) {
+      return { visible: [...nonSkip, ...skip], hidden: [] };
+    }
+    let visibleSkip = skip.slice(0, 2);
+    let hiddenSkip  = skip.slice(2);
+    if (bestPick && isSkip(bestPick) && hiddenSkip.includes(bestPick)) {
+      hiddenSkip = hiddenSkip.filter(g => g !== bestPick);
+      visibleSkip = [bestPick, ...visibleSkip];
+    }
+    return { visible: [...nonSkip, ...visibleSkip], hidden: hiddenSkip };
+  }
+
+  // Render a date-grouped list of games using gameCardHTML. Used by
+  // football and standard sport renders.
+  function renderDateGames(games, bestPick, sport) {
+    const { visible, hidden } = partitionSkipCollapse(games, bestPick);
+    let html = '';
+    let renderIdx = 0;
+    for (const g of visible) {
+      html += gameCardHTML(g, renderIdx++, g === bestPick, sport);
+    }
+    if (hidden.length > 0) {
+      const hiddenHTML = hidden.map(g => gameCardHTML(g, renderIdx++, false, sport)).join('');
+      html += `<div class="skip-collapse">
+        <button class="skip-collapse-pill" onclick="expandSkipped(this)">+ ${hidden.length} more we'd skip</button>
+        <div class="skip-collapse-hidden" style="display:none;">${hiddenHTML}</div>
+      </div>`;
+    }
+    return html;
+  }
+
+  // Cricket card markup is structurally different from standard sports
+  // (status string instead of h/a scores, league subtitle format). Render
+  // helper for cricket games. Pre-existing logic; just extracted for reuse.
+  function cricketCardHTML(g, i, isBestPick) {
+    const safeStatus = g.status.replace(/'/g, "\\'");
+    const gameId = makeGameId(g);
+    const isWatched = watched.has(gameId);
+    const safeId = gameId.replace(/'/g, "\\'");
+    const watchBtn = (g.watch && g.cat.cls === 'watchworthy')
+      ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
+      : '';
+    const insightHTML = buildInsightHTML(g.confidence?.factors, 'cricket');
+    return `
+      <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${isBestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
+        <div class="teams" style="flex:1;min-width:0;">
+          <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
+          <div class="game-meta">${g.dateStr} · ${g.league}</div>
+        </div>
+        ${isBestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
+        <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
+        ${watchBtn}
+        <button class="reveal-btn" title="Spoiler-free hints about the game" onclick="cycleReveal(this,'${safeStatus}','')">👁 Tell me more</button>
+        <div class="insight-reveal">${insightHTML}</div>
+        <div class="score-reveal" style="font-family:'Outfit',sans-serif;font-size:11px;white-space:normal;max-width:160px;line-height:1.4;text-align:right;"></div>
+        <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
+        ${debugPanelHTML(g)}
+      </div>`;
+  }
+
+  // Render cricket games grouped by league, with Skip-collapse applied
+  // per-league. Threshold: ≥4 skip games within a league section.
+  function renderCricketGames(games, bestPick) {
+    const { visible, hidden } = partitionSkipCollapse(games, bestPick);
+    let html = '';
+    let renderIdx = 0;
+    for (const g of visible) {
+      html += cricketCardHTML(g, renderIdx++, g === bestPick);
+    }
+    if (hidden.length > 0) {
+      const hiddenHTML = hidden.map(g => cricketCardHTML(g, renderIdx++, false)).join('');
+      html += `<div class="skip-collapse">
+        <button class="skip-collapse-pill" onclick="expandSkipped(this)">+ ${hidden.length} more we'd skip</button>
+        <div class="skip-collapse-hidden" style="display:none;">${hiddenHTML}</div>
+      </div>`;
+    }
+    return html;
+  }
+
+  // Tennis card markup — score is a set-string ("6-4, 6-3"), no watch button.
+  function tennisCardHTML(g, i, isBestPick) {
+    const safeScore = setScoreStr(g).replace(/'/g, "\\'");
+    const gameId = makeGameId(g);
+    const isWatched = watched.has(gameId);
+    const safeId = gameId.replace(/'/g, "\\'");
+    const insightHTML = buildInsightHTML(g.confidence?.factors, 'tennis');
+    return `
+      <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${isBestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
+        <div class="teams" style="flex:1;min-width:0;">
+          <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
+          <div class="game-meta">${g.date} · ${g.league}</div>
+        </div>
+        ${isBestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
+        <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
+        <button class="reveal-btn" title="Spoiler-free hints about the game" onclick="cycleReveal(this,'${safeScore}','')">👁 Tell me more</button>
+        <div class="insight-reveal">${insightHTML}</div>
+        <div class="score-reveal" style="font-family:'Outfit',sans-serif;font-size:11px;white-space:normal;max-width:130px;line-height:1.4;text-align:right;"></div>
+        <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
+        ${debugPanelHTML(g)}
+      </div>`;
+  }
+
+  // Render tennis games for one tournament with Skip-collapse applied.
+  function renderTennisGames(games, bestPick) {
+    const { visible, hidden } = partitionSkipCollapse(games, bestPick);
+    let html = '';
+    let renderIdx = 0;
+    for (const g of visible) {
+      html += tennisCardHTML(g, renderIdx++, g === bestPick);
+    }
+    if (hidden.length > 0) {
+      const hiddenHTML = hidden.map(g => tennisCardHTML(g, renderIdx++, false)).join('');
+      html += `<div class="skip-collapse">
+        <button class="skip-collapse-pill" onclick="expandSkipped(this)">+ ${hidden.length} more we'd skip</button>
+        <div class="skip-collapse-hidden" style="display:none;">${hiddenHTML}</div>
+      </div>`;
+    }
+    return html;
+  }
+
+  // Expand handler: swaps hidden cards into view and removes the pill.
+  function expandSkipped(btn) {
+    const wrapper = btn.closest('.skip-collapse');
+    if (!wrapper) return;
+    const hidden = wrapper.querySelector('.skip-collapse-hidden');
+    if (hidden) hidden.style.display = '';
+    btn.style.display = 'none';
   }
 
   function upcomingCardHTML(g, i) {
@@ -1866,7 +2089,7 @@
         <div class="teams">
           <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
           <div class="game-meta">${g.league}</div>
-          <div class="kickoff-time">🕐 ${g.time}</div>
+          <div class="kickoff-time">🕐 ${formatGameTime(g.ts)}</div>
           ${broadcast}
         </div>
         <div class="upcoming-badge">📅 Upcoming</div>
@@ -1939,7 +2162,7 @@
       btn.textContent = 'Show Score →';
       btn.dataset.state = '1';
     } else if (state === '1') {
-      // Insights → show score
+      // Hints visible → show score
       const isString = (typeof h === 'string') && (a === undefined || a === '');
       if (isString) {
         scoreEl.style.fontFamily = "'Outfit',sans-serif";
@@ -1954,7 +2177,7 @@
       // Score → fully hidden
       insightEl.style.display = 'none';
       scoreEl.style.display   = 'none';
-      btn.textContent = '👁 Insights';
+      btn.textContent = '👁 Tell me more';
       btn.dataset.state = '0';
     }
   }
@@ -1971,7 +2194,7 @@
     if (insightEl) insightEl.style.display = 'none';
     if (scoreEl)   scoreEl.style.display   = 'none';
     if (mainBtn) {
-      mainBtn.textContent = '👁 Insights';
+      mainBtn.textContent = '👁 Tell me more';
       mainBtn.dataset.state = '0';
     }
   }
@@ -2000,31 +2223,7 @@
 
       Object.entries(byLeague).forEach(([league, games]) => {
         html += `<div class="league-heading">${league}</div>`;
-        sortByExcitement(games).forEach((g, i) => {
-          const safeStatus = g.status.replace(/'/g, "\\'");
-          const gameId = makeGameId(g);
-          const isWatched = watched.has(gameId);
-          const safeId = gameId.replace(/'/g, "\\'");
-          const watchBtn = (g.watch && g.cat.cls === 'watchworthy')
-            ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
-            : '';
-          const insightHTML = buildInsightHTML(g.confidence?.factors, 'cricket');
-          html += `
-            <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${g===bestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
-              <div class="teams" style="flex:1;min-width:0;">
-                <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
-                <div class="game-meta">${g.dateStr} · ${g.league}</div>
-              </div>
-              ${g===bestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
-              <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
-              ${watchBtn}
-              <button class="reveal-btn" onclick="cycleReveal(this,'${safeStatus}','')">👁 Insights</button>
-              <div class="insight-reveal">${insightHTML}</div>
-              <div class="score-reveal" style="font-family:'Outfit',sans-serif;font-size:11px;white-space:normal;max-width:160px;line-height:1.4;text-align:right;"></div>
-              <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
-              ${debugPanelHTML(g)}
-            </div>`;
-        });
+        html += renderCricketGames(games, bestPick);
       });
     }
 
@@ -2043,7 +2242,7 @@
             <div class="teams">
               <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
               <div class="game-meta">${g.league}</div>
-              <div class="kickoff-time">🕐 ${g.timeStr}</div>
+              <div class="kickoff-time">🕐 ${formatGameTime(g.ts)}</div>
             </div>
             <div class="upcoming-badge">📅 Upcoming</div>
           </div>`).join('');
@@ -2096,27 +2295,7 @@
 
         Object.entries(byTournament).forEach(([tournament, tGames]) => {
           html += `<div class="section-label">${tournament}${tGames[0].round ? ' · ' + tGames[0].round : ''}</div>`;
-          tGames.forEach((g, i) => {
-            const safeScore = setScoreStr(g).replace(/'/g, "\\'");
-            const gameId = makeGameId(g);
-            const isWatched = watched.has(gameId);
-            const safeId = gameId.replace(/'/g, "\\'");
-            const insightHTML = buildInsightHTML(g.confidence?.factors, 'tennis');
-            html += `
-              <div class="game-card ${g.cat.cls}${isWatched?' is-watched':''}${g===bestPick?' best-pick':''}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
-                <div class="teams" style="flex:1;min-width:0;">
-                  <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
-                  <div class="game-meta">${g.date} · ${g.league}</div>
-                </div>
-                ${g===bestPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
-                <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
-                <button class="reveal-btn" onclick="cycleReveal(this,'${safeScore}','')">👁 Insights</button>
-                <div class="insight-reveal">${insightHTML}</div>
-                <div class="score-reveal" style="font-family:'Outfit',sans-serif;font-size:11px;white-space:normal;max-width:130px;line-height:1.4;text-align:right;"></div>
-                <button class="watched-btn${isWatched?' watched':''}" title="Mark as watched" onclick="toggleWatched(this,'${safeId}')">✓</button>
-                ${debugPanelHTML(g)}
-              </div>`;
-          });
+          html += renderTennisGames(tGames, bestPick);
         });
       });
     }
@@ -2137,7 +2316,7 @@
             <div class="teams">
               <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
               <div class="game-meta">${g.tournament || g.league}</div>
-              <div class="kickoff-time">🕐 ${g.time}</div>
+              <div class="kickoff-time">🕐 ${formatGameTime(g.ts)}</div>
             </div>
             <div class="upcoming-badge">📅 Upcoming</div>
           </div>`).join('');
@@ -2297,7 +2476,7 @@
             <div class="teams">
               <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
               <div class="game-meta">${g.league}</div>
-              <div class="kickoff-time">🕐 ${g.time}</div>
+              <div class="kickoff-time">🕐 ${formatGameTime(g.ts)}</div>
             </div>
             <div class="upcoming-badge">📅 Upcoming</div>
           </div>`).join('');
