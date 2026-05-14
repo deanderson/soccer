@@ -77,6 +77,30 @@
   .filter-btn:hover,.filter-btn.active{background:var(--surface);color:var(--text);border-color:rgba(255,255,255,0.2);}
   .filter-btn.league-active{background:var(--blue-bg);color:var(--blue);border-color:rgba(56,139,253,0.3);}
 
+  /* PERSONALIZE — watch provider setup for WNBA upcoming cards */
+  .personalize-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;}
+  .personalize-btn{background:none;border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer;font-family:'Outfit',sans-serif;display:flex;align-items:center;gap:5px;transition:all 0.15s;}
+  .personalize-btn:hover{color:var(--text);border-color:rgba(255,255,255,0.2);}
+  .personalize-btn.active{background:var(--blue-bg);color:var(--blue);border-color:rgba(56,139,253,0.3);}
+  .personalize-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:16px;display:none;}
+  .personalize-panel.open{display:block;}
+  .personalize-title{font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;}
+  .personalize-options{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;}
+  .personalize-option{display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--card);cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);transition:all 0.15s;user-select:none;}
+  .personalize-option:hover{border-color:rgba(255,255,255,0.2);color:var(--text);}
+  .personalize-option.selected{background:var(--blue-bg);color:var(--blue);border-color:rgba(56,139,253,0.3);}
+  .personalize-option input{display:none;}
+  .personalize-save{background:var(--green);color:#000;border:none;border-radius:8px;padding:8px 18px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;transition:opacity 0.15s;}
+  .personalize-save:hover{opacity:0.85;}
+  .personalize-hint{font-size:11px;color:var(--muted);margin-top:10px;}
+
+  /* Watch status tags on upcoming cards */
+  .watch-status{font-size:11px;margin-top:4px;display:flex;align-items:center;gap:5px;}
+  .watch-status.can-watch{color:var(--green);}
+  .watch-status.upgrade{color:var(--orange);}
+  .watch-status.no-watch{color:var(--muted);}
+  .watch-status a{color:inherit;text-decoration:underline;text-underline-offset:2px;}
+
   /* SECTION LABEL */
   .section-label{font-size:11px;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;margin-top:24px;display:flex;align-items:center;gap:8px;}
   .section-label::after{content:'';flex:1;height:1px;background:var(--border);}
@@ -1197,6 +1221,134 @@
 
   // ── HOW IT WORKS ───────────────────────────────────────────────────────
   // ── FILTERS ────────────────────────────────────────────────────────────
+  // ── WATCH PERSONALIZATION ──────────────────────────────────────────────
+  const SUBSCRIPTION_OPTIONS = [
+    { id: 'cable',      label: 'Cable / Satellite', icon: '📡' },
+    { id: 'prime',      label: 'Prime Video',        icon: '📦' },
+    { id: 'peacock',    label: 'Peacock',             icon: '🦚' },
+    { id: 'espnplus',   label: 'ESPN+',               icon: '🏈' },
+    { id: 'paramount',  label: 'Paramount+',          icon: '⛰️' },
+    { id: 'leaguepass', label: 'WNBA League Pass',    icon: '🏀' },
+  ];
+
+  const NETWORK_SUBS = {
+    'ABC':          ['free', 'cable'],
+    'NBC':          ['free', 'cable'],
+    'ION':          ['free', 'cable'],
+    'CBS':          ['free', 'cable'],
+    'ESPN':         ['cable'],
+    'ESPN2':        ['cable'],
+    'USA Network':  ['cable'],
+    'NBCSN':        ['cable', 'peacock'],
+    'NBA TV':       ['cable'],
+    'Prime Video':  ['prime'],
+    'Peacock':      ['peacock', 'cable'],
+    'ESPN+':        ['espnplus'],
+    'Paramount+':   ['paramount', 'cable'],
+    'WNBA League Pass': ['leaguepass'],
+  };
+
+  const SUBSCRIPTION_URLS = {
+    prime:      'https://www.amazon.com/amazonprime',
+    peacock:    'https://www.peacocktv.com',
+    espnplus:   'https://plus.espn.com',
+    paramount:  'https://www.paramountplus.com',
+    leaguepass: 'https://www.wnba.com/leaguepass',
+    cable:      null,
+  };
+
+  function loadSubscriptions() {
+    try { return JSON.parse(localStorage.getItem('watchSubscriptions') || 'null') || {}; }
+    catch { return {}; }
+  }
+
+  function saveSubscriptions(subs) {
+    localStorage.setItem('watchSubscriptions', JSON.stringify(subs));
+  }
+
+  function hasSubscriptions() {
+    return Object.values(loadSubscriptions()).some(Boolean);
+  }
+
+  function getWatchStatus(game) {
+    const subs = loadSubscriptions();
+    if (!hasSubscriptions()) return { status: 'unknown' };
+
+    const geo = Array.isArray(game.geoBroadcasts) ? game.geoBroadcasts : [];
+    const broadcastStr = game.broadcast || '';
+
+    const networks = [];
+    const national = geo.filter(b => b?.market?.type === 'National');
+    for (const b of national) {
+      const name = b?.media?.shortName;
+      if (name && !networks.includes(name)) networks.push(name);
+    }
+    if (broadcastStr && !networks.includes(broadcastStr)) networks.push(broadcastStr);
+    if (networks.length === 0) networks.push('WNBA League Pass');
+
+    for (const network of networks) {
+      const needed = NETWORK_SUBS[network];
+      if (!needed) continue;
+      if (needed.includes('free')) return { status: 'can-watch', network, subNeeded: null };
+      if (needed.some(s => subs[s])) return { status: 'can-watch', network, subNeeded: null };
+    }
+
+    for (const network of networks) {
+      const needed = (NETWORK_SUBS[network] || []).filter(s => s !== 'free' && s !== 'cable');
+      if (needed.length > 0) return { status: 'upgrade', network: networks[0], subNeeded: needed[0] };
+    }
+    return { status: 'upgrade', network: networks[0], subNeeded: 'cable' };
+  }
+
+  function buildWatchStatusHTML(game) {
+    const ws = getWatchStatus(game);
+    if (ws.status === 'unknown') return '';
+    if (ws.status === 'can-watch') {
+      return `<div class="watch-status can-watch">✅ You can watch this${ws.network ? ` — ${ws.network}` : ''}</div>`;
+    }
+    const subOpt = SUBSCRIPTION_OPTIONS.find(o => o.id === ws.subNeeded);
+    const url = ws.subNeeded ? SUBSCRIPTION_URLS[ws.subNeeded] : null;
+    const subLabel = subOpt ? subOpt.label : (ws.subNeeded || 'subscription');
+    const upgradeLink = url
+      ? `<a href="${url}" target="_blank" rel="noopener noreferrer">${subLabel}</a>`
+      : subLabel;
+    return `<div class="watch-status upgrade">⚠️ ${ws.network || 'This game'} — not in your lineup (${upgradeLink})</div>`;
+  }
+
+  function togglePersonalize() {
+    const panel = document.getElementById('wnba-personalize-panel');
+    const btn   = document.getElementById('wnba-personalize-btn');
+    if (!panel || !btn) return;
+    const isOpen = panel.classList.toggle('open');
+    btn.classList.toggle('active', isOpen);
+    if (isOpen) renderPersonalizePanel();
+  }
+
+  function renderPersonalizePanel() {
+    const subs = loadSubscriptions();
+    const container = document.getElementById('wnba-personalize-options');
+    if (!container) return;
+    container.innerHTML = SUBSCRIPTION_OPTIONS.map(opt => `
+      <label class="personalize-option${subs[opt.id] ? ' selected' : ''}" onclick="togglePersonalizeOption(this,'${opt.id}')">
+        <input type="checkbox" ${subs[opt.id] ? 'checked' : ''}> ${opt.icon} ${opt.label}
+      </label>`).join('');
+  }
+
+  function togglePersonalizeOption(el, id) {
+    el.classList.toggle('selected');
+  }
+
+  function savePersonalize() {
+    const subs = {};
+    document.querySelectorAll('#wnba-personalize-options .personalize-option').forEach(el => {
+      const id = el.getAttribute('onclick')?.match(/'([^']+)'\)$/)?.[1];
+      if (id) subs[id] = el.classList.contains('selected');
+    });
+    saveSubscriptions(subs);
+    togglePersonalize();
+    renderGames('wnba');
+  }
+
   function buildFilters(sport) {
     const el = document.getElementById(`${sport}-filters`);
     const labels = (sport === 'tennis') ? FILTER_LABELS : STD_FILTER_LABELS;
@@ -1232,6 +1384,25 @@
             onclick="setTennisFilter('tour','ATP',this)">🎾 ATP</button>
           <button class="filter-btn"
             onclick="setTennisFilter('tour','WTA',this)">🎾 WTA</button>
+        </div>`;
+    } else if (sport === 'wnba') {
+      const configured = hasSubscriptions();
+      el.innerHTML = `
+        <div class="personalize-row">
+          <div class="filters" style="margin-bottom:0">
+            ${SPORTS.wnba.filterDefs.map(k => `
+              <button class="filter-btn ${state.wnba.cat===k?'active':''}"
+                onclick="setCatFilter('wnba','${k}',this)">${STD_FILTER_LABELS[k]}</button>`).join('')}
+          </div>
+          <button class="personalize-btn${configured?' active':''}" id="wnba-personalize-btn" onclick="togglePersonalize()">
+            📺 ${configured ? 'My Services' : 'Personalize'}
+          </button>
+        </div>
+        <div class="personalize-panel" id="wnba-personalize-panel">
+          <div class="personalize-title">What do you have access to?</div>
+          <div class="personalize-options" id="wnba-personalize-options"></div>
+          <button class="personalize-save" onclick="savePersonalize()">Save</button>
+          <div class="personalize-hint">We'll show ✅ or ⚠️ on upcoming games so you know before you plan your night.</div>
         </div>`;
     } else {
       el.innerHTML = SPORTS[sport].filterDefs.map(k => `
@@ -2225,7 +2396,7 @@
             <span class="${f.points >= 0 ? 'pos' : 'neg'}">${f.points >= 0 ? '+' : ''}${f.points}</span>
           </div>`).join('')}
         ${g.debug ? `<div class="debug-factor" style="margin-top:4px;color:var(--blue)">
-          <span>LC:${g.debug.leadChanges ?? '—'} · Lead:${g.debug.largestLead ?? '—'}${g.debug.hasOT ? ' · OT' : ''}${g.debug.hadComeback ? ' · Comeback' : ''}</span>
+          <span>LC:${g.debug.leadChanges ?? '—'} · Lead:${g.debug.largestLead ?? '—'}${g.debug.hasOT ? ' · OT' : ''}${g.debug.hadComeback ? ' · Comeback' : ''}${(g.debug.fouledOut != null || g.debug.fiveFouls != null) ? ` · 6PF:${g.debug.fouledOut ?? 0} · 5PF:${g.debug.fiveFouls ?? 0}` : ''}</span>
         </div>` : ''}
       </div>`;
   }
@@ -2418,14 +2589,19 @@
   }
 
   function upcomingCardHTML(g, i) {
-    const broadcast = (g.geoBroadcasts !== undefined || g.broadcast) ? buildBroadcastHTML(g) : '';
+    // For WNBA: if user has set subscriptions, show personalized watch status.
+    // Otherwise fall back to normal broadcast info.
+    const isWNBA = g.league === 'WNBA';
+    const watchStatusHTML = isWNBA ? buildWatchStatusHTML(g) : '';
+    const broadcast = (!watchStatusHTML && (g.geoBroadcasts !== undefined || g.broadcast))
+      ? buildBroadcastHTML(g) : '';
     return `
       <div class="upcoming-card" style="animation-delay:${i*0.04}s">
         <div class="teams">
           <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
           <div class="game-meta">${g.league}</div>
           <div class="kickoff-time">🕐 ${formatGameTime(g.ts)}</div>
-          ${broadcast}
+          ${watchStatusHTML || broadcast}
         </div>
         <div class="upcoming-badge">📅 Upcoming</div>
       </div>`;

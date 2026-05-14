@@ -2,6 +2,48 @@
 
 > Things filed for later. Update as you complete or add items.
 
+## Status as of 2026-05-12 evening
+
+**Shipped today (in afternoon bundle, may still need push):**
+- UTC time fix (formatGameTime helper, user-local display)
+- League Pass button accuracy gate (suppressed on national TV games) + URL fix
+- Refresh button rewrite (separate user-action cooldown, 60s, polling for fresh data)
+- Skip-collapse applied to ALL tabs (was football-only)
+- "Tell me more" → "Why watch?" rename (later moved inside insights panel)
+- New tagline: "Hand-picked games. Hidden scores."
+- Stale-blob fallback (FRESH/STALE_OK/lock-held tiers)
+- Top Pick badges on inline duplicates (was only the single bestPick)
+- Gear/Sports settings panel removed
+- Two-line matchup on Top Pick cards
+- Calmer green saturation on Best Pick
+- Empty-state line cycling (8 variants, day-of-year mod)
+- Editorial line generator above Top Picks (state-aware, only shows when there's something to say)
+- WNBA tab reorder (upcoming above past games, WNBA only)
+- Two-button reveal nested: Show Score lives inside Why watch? insights area
+- Watched ✓ feature removed (clutter, not pulling weight)
+- Feedback engine v1: 👍/👎 thumbs, downvote reason picker, Supabase table, Netlify function
+- Default Top Picks window changed to "Recent" (was "Today") — better first impression
+
+**Still open from Tier B (post-launch polish):**
+- Empty-state suggestion box on desktop is full-width, should be compact
+- Visual identity / logomark — plan: hire an artist, not AI-generated
+- Notable events enrichment (needs paid stats source)
+- NHL refinements (friend may tackle: goal cluster, empty-netter, shootouts, goalie-pulled drama)
+- Insight phrase audit for hockey-specific vocabulary
+
+**Open small items:**
+- Decide divider copy for WNBA upcoming section: "Coming Up This Week" (current) vs "Where to Watch This Week" (directive) vs alternative
+- Hands-on mobile interaction test on deployed site (only user can do)
+- Push the bundle (3 files: index.html, submit-feedback.js, feedback-schema.sql — schema already run in Supabase)
+
+**r/wnba launch plan:**
+- Two community comments posted today, plan to continue through the week
+- No formal post yet — soft launch via comments is the strategy
+- After a week of comments, evaluate: formal post or keep going organically
+- Watch for repeated questions that the site uniquely answers
+
+---
+
 ## Bugs (real, low-priority)
 
 - **TIME DISPLAY IS UTC (pre-launch blocker).** Upcoming game times show

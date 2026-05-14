@@ -1053,6 +1053,24 @@ exports.handler = async function (event, context) {
       }
     }
 
+    // Foul trouble: count players at 5 PF (managed minutes) and 6 PF (fouled out).
+    // 5+ PF disrupts lineups even when coach keeps them in; foul-outs remove a player entirely.
+    let fouledOut = 0, fiveFouls = 0;
+    for (const teamBlock of (summary.boxscore?.players || [])) {
+      const statsBlock = (teamBlock.statistics || [])[0];
+      if (!statsBlock) continue;
+      const pfIdx = (statsBlock.keys || []).indexOf('fouls');
+      if (pfIdx < 0) continue;
+      for (const ath of (statsBlock.athletes || [])) {
+        if (ath.didNotPlay) continue;
+        const s = ath.stats || [];
+        if (!s.length) continue;
+        const pf = parseInt(s[pfIdx], 10) || 0;
+        if (pf >= 6) fouledOut++;
+        else if (pf === 5) fiveFouls++;
+      }
+    }
+
     // WNBA also plays 4 quarters then OT, so period > 4 means OT happened.
     const hasOT = (summary.header?.competitions?.[0]?.status?.period ?? 4) > 4;
 
@@ -1060,13 +1078,13 @@ exports.handler = async function (event, context) {
     const hadComeback = largestLead >= 8 && diff <= 5;
 
     // Score Fest: 170+ total and close (≤5 margin)
-    if (total >= 170 && diff <= 5) return { cat: 'scorefest', leadChanges, largestLead, hasOT, hadComeback };
+    if (total >= 170 && diff <= 5) return { cat: 'scorefest', leadChanges, largestLead, hasOT, hadComeback, fouledOut, fiveFouls };
 
-    if (hasOT) return { cat: 'watchworthy', leadChanges, largestLead, hasOT, hadComeback };
-    if (hadComeback) return { cat: 'watchworthy', leadChanges, largestLead, hasOT, hadComeback };
-    if (leadChanges >= 8 && diff <= 5) return { cat: 'watchworthy', leadChanges, largestLead, hasOT, hadComeback };
+    if (hasOT) return { cat: 'watchworthy', leadChanges, largestLead, hasOT, hadComeback, fouledOut, fiveFouls };
+    if (hadComeback) return { cat: 'watchworthy', leadChanges, largestLead, hasOT, hadComeback, fouledOut, fiveFouls };
+    if (leadChanges >= 8 && diff <= 5) return { cat: 'watchworthy', leadChanges, largestLead, hasOT, hadComeback, fouledOut, fiveFouls };
 
-    return { cat: null, leadChanges, largestLead, hasOT, hadComeback };
+    return { cat: null, leadChanges, largestLead, hasOT, hadComeback, fouledOut, fiveFouls };
   }
 
 
@@ -1169,6 +1187,8 @@ exports.handler = async function (event, context) {
           largestLead: result.largestLead,
           hasOT: result.hasOT,
           hadComeback: result.hadComeback,
+          fouledOut: result.fouledOut,
+          fiveFouls: result.fiveFouls,
         }
       };
     });
@@ -1260,6 +1280,17 @@ exports.handler = async function (event, context) {
       const lc = g.debug?.leadChanges ?? 0;
       if      (lc >= 12) { factors.push({ label: `${lc} lead changes`, points: 25 }); score += 25; }
       else if (lc >= 6)  { factors.push({ label: `${lc} lead changes`, points: 12 }); score += 12; }
+
+      // Foul trouble penalty. 6 PF (fouled out) costs -5, 5 PF (managed minutes) -3.
+      // Folded into a single "Foul trouble" line for spoiler safety — no player names,
+      // no per-team breakdown. v1 weights from N=14 sample; tune after host review.
+      const fouledOut = g.debug?.fouledOut ?? 0;
+      const fiveFouls = g.debug?.fiveFouls ?? 0;
+      const foulPenalty = fouledOut * 5 + fiveFouls * 3;
+      if (foulPenalty > 0) {
+        factors.push({ label: 'Foul trouble', points: -foulPenalty });
+        score -= foulPenalty;
+      }
 
     } else if (sport === 'tennis') {
       const sets = (g.homeSets ?? 0) + (g.awaySets ?? 0);
