@@ -321,10 +321,6 @@
   /* LAST UPDATED */
   .last-updated{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;}
   .last-updated-dot{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0;}
-  .refresh-btn{background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:'Outfit',sans-serif;padding:2px 6px;border-radius:4px;transition:color 0.15s;display:inline-flex;align-items:center;gap:3px;}
-  .refresh-btn:hover:not(:disabled){color:var(--text);}
-  .refresh-btn:disabled{opacity:0.4;cursor:not-allowed;}
-  .refresh-btn.spinning{animation:spin 1s linear infinite;display:inline-block;}
 
   /* SETTINGS PANEL */
   .settings-bar{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:12px;}
@@ -385,7 +381,7 @@
         <p style="font-size:14px;color:var(--muted);margin-top:6px;font-weight:400;letter-spacing:0.01em;">Hand-picked games. Hidden scores.</p>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;">
-        <div class="last-updated"><div class="last-updated-dot"></div><span id="last-updated-text">Loading...</span><button class="refresh-btn" id="refresh-btn" onclick="refreshNow()" title="Refresh scores">↻</button></div>
+        <div class="last-updated"><div class="last-updated-dot"></div><span id="last-updated-text">Loading...</span></div>
       </div>
     </div>
   </header>
@@ -978,114 +974,12 @@
 
   // ── LAST UPDATED (feature #6) ──────────────────────────────────────────
   let loadedAt = null;
-  let refreshCooldownUntil = 0;
-  let refreshCountdownTimer = null;
-
   function updateLastUpdatedText() {
     if (!loadedAt) return;
     const mins = Math.floor((Date.now() - loadedAt) / 60000);
     const txt = mins < 1 ? 'Just updated' : mins === 1 ? 'Updated 1 min ago' : `Updated ${mins} mins ago`;
     const el = document.getElementById('last-updated-text');
     if (el) el.textContent = txt;
-
-    // Update refresh button — show countdown if in cooldown
-    const btn = document.getElementById('refresh-btn');
-    if (!btn) return;
-    const remaining = refreshCooldownUntil - Date.now();
-    if (remaining > 0) {
-      btn.disabled = true;
-      const secs = Math.ceil(remaining / 1000);
-      const minsLeft = Math.floor(secs / 60);
-      const secsLeft = secs % 60;
-      btn.textContent = minsLeft > 0 ? `${minsLeft}m` : `${secsLeft}s`;
-      btn.title = `Refresh available in ${minsLeft > 0 ? minsLeft + 'm ' : ''}${secsLeft}s`;
-    } else {
-      btn.disabled = false;
-      btn.textContent = '↻';
-      btn.title = 'Refresh scores';
-    }
-  }
-
-  // Refresh button handler. Polls for blob freshness instead of a fixed
-  // wait — the original 18s timeout was hostile (real fetch usually takes
-  // 5-12s, sometimes faster). Polling closes the gap so the spinner stops
-  // as soon as new data is actually available.
-  async function refreshNow() {
-    const btn = document.getElementById('refresh-btn');
-    if (!btn || btn.disabled) return;
-
-    const oldFetchedAt = loadedAt || 0;
-    btn.disabled = true;
-    btn.textContent = '↻';
-    btn.classList.add('spinning');
-
-    const stopSpinner = () => {
-      btn.classList.remove('spinning');
-      btn.textContent = '↻';
-    };
-
-    try {
-      const res = await fetch('/.netlify/functions/refresh-scores', { method: 'POST' });
-      const result = await res.json();
-
-      if (res.status === 429) {
-        const secs = result.remainingSecs || 60;
-        showToast(`⏱ Just refreshed — refresh again in ${secs}s`, 'warn');
-        refreshCooldownUntil = Date.now() + secs * 1000;
-        stopSpinner();
-        return;
-      }
-
-      if (!result.ok) {
-        showToast('⚠️ Refresh failed, try again', 'error');
-        btn.disabled = false;
-        stopSpinner();
-        return;
-      }
-
-      // Background fetch is firing. Poll get-scores for X-Fetched-At header
-      // until we see a timestamp newer than what we had loaded. This avoids
-      // the fixed 18s wait — real fetches are often quicker.
-      showToast('🔄 Refreshing scores...', 'success');
-      refreshCooldownUntil = Date.now() + 60 * 1000;
-
-      const startedAt = Date.now();
-      const maxWaitMs = 25000;     // hard ceiling — give up if backend's stuck
-      const pollIntervalMs = 1500;
-
-      const poll = async () => {
-        if (Date.now() - startedAt > maxWaitMs) {
-          // Backend probably failed; load whatever's there
-          await loadScores();
-          showToast('⚠️ Refresh slower than expected', 'warn');
-          stopSpinner();
-          return;
-        }
-        try {
-          // Cache-bust query param prevents CDN from serving us a stale
-          // X-Fetched-At header. We only read the header, not the body,
-          // but the request still has to bypass cache to be useful.
-          const bust = Date.now();
-          const r = await fetch(`/.netlify/functions/get-scores?sport=all&_poll=${bust}`);
-          const fetchedAtHdr = r.headers.get('X-Fetched-At');
-          const newFetchedAt = fetchedAtHdr ? new Date(fetchedAtHdr).getTime() : 0;
-          if (newFetchedAt > oldFetchedAt) {
-            await loadScores();
-            showToast('✓ Scores updated', 'success');
-            stopSpinner();
-            return;
-          }
-        } catch (e) {
-          // Network blip — keep polling
-        }
-        setTimeout(poll, pollIntervalMs);
-      };
-      setTimeout(poll, 2000);  // give the backend a head start
-    } catch (err) {
-      showToast('⚠️ Refresh failed', 'error');
-      btn.disabled = false;
-      stopSpinner();
-    }
   }
 
   // ── LOAD ───────────────────────────────────────────────────────────────
@@ -1560,22 +1454,20 @@
       const [, n, unit] = m;
       const num = parseInt(n, 10);
       if (unit === 'goals' && num >= 5) return 'High-scoring game';
-      if (unit === 'goals')             return null;   // 2-4 goals is unremarkable
-      // Basketball: NBA ~220 typical, WNBA ~160 typical. Different thresholds.
+      if (unit === 'goals')             return null;
       if (unit === 'pts') {
-        if (sport === 'wnba') return num >= 170 ? 'High-scoring game' : null;
-        if (sport === 'nba')  return num >= 230 ? 'High-scoring game' : null;
+        if (sport === 'wnba') {
+          if (num >= 190) return 'They could not stop scoring';
+          if (num >= 175) return 'Plenty of offense';
+          return null;
+        }
+        if (sport === 'nba')  return num >= 230 ? 'They could not stop scoring' : num >= 210 ? 'High-scoring game' : null;
         if (sport === 'nfl')  return num >= 50  ? 'High-scoring game' : null;
         return num >= 50 ? 'High-scoring game' : null;
       }
       if (unit === 'runs') return num >= 12 ? 'High-scoring game' : null;
     }
-    // Margins: "1 goal margin", "3 pt margin", "2 run margin"
-    // CRITICAL: phrases must describe the *texture* of the closeness (down to
-    // the wire, close finish), never imply a specific small margin. Saying
-    // "Decided by a possession" tells the user the margin was 1-3 pts —
-    // that's a spoiler. "Down to the wire" describes flow without leaking
-    // the number. Always prefer texture over precision.
+    // Margins
     m = label.match(/^(\d+)\s+(goal|pt|run)\s+margin$/);
     if (m) {
       const n = parseInt(m[1], 10);
@@ -1589,8 +1481,6 @@
         return null;
       }
       if (unit === 'pt') {
-        // Basketball: ≤5 close, 6-10 competitive. NFL: ≤7 close.
-        // Avoid "by a possession" / "by a field goal" — too margin-specific.
         if (sport === 'nba' || sport === 'wnba') {
           if (n <= 5)  return 'Down to the wire';
           if (n <= 10) return 'Came down to the closing minutes';
@@ -1600,17 +1490,11 @@
           if (n <= 7) return 'Down to the wire';
           return null;
         }
-        // Default for other point-margin sports
         if (n <= 7) return 'Close finish';
         return null;
       }
     }
-    // Cricket wkts/runs result. Important: the unit (wkts vs runs) tells you
-    // which side won (wkts = chasing team won, runs = defending team won), so
-    // phrasings must describe closeness without disclosing direction.
-    // Also: don't use different phrases for nearby margins — a user who learns
-    // "down to the wire" means ≤2 wkts vs "close finish" means 3-4 wkts is
-    // doing margin inference. Collapse to coarse closeness bands.
+    // Cricket result
     m = label.match(/^Won by (\d+) (wkts|runs)$/);
     if (m) {
       const n = parseInt(m[1], 10);
@@ -1625,15 +1509,16 @@
       }
       return null;
     }
-    // Lead changes: "5 lead changes", "15 lead changes"
+    // Lead changes
     m = label.match(/^(\d+) lead changes$/);
     if (m) {
       const n = parseInt(m[1], 10);
-      if (n >= 15) return 'Constant lead changes';
-      if (n >= 8)  return 'Lots of lead changes';
-      return 'Multiple lead changes';
+      if (n >= 15) return 'Wildly competitive';
+      if (n >= 8)  return 'Back and forth all game';
+      if (n >= 5)  return 'Multiple lead changes';
+      return null;
     }
-    // Cricket innings total: "X run innings"
+    // Cricket innings total
     m = label.match(/^(\d+) run innings$/);
     if (m) {
       return 'A big innings total';

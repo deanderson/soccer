@@ -508,7 +508,15 @@ exports.handler = async function (event, context) {
 
       const T20_SERIES_NAMES = new Set(['IPL', 'PSL', 'BBL', 'T20 World Cup', 'T20I',
         'Men\'s T20 World Cup', 'ICC Men\'s T20 World Cup', 'Indian Premier League',
-        'Pakistan Super League', 'Big Bash League']);
+        'Pakistan Super League', 'Big Bash League',
+        'Vitality Blast', 'Vitality Blast Men', 'The Hundred', 'The Hundred Men\'s Competition',
+        'Major League Cricket', 'MLC',
+        'ICC Women\'s T20 World Cup', 'Women\'s T20 World Cup',
+        'SA20', 'International League T20', 'ILT20',
+        'Caribbean Premier League', 'CPL',
+        'Lanka Premier League', 'LPL',
+        'T20 Blast',
+      ]);
 
       const BLOCKED_KEYWORDS = [
         'women', 'qualifier', 'emerging', 'rising stars',
@@ -519,7 +527,12 @@ exports.handler = async function (event, context) {
 
       function isAllowedSeries(name) {
         const lower = (name || '').toLowerCase();
-        return !BLOCKED_KEYWORDS.some(k => lower.includes(k));
+        // Allowlist takes priority — known top-tier T20 competitions
+        if (T20_SERIES_NAMES.has(name)) return true;
+        // Block domestic, qualifier, and low-tier tournaments
+        if (BLOCKED_KEYWORDS.some(k => lower.includes(k))) return false;
+        // Default block — only show explicitly allowlisted series
+        return false;
       }
 
       // Fetch header for each date in parallel

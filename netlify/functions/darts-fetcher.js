@@ -36,19 +36,7 @@ const TOURNAMENTS = [
       17: '2026-05-28',  // play-offs
     },
   },
-  // TEST CONFIG: 2025 Matchplay is finished; included to validate the
-  // multi-session knockout parser against complete historical data.
-  // Once verified, replace with 2026 Matchplay (July) before deploying for
-  // live use.
-  {
-    wikiPage: '2025_World_Matchplay',
-    league:   'World Matchplay',
-    format:   'knockout-multi-session',
-    startDate:'2025-07-19',
-    endDate:  '2025-07-27',
-    year:     2025,
-    forceActive: true,  // bypass the date-window filter for testing
-  },
+  // 2026 World Matchplay goes here when dates are confirmed (typically mid-July)
 ];
 
 // -------------------- fetch --------------------
