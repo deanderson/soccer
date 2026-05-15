@@ -44,7 +44,7 @@
   /* SPORT TABS — base rule overridden below in SCROLLING TABS section.
      Flex-wrap and overflow behavior set there to differentiate desktop
      (nowrap, fits one row) from mobile (wrap, multi-row OK). */
-  .sport-tabs{display:flex;flex-wrap:wrap;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px;}
+  .sport-tab-divider-placeholder{display:none;}
   /* sport tab styles defined below in scrolling tabs section */
 
   /* LEGEND */
@@ -340,7 +340,7 @@
   .sport-toggle:hover{border-color:rgba(255,255,255,0.2);}
 
   /* SCROLLING TABS — primary sport nav, big and obvious */
-  .sport-tabs{display:flex;border:1px solid var(--border);border-radius:12px;overflow-x:auto;overflow-y:hidden;margin-bottom:20px;scrollbar-width:none;background:var(--surface);flex-wrap:nowrap;}
+  .sport-tabs{display:flex;border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px;scrollbar-width:none;background:var(--surface);flex-wrap:wrap;}
   .sport-tabs::-webkit-scrollbar{display:none;}
   .sport-tab{flex:0 0 auto;padding:14px 11px;text-align:center;cursor:pointer;font-size:13px;font-weight:700;color:var(--muted);background:transparent;border:none;font-family:'Outfit',sans-serif;transition:background 0.2s,color 0.2s;display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;letter-spacing:0.01em;}
   .sport-tab:not(:last-child){border-right:1px solid var(--border);}
@@ -2614,13 +2614,15 @@
     const wrapper = btn.closest('.skip-collapse');
     if (!wrapper) return;
     const hidden = wrapper.querySelector('.skip-collapse-hidden');
-    const isExpanded = hidden.style.display !== 'none' && hidden.style.display !== '';
+    const isExpanded = wrapper.dataset.expanded === 'true';
     if (isExpanded) {
       hidden.style.display = 'none';
-      btn.textContent = btn.dataset.expandLabel || btn.textContent.replace('Show fewer', '+ ' + hidden.querySelectorAll('.game-card').length + ' more we\'d skip');
+      wrapper.dataset.expanded = 'false';
+      btn.textContent = btn.dataset.originalLabel || '+ more we\'d skip';
     } else {
+      btn.dataset.originalLabel = btn.textContent;
       hidden.style.display = '';
-      btn.dataset.expandLabel = btn.textContent;
+      wrapper.dataset.expanded = 'true';
       btn.textContent = 'Show fewer ↑';
     }
   }
