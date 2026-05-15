@@ -44,7 +44,7 @@
   /* SPORT TABS — base rule overridden below in SCROLLING TABS section.
      Flex-wrap and overflow behavior set there to differentiate desktop
      (nowrap, fits one row) from mobile (wrap, multi-row OK). */
-  .sport-tabs{display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px;}
+  .sport-tabs{display:flex;flex-wrap:wrap;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:24px;}
   /* sport tab styles defined below in scrolling tabs section */
 
   /* LEGEND */
@@ -1275,22 +1275,36 @@
     const geo = Array.isArray(game.geoBroadcasts) ? game.geoBroadcasts : [];
     const broadcastStr = game.broadcast || '';
 
+    // Build ordered list of national networks
     const networks = [];
     const national = geo.filter(b => b?.market?.type === 'National');
     for (const b of national) {
       const name = b?.media?.shortName;
       if (name && !networks.includes(name)) networks.push(name);
     }
-    if (broadcastStr && !networks.includes(broadcastStr)) networks.push(broadcastStr);
+    // Also parse broadcast string (e.g. "NBC/Peacock") for any not in geo
+    for (const n of broadcastStr.split('/').map(s => s.trim()).filter(Boolean)) {
+      if (!networks.includes(n)) networks.push(n);
+    }
     if (networks.length === 0) networks.push('WNBA League Pass');
 
+    // Find all networks the user can watch, return the most relevant display name
+    const canWatchOn = [];
     for (const network of networks) {
       const needed = NETWORK_SUBS[network];
       if (!needed) continue;
-      if (needed.includes('free')) return { status: 'can-watch', network, subNeeded: null };
-      if (needed.some(s => subs[s])) return { status: 'can-watch', network, subNeeded: null };
+      if (needed.includes('free') || needed.some(s => subs[s])) {
+        canWatchOn.push(network);
+      }
+    }
+    if (canWatchOn.length > 0) {
+      // Filter out 'WNBA League Pass' if other options exist
+      const display = canWatchOn.filter(n => n !== 'WNBA League Pass');
+      const network = (display.length > 0 ? display : canWatchOn).join(' / ');
+      return { status: 'can-watch', network, subNeeded: null };
     }
 
+    // Can't watch any — suggest cheapest streaming upgrade (prefer non-cable)
     for (const network of networks) {
       const needed = (NETWORK_SUBS[network] || []).filter(s => s !== 'free' && s !== 'cable');
       if (needed.length > 0) return { status: 'upgrade', network: networks[0], subNeeded: needed[0] };
@@ -2426,24 +2440,7 @@
   // If this device already voted on this game, the appropriate thumb gets the
   // "voted" class (kept bright) and the other is locked-faded.
   function voteButtonsHTML(gameId) {
-    const prior = votedGames.get(gameId);
-    const locked = !!prior;
-    const upClass    = `vote-btn vote-up${prior === 'up' ? ' voted' : ''}${locked ? ' vote-locked' : ''}`;
-    const downClass  = `vote-btn vote-down${prior === 'down' ? ' voted' : ''}${locked ? ' vote-locked' : ''}`;
-    // If already voted, click is a no-op (button is locked); leave handler
-    // attached so the locked state is enforced consistently.
-    return `
-      <button class="${upClass}" title="Good rec" onclick="handleVoteUp(this)">👍</button>
-      <button class="${downClass}" title="Bad rec" onclick="handleVoteDown(this)">👎</button>
-      <div class="vote-reasons">
-        <span class="vote-reasons-label">Why?</span>
-        <button class="vote-reason-btn" onclick="handleReasonPick(this,'boring')">Boring / one-sided</button>
-        <button class="vote-reason-btn" onclick="handleReasonPick(this,'defensive')">Too defensive</button>
-        <button class="vote-reason-btn" onclick="handleReasonPick(this,'didnt_watch')">Didn't watch</button>
-        <button class="vote-reason-btn" onclick="handleReasonPick(this,'overhyped')">Score didn't match hype</button>
-        <button class="vote-reason-btn" onclick="handleReasonPick(this,'other')">Other</button>
-        <button class="vote-reason-cancel" onclick="handleReasonCancel(this)" title="Cancel">×</button>
-      </div>`;
+    return ''; // hidden for now — re-enable when ready to surface feedback UI
   }
 
   function gameCardHTML(g, i, isBestPick = false, sport = null) {
@@ -2566,6 +2563,12 @@
   }
 
   // Tennis card markup — score is a set-string ("6-4, 6-3"), no watch button.
+  function setScoreStr(g) {
+    if (!g.sets || g.sets.length === 0) return `${g.homeSets}–${g.awaySets}`;
+    const setStr = g.sets.map(s => `${s.h}-${s.a}`).join(', ');
+    return `${g.homeSets}–${g.awaySets} sets (${setStr})`;
+  }
+
   function tennisCardHTML(g, i, isBestPick) {
     const safeScore = setScoreStr(g).replace(/'/g, "\\'");
     const gameId = makeGameId(g);
@@ -2611,8 +2614,15 @@
     const wrapper = btn.closest('.skip-collapse');
     if (!wrapper) return;
     const hidden = wrapper.querySelector('.skip-collapse-hidden');
-    if (hidden) hidden.style.display = '';
-    btn.style.display = 'none';
+    const isExpanded = hidden.style.display !== 'none' && hidden.style.display !== '';
+    if (isExpanded) {
+      hidden.style.display = 'none';
+      btn.textContent = btn.dataset.expandLabel || btn.textContent.replace('Show fewer', '+ ' + hidden.querySelectorAll('.game-card').length + ' more we\'d skip');
+    } else {
+      hidden.style.display = '';
+      btn.dataset.expandLabel = btn.textContent;
+      btn.textContent = 'Show fewer ↑';
+    }
   }
 
   function upcomingCardHTML(g, i) {
@@ -2824,12 +2834,6 @@
 
     const bestPick = sortByExcitement(filtered)[0];
     let html = '';
-
-    function setScoreStr(g) {
-      if (!g.sets || g.sets.length === 0) return `${g.homeSets}–${g.awaySets}`;
-      const setStr = g.sets.map(s => `${s.h}-${s.a}`).join(', ');
-      return `${g.homeSets}–${g.awaySets} sets (${setStr})`;
-    }
 
     if (filtered.length === 0) {
       html += '<p class="no-games">Nothing in this filter right now.</p>';
@@ -3047,7 +3051,7 @@
 
   // Hash routing — spoilerfreescores.com/#cricket lands on cricket tab
   const hashSport = window.location.hash.replace('#', '').toLowerCase();
-  const validSports = ['football','cricket','darts','tennis','nhl','nba','mlb','nfl'];
+  const validSports = ['football','cricket','wnba','darts','tennis','nhl','nba','mlb','nfl'];
   if (hashSport && validSports.includes(hashSport)) activeSport = hashSport;
 
   function switchSport(sport, tabEl) {
@@ -3076,5 +3080,8 @@
   }
 
 </script>
+<footer style="text-align:center;padding:32px 16px 24px;font-size:11px;color:var(--muted);">
+  Made with ♥ · <a href="mailto:sfreescores@gmail.com" style="color:var(--muted);text-decoration:underline;text-underline-offset:2px;">sfreescores@gmail.com</a>
+</footer>
 </body>
 </html>
