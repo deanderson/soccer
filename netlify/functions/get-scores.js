@@ -191,9 +191,15 @@ exports.handler = async function (event, context) {
               : UPCOMING_STATUSES.has(status) ? "upcoming"
               : "other",
         ts: date.getTime(),
+        period: ev.status?.period ?? null,
       };
       if (broadcast     !== undefined) out.broadcast     = broadcast;
       if (geoBroadcasts !== undefined) out.geoBroadcasts = geoBroadcasts;
+      // MLB: pass through inning-by-inning linescores for drama analysis
+      if (leagueName === 'MLB') {
+        out.homeLinescores = (home?.linescores || []).map(l => parseInt(l.value ?? 0, 10));
+        out.awayLinescores = (away?.linescores || []).map(l => parseInt(l.value ?? 0, 10));
+      }
       return out;
     });
   }
@@ -773,6 +779,32 @@ exports.handler = async function (event, context) {
     // Statuses to skip
     const SKIP_STATUSES = new Set(["STATUS_RETIRED", "STATUS_WALKOVER", "STATUS_ABANDONED"]);
 
+    // Fetch ATP + WTA rankings and build athleteId → rank maps.
+    // ESPN athlete ID is embedded in the player card href:
+    // "https://www.espn.com/tennis/player/_/id/2383/daniil-medvedev" → 2383
+    async function fetchRankings(slug) {
+      try {
+        const data = await fetchESPN(`${BASE}/tennis/${slug}/rankings?limit=25`);
+        const ranks = data?.rankings?.[0]?.ranks || [];
+        const map = new Map();
+        for (const entry of ranks) {
+          const links = entry.athlete?.links || [];
+          const href = links.find(l => l.rel?.includes('athlete'))?.href || '';
+          const idMatch = href.match(/\/id\/(\d+)\//);
+          if (idMatch) map.set(idMatch[1], entry.current);
+        }
+        return map;
+      } catch { return new Map(); }
+    }
+
+    // Extract ESPN athlete ID from player card href
+    function athleteId(competitor) {
+      const links = competitor?.athlete?.links || [];
+      const href = links.find(l => l.rel?.includes('athlete'))?.href || '';
+      const m = href.match(/\/id\/(\d+)\//);
+      return m ? m[1] : null;
+    }
+
     async function fetchTennisLeague(slug, leagueName) {
       // ESPN tennis scoreboard returns tournaments with nested groupings/competitions
       const data = await fetchESPN(
@@ -843,9 +875,11 @@ exports.handler = async function (event, context) {
             const round = comp.round?.displayName || "";
             const utcDate = `${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,'0')}-${String(date.getUTCDate()).padStart(2,'0')}`;
 
-            // Player names
+            // Player names and IDs (IDs stripped after rank annotation)
             const home = p1?.athlete?.displayName || p1?.roster?.shortDisplayName || "TBD";
             const away = p2?.athlete?.displayName || p2?.roster?.shortDisplayName || "TBD";
+            const _homeId = athleteId(p1);
+            const _awayId = athleteId(p2);
 
             const match = {
               home, away, homeSets, awaySets, sets,
@@ -853,7 +887,7 @@ exports.handler = async function (event, context) {
               date: date.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" }),
               dateKey: utcDate,
               time: date.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit", timeZoneName:"short" }),
-              ts,
+              ts, _homeId, _awayId,
             };
 
             if (isCompleted && ts >= threeWeeksAgo) {
@@ -871,9 +905,26 @@ exports.handler = async function (event, context) {
       };
     }
 
-    const [atp, wta] = await Promise.all(
-      TENNIS_LEAGUES.map(l => fetchTennisLeague(l.slug, l.name))
-    );
+    const [atpRanks, wtaRanks, atp, wta] = await Promise.all([
+      fetchRankings('atp'),
+      fetchRankings('wta'),
+      fetchTennisLeague('atp', 'ATP'),
+      fetchTennisLeague('wta', 'WTA'),
+    ]);
+
+    // Annotate matches with player ranks now that ranking maps are available
+    function annotateRanks(matches, rankMap) {
+      return matches.map(m => {
+        const hr = rankMap.get(m._homeId) ?? null;
+        const ar = rankMap.get(m._awayId) ?? null;
+        const { _homeId, _awayId, ...rest } = m;
+        return { ...rest, homeRank: hr, awayRank: ar };
+      });
+    }
+    atp.recent   = annotateRanks(atp.recent,   atpRanks);
+    atp.upcoming = annotateRanks(atp.upcoming,  atpRanks);
+    wta.recent   = annotateRanks(wta.recent,    wtaRanks);
+    wta.upcoming = annotateRanks(wta.upcoming,  wtaRanks);
 
     // Dedup across leagues — Madrid Open and other combined events appear in both ATP and WTA feeds
     function dedupMatches(matches) {
@@ -1197,7 +1248,7 @@ exports.handler = async function (event, context) {
   }
 
   // One score drives everything: category, ranking, Top Picks order.
-  // Thresholds: ≥70 = Must Watch, 40-69 = Watchable, <40 = Skip
+  // Thresholds vary by sport — see per-sport mustWatch/watchable constants below (~line 1405).
   const SCORE_MUST_WATCH = 60; // ≥60 = Must Watch, 38-59 = Watchable, <38 = Skip
   const SCORE_WATCHABLE  = 38;
 
@@ -1313,6 +1364,21 @@ exports.handler = async function (event, context) {
       const hasBagel = (g.sets || []).some(s => s.h === 0 || s.a === 0);
       if (hasBagel) { factors.push({ label: 'Bagel set', points: -15 }); score -= 15; }
 
+      // Player rank bonus — top 20 ATP/WTA players add star power.
+      // Bonus = 10.5 - rank*0.5: rank 1 → +10, rank 10 → +5.5, rank 20 → +0.5
+      // Both players' bonuses stack — Sinner vs Alcaraz adds ~+19.5.
+      const calcRankBonus = r => (!r || r > 20) ? 0 : parseFloat((10.5 - r * 0.5).toFixed(1));
+      const hrBonus = calcRankBonus(g.homeRank);
+      const arBonus = calcRankBonus(g.awayRank);
+      const totalRankBonus = Math.round((hrBonus + arBonus) * 10) / 10;
+      if (totalRankBonus > 0) {
+        const label = (g.homeRank && g.homeRank <= 20 && g.awayRank && g.awayRank <= 20)
+          ? `#${g.homeRank} vs #${g.awayRank}`
+          : (g.homeRank && g.homeRank <= 20) ? `#${g.homeRank} ranked` : `#${g.awayRank} ranked`;
+        factors.push({ label, points: totalRankBonus });
+        score += totalRankBonus;
+      }
+
     } else if (sport === 'cricket') {
       if (g.maxInnings >= 200) { factors.push({ label: `${g.maxInnings} run innings`, points: 25 }); score += 25; }
       if (g.resultType === 'wickets') {
@@ -1331,12 +1397,20 @@ exports.handler = async function (event, context) {
       if (hasHighScoring) { factors.push({ label: '⚡ High scoring', points: 12 }); score += 12; }
 
     } else if (sport === 'mlb') {
-      if      (total >= 12) { factors.push({ label: `${total} runs`, points: 20 }); score += 20; }
+      if      (total >= 12) { factors.push({ label: `${total} runs`, points: 25 }); score += 25; }
       else if (total >= 8)  { factors.push({ label: `${total} runs`, points: 12 }); score += 12; }
       else if (total <= 3)  { factors.push({ label: 'Low scoring', points: -15 }); score -= 15; }
-      if      (diff === 0 || diff === 1) { factors.push({ label: `${diff === 0 ? 'Tie' : '1 run margin'}`, points: 28 }); score += 28; }
-      else if (diff === 2)               { factors.push({ label: '2 run margin', points: 14 }); score += 14; }
+      if      (diff === 0 || diff === 1) { factors.push({ label: `${diff === 0 ? 'Tie' : '1 run margin'}`, points: 35 }); score += 35; }
+      else if (diff === 2)               { factors.push({ label: '2 run margin', points: 18 }); score += 18; }
       else if (diff >= 5)                { factors.push({ label: 'Large margin', points: -40 }); score -= 40; }
+      if (g.period > 9) { factors.push({ label: `Extra innings (${g.period})`, points: 20 }); score += 20; }
+
+      // Linescore-derived drama signals
+      const lc = g.debug?.leadChanges ?? 0;
+      if      (lc >= 4) { factors.push({ label: `${lc} lead changes`, points: 20 }); score += 20; }
+      else if (lc >= 2) { factors.push({ label: `${lc} lead changes`, points: 10 }); score += 10; }
+      if (g.debug?.hadComeback)  { factors.push({ label: '⚡ Comeback', points: 18 }); score += 18; }
+      if (g.debug?.walkOff)      { factors.push({ label: '⚡ Walk-off', points: 15 }); score += 15; }
 
     } else if (sport === 'nfl') {
       if      (diff <= 3)  { factors.push({ label: `${diff} pt margin`, points: 30 }); score += 30; }
@@ -1407,8 +1481,8 @@ exports.handler = async function (event, context) {
                     : sport === 'nba'      ? 65
                     : sport === 'wnba'     ? 65
                     : sport === 'cricket'  ? 38
-                    : sport === 'mlb'      ? 45
-                    : sport === 'tennis'   ? 65
+                    : sport === 'mlb'      ? 50
+                    : sport === 'tennis'   ? 58
                     : sport === 'darts'    ? 50
                     : 60;
     const watchable = sport === 'football' ? 38
@@ -1438,6 +1512,57 @@ exports.handler = async function (event, context) {
   }
 
   // Attach confidence + derived category to all games
+  // ── MLB LINESCORE ENRICHMENT ──────────────────────────────────────────
+  // Derives drama signals from inning-by-inning scores.
+  // Called after normalizeEvents, before attachConfidence.
+  function enrichMLB(games) {
+    return games.map(g => {
+      const hl = g.homeLinescores || [];
+      const al = g.awayLinescores || [];
+      if (!hl.length && !al.length) return g;
+
+      // Build cumulative score per inning
+      let hCum = 0, aCum = 0;
+      let leadChanges = 0;
+      let maxDeficit = 0;       // max deficit the winning team overcame
+      let prevLead = 0;         // positive = home leading, negative = away leading
+      const winner = g.h > g.a ? 'home' : 'away';
+
+      const innings = Math.max(hl.length, al.length);
+      for (let i = 0; i < innings; i++) {
+        hCum += hl[i] ?? 0;
+        aCum += al[i] ?? 0;
+        const lead = hCum - aCum;
+        // Lead change: sign flipped (excluding ties as non-changes)
+        if (prevLead !== 0 && lead !== 0 && Math.sign(lead) !== Math.sign(prevLead)) {
+          leadChanges++;
+        }
+        // Track max deficit for the eventual winner
+        if (winner === 'home' && lead < 0) maxDeficit = Math.max(maxDeficit, -lead);
+        if (winner === 'away' && lead > 0) maxDeficit = Math.max(maxDeficit, lead);
+        if (lead !== 0) prevLead = lead;
+      }
+
+      const hadComeback = maxDeficit >= 3;
+
+      // Walk-off: home team scores in the final inning to win
+      // Home team wins and scored in their last at-bat
+      const lastHomeInning = hl[hl.length - 1] ?? 0;
+      const walkOff = g.h > g.a && lastHomeInning > 0 && hl.length >= 9;
+
+      return {
+        ...g,
+        debug: {
+          ...(g.debug || {}),
+          leadChanges,
+          maxDeficit,
+          hadComeback,
+          walkOff,
+        },
+      };
+    });
+  }
+
   function attachConfidence(games, sport) {
     return games.map(g => {
       const confidence = computeConfidence(g, sport);
@@ -1488,7 +1613,7 @@ exports.handler = async function (event, context) {
   const SPORT_FETCHERS = {
     football: async () => { const r = await fetchAllSoccer();        return { soccer:  { ...r, recent: attachConfidence(r.recent,  'football') } }; },
     nhl:      async () => { const r = await fetchNHLWithTimeline();   return { nhl:     { ...r, recent: attachConfidence(r.recent,  'nhl')      } }; },
-    mlb:      async () => { const r = await fetchSport(`${BASE}/baseball/mlb/scoreboard`, "MLB", 15); return { mlb: { ...r, recent: attachConfidence(r.recent, 'mlb') } }; },
+    mlb:      async () => { const r = await fetchSport(`${BASE}/baseball/mlb/scoreboard`, "MLB", 15); const enriched = enrichMLB(r.recent); return { mlb: { ...r, recent: attachConfidence(enriched, 'mlb') } }; },
     nba:      async () => { const r = await fetchNBAWithTimeline();   return { nba:     { ...r, recent: attachConfidence(r.recent,  'nba')      } }; },
     wnba:     async () => { const r = await fetchWNBAWithTimeline();  return { wnba:    { ...r, recent: attachConfidence(r.recent,  'wnba')     } }; },
     nfl:      async () => { const r = await fetchSport(`${BASE}/football/nfl/scoreboard`, "NFL");     return { nfl: { ...r, recent: attachConfidence(r.recent, 'nfl') } }; },
@@ -1515,7 +1640,7 @@ exports.handler = async function (event, context) {
     body = {
       soccer:  { ...soccer,  recent: attachConfidence(soccer.recent,  'football') },
       nhl:     { ...nhl,     recent: attachConfidence(nhl.recent,     'nhl')      },
-      mlb:     { ...mlb,     recent: attachConfidence(mlb.recent,     'mlb')      },
+      mlb:     { ...mlb,     recent: attachConfidence(enrichMLB(mlb.recent),     'mlb')      },
       nba:     { ...nba,     recent: attachConfidence(nba.recent,     'nba')      },
       wnba:    { ...wnba,    recent: attachConfidence(wnba.recent,    'wnba')     },
       nfl:     { ...nfl,     recent: attachConfidence(nfl.recent,     'nfl')      },
