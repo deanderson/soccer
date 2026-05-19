@@ -1403,11 +1403,14 @@
 
     // DRAMA SIGNALS — these are great for users
     '⚡ Overtime':      'Went to overtime',
+    '⚡ 2x Overtime':   'Went to double overtime',
+    '⚡ 3x Overtime':   'Triple overtime',
     '⚡ Back & forth':  'Back-and-forth game',
     '⚡ Last over finish': 'Came down to the last over',
     '⚡ Close chase':   'Tense run chase',
     '⚡ High scoring':  'Lots of runs scored',
     '⚡ 9-darter on night': 'A nine-darter happened',
+    'Red card':         'A player was sent off',
 
     // CLOSENESS SIGNALS
     'Deciding leg':    'Went to a deciding leg',
@@ -1448,68 +1451,106 @@
   // in football (NFL). A "171 pt" total is high in WNBA but low in NBA. So this
   // function takes the sport to apply proportional thresholds where relevant.
   function formatDynamicLabel(label, sport) {
-    // Score totals: "5 goals", "230 pts", "12 runs"
+    // ── Score totals ─────────────────────────────────────────────────────
     let m = label.match(/^(\d+)\s+(goals|pts|runs)$/);
     if (m) {
-      const [, n, unit] = m;
-      const num = parseInt(n, 10);
-      if (unit === 'goals' && num >= 5) return 'High-scoring game';
-      if (unit === 'goals')             return null;
+      const num = parseInt(m[1], 10);
+      const unit = m[2];
+
+      if (unit === 'goals') {
+        // Soccer: 5+ goals is high, 7+ is wild. NHL: 6+ is high, 8+ is wild.
+        if (sport === 'nhl' || sport === 'hockey') {
+          if (num >= 8) return 'Goals galore';
+          if (num >= 6) return 'High-scoring game';
+          return null;
+        }
+        // Soccer
+        if (num >= 7) return 'Goals galore';
+        if (num >= 5) return 'High-scoring game';
+        return null;
+      }
+
       if (unit === 'pts') {
         if (sport === 'wnba') {
           if (num >= 190) return 'They could not stop scoring';
           if (num >= 175) return 'Plenty of offense';
           return null;
         }
-        if (sport === 'nba')  return num >= 230 ? 'They could not stop scoring' : num >= 210 ? 'High-scoring game' : null;
-        if (sport === 'nfl')  return num >= 50  ? 'High-scoring game' : null;
+        if (sport === 'nba') {
+          if (num >= 240) return 'They could not stop scoring';
+          if (num >= 220) return 'Plenty of offense';
+          return null;
+        }
+        if (sport === 'nfl') {
+          if (num >= 60) return 'They could not stop scoring';
+          if (num >= 50) return 'High-scoring game';
+          return null;
+        }
         return num >= 50 ? 'High-scoring game' : null;
       }
-      if (unit === 'runs') return num >= 12 ? 'High-scoring game' : null;
+
+      if (unit === 'runs') {
+        if (num >= 18) return 'Lots of runs scored';
+        if (num >= 12) return 'Plenty of offense';
+        return null;
+      }
     }
-    // Margins
+
+    // ── Margins ──────────────────────────────────────────────────────────
     m = label.match(/^(\d+)\s+(goal|pt|run)\s+margin$/);
     if (m) {
       const n = parseInt(m[1], 10);
       const unit = m[2];
+
       if (unit === 'goal') {
-        if (n <= 2) return 'Close finish';
+        // Both soccer and NHL — 1 is close, 2 is competitive
+        if (n === 1) return 'Down to the wire';
+        if (n === 2) return 'Competitive finish';
         return null;
       }
+
       if (unit === 'run') {
-        if (n <= 2) return 'Close finish';
+        if (n === 1) return 'Down to the wire';
+        if (n === 2) return 'Competitive finish';
         return null;
       }
+
       if (unit === 'pt') {
         if (sport === 'nba' || sport === 'wnba') {
-          if (n <= 5)  return 'Down to the wire';
+          if (n <= 3)  return 'Down to the wire';
+          if (n <= 5)  return 'Close finish';
           if (n <= 10) return 'Came down to the closing minutes';
           return null;
         }
         if (sport === 'nfl') {
-          if (n <= 7) return 'Down to the wire';
+          if (n <= 3) return 'Down to the wire';
+          if (n <= 7) return 'Came down to the closing minutes';
           return null;
         }
         if (n <= 7) return 'Close finish';
         return null;
       }
     }
-    // Cricket result
+
+    // ── Cricket result ───────────────────────────────────────────────────
     m = label.match(/^Won by (\d+) (wkts|runs)$/);
     if (m) {
       const n = parseInt(m[1], 10);
       const unit = m[2];
       if (unit === 'wkts') {
+        if (n <= 2) return 'Down to the wire';
         if (n <= 4) return 'Close finish';
         return 'Comfortable margin';
       }
       if (unit === 'runs') {
+        if (n <= 10) return 'Down to the wire';
         if (n <= 20) return 'Close finish';
         return 'Comfortable margin';
       }
       return null;
     }
-    // Lead changes
+
+    // ── Lead changes ─────────────────────────────────────────────────────
     m = label.match(/^(\d+) lead changes$/);
     if (m) {
       const n = parseInt(m[1], 10);
@@ -1518,11 +1559,31 @@
       if (n >= 5)  return 'Multiple lead changes';
       return null;
     }
-    // Cricket innings total
+
+    // ── Cricket innings total ────────────────────────────────────────────
     m = label.match(/^(\d+) run innings$/);
+    if (m) return 'A big innings total';
+
+    // ── MLB extra innings ────────────────────────────────────────────────
+    m = label.match(/^Extra innings \((\d+)\)$/);
     if (m) {
-      return 'A big innings total';
+      const innings = parseInt(m[1], 10);
+      if (innings >= 12) return 'Marathon extra innings';
+      return 'Went to extra innings';
     }
+
+    // ── Red cards ────────────────────────────────────────────────────────
+    m = label.match(/^(\d+) red cards$/);
+    if (m) return parseInt(m[1], 10) >= 3 ? 'Multiple players sent off' : 'Two players sent off';
+
+    // ── Tie scores ───────────────────────────────────────────────────────
+    if (label === 'Tie' || label === 'Tied/OT') return 'Down to the wire';
+    if (label === 'Draw') {
+      // Draws in soccer can be exciting (high-scoring) or boring (low). The
+      // overall context will already signal that via goals total.
+      return null;
+    }
+
     return null;
   }
 

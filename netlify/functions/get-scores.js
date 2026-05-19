@@ -350,6 +350,15 @@ exports.handler = async function (event, context) {
     const diff  = Math.abs(h - a);
     const total = h + a;
 
+    // Red cards — count sendings off. We only credit them as a bonus signal
+    // later if the game is otherwise close (diff <= 2), since a red card in
+    // a 5-0 blowout doesn't make it more watchable.
+    const redCards = keyEvents.filter(e => {
+      const type = (e.type?.text || '').toLowerCase();
+      const text = (e.text || '').toLowerCase();
+      return type === 'red card' || type.includes('red card') || text.includes('red card');
+    }).length;
+
     // Late goal detection — only meaningful late goals (changed or decided the result)
     const lateGoals = goals.filter(g => {
       const min = parseMinute(g.clock?.displayValue);
@@ -416,16 +425,16 @@ exports.handler = async function (event, context) {
     if (leadChanges >= 2)    hints.push('back-and-forth');
 
     // Always return a result for enriched games — even if just late drama
-    if (total >= 6)                                        return { cat: 'scorefest',   hints };
-    if (hadComeback)                                       return { cat: 'watchworthy', hints };
-    if (leadChanges >= 2)                                  return { cat: 'watchworthy', hints };
-    if (hasLateDrama && diff <= 2)                         return { cat: 'watchworthy', hints };
-    if (total >= 4 && diff <= 1)                           return { cat: 'watchworthy', hints };
-    if (diff >= 3 && !hasLateDrama && leadChanges === 0)   return { cat: 'blowout',     hints };
-    if (total <= 1)                                        return { cat: 'defensive',   hints };
-    if (diff <= 1)                                         return { cat: 'watchable',   hints };
+    if (total >= 6)                                        return { cat: 'scorefest',   hints, redCards };
+    if (hadComeback)                                       return { cat: 'watchworthy', hints, redCards };
+    if (leadChanges >= 2)                                  return { cat: 'watchworthy', hints, redCards };
+    if (hasLateDrama && diff <= 2)                         return { cat: 'watchworthy', hints, redCards };
+    if (total >= 4 && diff <= 1)                           return { cat: 'watchworthy', hints, redCards };
+    if (diff >= 3 && !hasLateDrama && leadChanges === 0)   return { cat: 'blowout',     hints, redCards };
+    if (total <= 1)                                        return { cat: 'defensive',   hints, redCards };
+    if (diff <= 1)                                         return { cat: 'watchable',   hints, redCards };
 
-    return { cat: null, hints }; // return hints even if no category override
+    return { cat: null, hints, redCards };
   }
 
   async function enrichSoccerWithTimeline(games, slug, cap) {
@@ -460,6 +469,7 @@ exports.handler = async function (event, context) {
       const r = overrides.get(g.id);
       const enriched = { ...g, dramaHints: r.hints || [] };
       if (r.cat) enriched.timelineCat = r.cat;
+      if (typeof r.redCards === 'number' && r.redCards > 0) enriched.redCards = r.redCards;
       return enriched;
     });
   }
@@ -1295,6 +1305,16 @@ exports.handler = async function (event, context) {
       if (hasComeback)  { factors.push({ label: '⚡ Comeback', points: 25 }); score += 25; }
       if (hasLateDrama) { factors.push({ label: '⚡ Late drama', points: 18 }); score += 18; }
       if (hasBackForth) { factors.push({ label: '⚡ Back & forth', points: 18 }); score += 18; }
+
+      // Red cards — small positive bonus. The blowout penalty (-40 above)
+      // ensures these can never promote a one-sided game to Must Watch.
+      const reds = g.redCards || 0;
+      if (reds > 0) {
+        const pts = reds >= 2 ? 12 : 6;
+        factors.push({ label: reds >= 2 ? `${reds} red cards` : 'Red card', points: pts });
+        score += pts;
+      }
+
       const leagueTier = { 'Champions League': 1, 'Premier League': 1, 'La Liga': 2, 'Bundesliga': 2, 'Serie A': 2 };
       const tier = leagueTier[g.league];
       if      (tier === 1) { factors.push({ label: g.league, points: 6 }); score += 6; }
@@ -1323,7 +1343,12 @@ exports.handler = async function (event, context) {
       else if (diff <= 10) { factors.push({ label: `${diff} pt margin`, points: 15 }); score += 15; }
       else if (diff >= 20) { factors.push({ label: 'Blowout margin', points: -40 }); score -= 40; }
       else if (diff >= 12) { factors.push({ label: 'Large margin', points: -10 }); score -= 10; }
-      if (hasOT)       { factors.push({ label: '⚡ Overtime', points: 20 }); score += 20; }
+      if (hasOT || (g.period ?? 4) > 4) {
+        const otPeriods = Math.max(1, (g.period ?? 5) - 4);
+        const otPts = otPeriods >= 2 ? 30 : 20;
+        const otLabel = otPeriods >= 2 ? `⚡ ${otPeriods}x Overtime` : '⚡ Overtime';
+        factors.push({ label: otLabel, points: otPts }); score += otPts;
+      }
       if (hasComeback) { factors.push({ label: '⚡ Comeback', points: 20 }); score += 20; }
       const lc = g.debug?.leadChanges ?? 0;
       if      (lc >= 15) { factors.push({ label: `${lc} lead changes`, points: 25 }); score += 25; }
@@ -1339,7 +1364,12 @@ exports.handler = async function (event, context) {
       else if (diff <= 7)  { factors.push({ label: `${diff} pt margin`, points: 15 }); score += 15; }
       else if (diff >= 15) { factors.push({ label: 'Blowout margin', points: -40 }); score -= 40; }
       else if (diff >= 9)  { factors.push({ label: 'Large margin', points: -10 }); score -= 10; }
-      if (hasOT)       { factors.push({ label: '⚡ Overtime', points: 20 }); score += 20; }
+      if (hasOT || (g.period ?? 4) > 4) {
+        const otPeriods = Math.max(1, (g.period ?? 5) - 4);
+        const otPts = otPeriods >= 2 ? 30 : 20;
+        const otLabel = otPeriods >= 2 ? `⚡ ${otPeriods}x Overtime` : '⚡ Overtime';
+        factors.push({ label: otLabel, points: otPts }); score += otPts;
+      }
       if (hasComeback) { factors.push({ label: '⚡ Comeback', points: 20 }); score += 20; }
       const lc = g.debug?.leadChanges ?? 0;
       if      (lc >= 12) { factors.push({ label: `${lc} lead changes`, points: 25 }); score += 25; }
