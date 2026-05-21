@@ -974,13 +974,40 @@
 
   // ── LAST UPDATED (feature #6) ──────────────────────────────────────────
   let loadedAt = null;
+
   function updateLastUpdatedText() {
     if (!loadedAt) return;
     const mins = Math.floor((Date.now() - loadedAt) / 60000);
-    const txt = mins < 1 ? 'Just updated' : mins === 1 ? 'Updated 1 min ago' : `Updated ${mins} mins ago`;
+    let txt;
+    if (mins < 1)    txt = 'Just updated';
+    else if (mins === 1) txt = 'Updated 1 min ago';
+    else if (mins < 60)  txt = `Updated ${mins} mins ago`;
+    else if (mins < 480) txt = `Updated ${Math.floor(mins/60)}h ago`;
+    else                 txt = 'Updated a while ago';
     const el = document.getElementById('last-updated-text');
     if (el) el.textContent = txt;
   }
+
+  // Silent auto-refresh: check every 5 minutes if the blob is newer than
+  // what we loaded. If so, silently reload data and re-render.
+  // Only refreshes if the page has been visible for at least 2 minutes
+  // to avoid disrupting someone actively reading.
+  async function checkForNewerBlob() {
+    if (!loadedAt) return;
+    try {
+      const res = await fetch(`/.netlify/functions/get-scores?sport=all&_poll=${Date.now()}`, { method: 'HEAD' });
+      const fetchedAtHdr = res.headers.get('X-Fetched-At');
+      if (!fetchedAtHdr) return;
+      const serverFetchedAt = new Date(fetchedAtHdr).getTime();
+      if (serverFetchedAt > loadedAt) {
+        await loadScores();
+      }
+    } catch (e) {
+      // Network blip — try again next interval
+    }
+  }
+
+  setInterval(checkForNewerBlob, 5 * 60 * 1000); // every 5 minutes
 
   // ── LOAD ───────────────────────────────────────────────────────────────
   // Map from frontend sport key to API response key
@@ -1402,15 +1429,17 @@
     '⚡ Late drama':    null,   // softly hints at when drama happened — borderline; suppress to be safe
 
     // DRAMA SIGNALS — these are great for users
-    '⚡ Overtime':      'Went to overtime',
-    '⚡ 2x Overtime':   'Went to double overtime',
-    '⚡ 3x Overtime':   'Triple overtime',
+    '⚡ Overtime':          'Went to overtime',
+    '⚡ Exciting overtime': 'Exciting overtime finish',
     '⚡ Back & forth':  'Back-and-forth game',
     '⚡ Last over finish': 'Came down to the last over',
     '⚡ Close chase':   'Tense run chase',
     '⚡ High scoring':  'Lots of runs scored',
     '⚡ 9-darter on night': 'A nine-darter happened',
     'Red card':         'A player was sent off',
+    '⭐ Standout 40+ pt game': 'A player went off (40+ pts)',
+    '⭐ Standout 30+ pt game': 'Standout individual performance',
+    '⭐ Bench scorer 20+':     'A bench player put up big numbers',
 
     // CLOSENESS SIGNALS
     'Deciding leg':    'Went to a deciding leg',
@@ -1595,6 +1624,12 @@
       Math.abs(b.points || 0) - Math.abs(a.points || 0)
     );
 
+    // Check if game had meaningful lead changes — if not, margin phrases
+    // like "Down to the wire" are misleading (one team may have led wire-to-wire)
+    const lcFactor = factors.find(f => f.label?.match(/^(\d+) lead changes$/));
+    const leadChanges = lcFactor ? parseInt(lcFactor.label, 10) : 0;
+    const hasRealBackAndForth = leadChanges >= 3;
+
     const phrases = [];
     const seen = new Set();
     for (const f of ranked) {
@@ -1603,6 +1638,14 @@
         phrase = INSIGHT_MAP[f.label];   // may be null = suppress
       } else {
         phrase = formatDynamicLabel(f.label, sport);
+      }
+      // Suppress "close finish" / "down to the wire" phrases when there were
+      // no real lead changes — a team that led wire-to-wire and won by 3
+      // isn't a nail-biter even if the margin looks close.
+      // Only apply to WNBA/NBA where we have reliable lead change data.
+      if (phrase && (phrase === 'Down to the wire' || phrase === 'Close finish' || phrase === 'Competitive finish')
+          && (sport === 'wnba' || sport === 'nba') && !hasRealBackAndForth) {
+        phrase = null;
       }
       if (!phrase) continue;
       if (seen.has(phrase)) continue;     // dedupe (e.g. multiple "High-scoring")
@@ -2377,7 +2420,7 @@
             <span class="${f.points >= 0 ? 'pos' : 'neg'}">${f.points >= 0 ? '+' : ''}${f.points}</span>
           </div>`).join('')}
         ${g.debug ? `<div class="debug-factor" style="margin-top:4px;color:var(--blue)">
-          <span>LC:${g.debug.leadChanges ?? '—'} · Lead:${g.debug.largestLead ?? '—'}${g.debug.hasOT ? ' · OT' : ''}${g.debug.hadComeback ? ' · Comeback' : ''}${(g.debug.fouledOut != null || g.debug.fiveFouls != null) ? ` · 6PF:${g.debug.fouledOut ?? 0} · 5PF:${g.debug.fiveFouls ?? 0}` : ''}</span>
+          <span>LC:${g.debug.leadChanges ?? '—'} · Lead:${g.debug.largestLead ?? '—'}${g.debug.hasOT ? ' · OT' : ''}${g.debug.hadComeback ? ' · Comeback' : ''}${(g.debug.fouledOut != null || g.debug.fiveFouls != null) ? ` · 6PF:${g.debug.fouledOut ?? 0} · 5PF:${g.debug.fiveFouls ?? 0}` : ''}${g.debug.topScorer ? ` · ${g.debug.topScorer}` : ''}${g.debug.benchStandout ? ` · ${g.debug.benchStandout}` : ''}</span>
         </div>` : ''}
       </div>`;
   }

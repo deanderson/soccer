@@ -166,8 +166,23 @@ exports.handler = async function (event, context) {
       const away   = comp?.competitors?.find(c => c.homeAway === "away");
       const status = ev.status?.type?.name ?? "";
       const date   = new Date(ev.date);
-      // Use UTC date as the grouping key so all leagues bucket consistently
-      const utcDate = `${date.getUTCFullYear()}-${String(date.getUTCMonth()+1).padStart(2,'0')}-${String(date.getUTCDate()).padStart(2,'0')}`;
+      // US sports primarily play in ET, so we anchor both the grouping key
+      // and the display date to ET. Otherwise late-night ET games (which are
+      // already past midnight UTC) get bucketed to the next calendar day,
+      // showing a "Tue May 13" game on the "Wed May 14" page.
+      const etFormatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+      });
+      const etParts = etFormatter.formatToParts(date).reduce((acc, p) => {
+        if (p.type !== 'literal') acc[p.type] = p.value;
+        return acc;
+      }, {});
+      const dateKey = `${etParts.year}-${etParts.month}-${etParts.day}`;
+      const displayDate = date.toLocaleDateString("en-US", {
+        timeZone: 'America/New_York',
+        weekday: "short", month: "short", day: "numeric",
+      });
       // Broadcast data — only attached for sports in BROADCAST_SPORTS.
       // ESPN provides:
       //  - broadcast (string): populated only for nationally televised
@@ -183,8 +198,8 @@ exports.handler = async function (event, context) {
         away:   away?.team?.displayName ?? "TBD",
         h:      parseInt(home?.score ?? "0", 10),
         a:      parseInt(away?.score ?? "0", 10),
-        date:   date.toLocaleDateString("en-US", { weekday:"short", month:"short", day:"numeric" }),
-        dateKey: utcDate,
+        date:   displayDate,
+        dateKey: dateKey,
         time:   date.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit", timeZoneName:"short" }),
         league: leagueName,
         status: FINAL_STATUSES.has(status)    ? "final"
@@ -1129,19 +1144,32 @@ exports.handler = async function (event, context) {
 
     // Foul trouble: count players at 5 PF (managed minutes) and 6 PF (fouled out).
     // 5+ PF disrupts lineups even when coach keeps them in; foul-outs remove a player entirely.
+    // Star performance: detect 30+, 40+ pt games and 20+ pt bench scorers.
     let fouledOut = 0, fiveFouls = 0;
+    let topScorer = null;  // { name, pts }
+    let benchStandout = null;  // { name, pts } — non-starter with 20+
     for (const teamBlock of (summary.boxscore?.players || [])) {
       const statsBlock = (teamBlock.statistics || [])[0];
       if (!statsBlock) continue;
-      const pfIdx = (statsBlock.keys || []).indexOf('fouls');
-      if (pfIdx < 0) continue;
+      const pfIdx  = (statsBlock.keys || []).indexOf('fouls');
+      const ptsIdx = (statsBlock.keys || []).indexOf('points');
       for (const ath of (statsBlock.athletes || [])) {
         if (ath.didNotPlay) continue;
         const s = ath.stats || [];
         if (!s.length) continue;
-        const pf = parseInt(s[pfIdx], 10) || 0;
-        if (pf >= 6) fouledOut++;
-        else if (pf === 5) fiveFouls++;
+        if (pfIdx >= 0) {
+          const pf = parseInt(s[pfIdx], 10) || 0;
+          if (pf >= 6) fouledOut++;
+          else if (pf === 5) fiveFouls++;
+        }
+        if (ptsIdx >= 0) {
+          const pts = parseInt(s[ptsIdx], 10) || 0;
+          const name = ath.athlete?.displayName || '';
+          if (!topScorer || pts > topScorer.pts) topScorer = { name, pts };
+          if (!ath.starter && pts >= 20 && (!benchStandout || pts > benchStandout.pts)) {
+            benchStandout = { name, pts };
+          }
+        }
       }
     }
 
@@ -1152,13 +1180,13 @@ exports.handler = async function (event, context) {
     const hadComeback = largestLead >= 8 && diff <= 5;
 
     // Score Fest: 170+ total and close (≤5 margin)
-    if (total >= 170 && diff <= 5) return { cat: 'scorefest', leadChanges, largestLead, hasOT, hadComeback, fouledOut, fiveFouls };
+    if (total >= 170 && diff <= 5) return { cat: 'scorefest', leadChanges, largestLead, hasOT, hadComeback, fouledOut, fiveFouls, topScorer, benchStandout };
 
-    if (hasOT) return { cat: 'watchworthy', leadChanges, largestLead, hasOT, hadComeback, fouledOut, fiveFouls };
-    if (hadComeback) return { cat: 'watchworthy', leadChanges, largestLead, hasOT, hadComeback, fouledOut, fiveFouls };
-    if (leadChanges >= 8 && diff <= 5) return { cat: 'watchworthy', leadChanges, largestLead, hasOT, hadComeback, fouledOut, fiveFouls };
+    if (hasOT) return { cat: 'watchworthy', leadChanges, largestLead, hasOT, hadComeback, fouledOut, fiveFouls, topScorer, benchStandout };
+    if (hadComeback) return { cat: 'watchworthy', leadChanges, largestLead, hasOT, hadComeback, fouledOut, fiveFouls, topScorer, benchStandout };
+    if (leadChanges >= 8 && diff <= 5) return { cat: 'watchworthy', leadChanges, largestLead, hasOT, hadComeback, fouledOut, fiveFouls, topScorer, benchStandout };
 
-    return { cat: null, leadChanges, largestLead, hasOT, hadComeback, fouledOut, fiveFouls };
+    return { cat: null, leadChanges, largestLead, hasOT, hadComeback, fouledOut, fiveFouls, topScorer, benchStandout };
   }
 
 
@@ -1256,6 +1284,8 @@ exports.handler = async function (event, context) {
         ...g,
         timelineCat: result.cat || undefined,
         dramaHints: hints,
+        topScorer: result.topScorer || undefined,
+        benchStandout: result.benchStandout || undefined,
         debug: {
           leadChanges: result.leadChanges,
           largestLead: result.largestLead,
@@ -1263,6 +1293,8 @@ exports.handler = async function (event, context) {
           hadComeback: result.hadComeback,
           fouledOut: result.fouledOut,
           fiveFouls: result.fiveFouls,
+          topScorer: result.topScorer ? `${result.topScorer.name} ${result.topScorer.pts}pt` : null,
+          benchStandout: result.benchStandout ? `${result.benchStandout.name} ${result.benchStandout.pts}pt off bench` : null,
         }
       };
     });
@@ -1329,7 +1361,12 @@ exports.handler = async function (event, context) {
       else if (diff === 1) { factors.push({ label: '1 goal margin', points: 25 }); score += 25; }
       else if (diff === 2) { factors.push({ label: '2 goal margin', points: 10 }); score += 10; }
       else                 { factors.push({ label: 'Large margin', points: -40 }); score -= 40; }
-      if (hasOT)        { factors.push({ label: '⚡ Overtime', points: 25 }); score += 25; }
+      if (hasOT) {
+        const otPeriods = Math.max(1, (g.period ?? 4) - 3);
+        const otPts = otPeriods >= 2 ? 35 : 25;
+        const otLabel = otPeriods >= 2 ? '⚡ Exciting overtime' : '⚡ Overtime';
+        factors.push({ label: otLabel, points: otPts }); score += otPts;
+      }
       if (hasComeback)  { factors.push({ label: '⚡ Comeback', points: 22 }); score += 22; }
       if (hasBackForth) { factors.push({ label: '⚡ Back & forth', points: 18 }); score += 18; }
       if (hasLateDrama) { factors.push({ label: '⚡ Late drama', points: 18 }); score += 18; }
@@ -1346,7 +1383,7 @@ exports.handler = async function (event, context) {
       if (hasOT || (g.period ?? 4) > 4) {
         const otPeriods = Math.max(1, (g.period ?? 5) - 4);
         const otPts = otPeriods >= 2 ? 30 : 20;
-        const otLabel = otPeriods >= 2 ? `⚡ ${otPeriods}x Overtime` : '⚡ Overtime';
+        const otLabel = otPeriods >= 2 ? '⚡ Exciting overtime' : '⚡ Overtime';
         factors.push({ label: otLabel, points: otPts }); score += otPts;
       }
       if (hasComeback) { factors.push({ label: '⚡ Comeback', points: 20 }); score += 20; }
@@ -1367,7 +1404,7 @@ exports.handler = async function (event, context) {
       if (hasOT || (g.period ?? 4) > 4) {
         const otPeriods = Math.max(1, (g.period ?? 5) - 4);
         const otPts = otPeriods >= 2 ? 30 : 20;
-        const otLabel = otPeriods >= 2 ? `⚡ ${otPeriods}x Overtime` : '⚡ Overtime';
+        const otLabel = otPeriods >= 2 ? '⚡ Exciting overtime' : '⚡ Overtime';
         factors.push({ label: otLabel, points: otPts }); score += otPts;
       }
       if (hasComeback) { factors.push({ label: '⚡ Comeback', points: 20 }); score += 20; }
@@ -1384,6 +1421,24 @@ exports.handler = async function (event, context) {
       if (foulPenalty > 0) {
         factors.push({ label: 'Foul trouble', points: -foulPenalty });
         score -= foulPenalty;
+      }
+
+      // Star performance: 30+ pt game is notable, 40+ is exceptional.
+      // Use spoiler-safe phrasing — no player names in the factor label,
+      // since names would reveal which team had the standout.
+      const topPts = g.topScorer?.pts ?? 0;
+      if (topPts >= 40) {
+        factors.push({ label: '⭐ Standout 40+ pt game', points: 15 });
+        score += 15;
+      } else if (topPts >= 30) {
+        factors.push({ label: '⭐ Standout 30+ pt game', points: 8 });
+        score += 8;
+      }
+      // Bench scorer 20+ — uncommon and a great storyline.
+      const benchPts = g.benchStandout?.pts ?? 0;
+      if (benchPts >= 20) {
+        factors.push({ label: '⭐ Bench scorer 20+', points: 8 });
+        score += 8;
       }
 
     } else if (sport === 'tennis') {
