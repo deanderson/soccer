@@ -279,6 +279,35 @@ exports.handler = async function (event, context) {
 
   // ESPN soccer scoreboard only accepts a single date (not a range).
   // Fetch 9 days back + 4 ahead = 13 requests per league (down from 15)
+  // ── SOCCER DETAILS PARSING ────────────────────────────────────────────
+  // Parses the `details` array from the ESPN scoreboard (no extra API call)
+  // to extract red cards, late goals, own goals, penalty shootouts, and
+  // penalty kick goals. Returns a signals object or null if no details.
+  function parseSoccerDetails(details, h, a) {
+    if (!Array.isArray(details) || details.length === 0) return null;
+
+    let redCards = 0;
+    let lateGoal = false;       // goal after 80'
+    let ninetyGoal = false;     // goal after 90' (injury time winner)
+    let ownGoal = false;
+    let penaltyShootout = false;
+    let penaltyGoal = false;
+
+    for (const det of details) {
+      const mins = (det.clock?.value ?? 0) / 60;
+      if (det.redCard)    redCards++;
+      if (det.ownGoal)    ownGoal = true;
+      if (det.shootout)   penaltyShootout = true;
+      if (det.scoringPlay) {
+        if (det.penaltyKick && !det.shootout) penaltyGoal = true;
+        if (mins >= 80) lateGoal = true;
+        if (mins >= 90) ninetyGoal = true;
+      }
+    }
+
+    return { redCards, lateGoal, ninetyGoal, ownGoal, penaltyShootout, penaltyGoal };
+  }
+
   async function fetchSoccerLeague(slug, leagueName) {
     const offsets = Array.from({ length: 13 }, (_, i) => i - 9);
 
@@ -289,6 +318,21 @@ exports.handler = async function (event, context) {
         )
       )
     );
+
+    // Build a details signals map keyed by event id BEFORE normalizing
+    const detailsSignals = new Map();
+    for (const data of dayResults) {
+      for (const ev of (data.events || [])) {
+        const comp = ev.competitions?.[0];
+        if (!comp?.details?.length) continue;
+        const home = comp.competitors?.find(c => c.homeAway === 'home');
+        const away = comp.competitors?.find(c => c.homeAway === 'away');
+        const h = parseInt(home?.score ?? '0', 10);
+        const a = parseInt(away?.score ?? '0', 10);
+        const signals = parseSoccerDetails(comp.details, h, a);
+        if (signals && ev.id) detailsSignals.set(ev.id, signals);
+      }
+    }
 
     // Flatten all events, deduplicate by event id
     const seen = new Set();
@@ -306,7 +350,19 @@ exports.handler = async function (event, context) {
 
     const recent = allEvents
       .filter(g => g.status === "final" && g.ts >= twoWeeksAgo)
-      .sort((a, b) => b.ts - a.ts); // newest first
+      .sort((a, b) => b.ts - a.ts)
+      .map(g => {
+        const sig = detailsSignals.get(g.id);
+        if (!sig) return g;
+        const out = { ...g };
+        if (sig.redCards > 0)       out.redCards = sig.redCards;
+        if (sig.lateGoal)           out.lateGoal = true;
+        if (sig.ninetyGoal)         out.ninetyGoal = true;
+        if (sig.ownGoal)            out.ownGoal = true;
+        if (sig.penaltyShootout)    out.penaltyShootout = true;
+        if (sig.penaltyGoal)        out.penaltyGoal = true;
+        return out;
+      }); // newest first
 
     const upcoming = allEvents
       .filter(g => g.status === "upcoming" && g.ts >= now)
@@ -1338,13 +1394,25 @@ exports.handler = async function (event, context) {
       if (hasLateDrama) { factors.push({ label: '⚡ Late drama', points: 18 }); score += 18; }
       if (hasBackForth) { factors.push({ label: '⚡ Back & forth', points: 18 }); score += 18; }
 
-      // Red cards — small positive bonus. The blowout penalty (-40 above)
-      // ensures these can never promote a one-sided game to Must Watch.
+      // Red cards — from scoreboard details (all games) or summary keyEvents
       const reds = g.redCards || 0;
       if (reds > 0) {
         const pts = reds >= 2 ? 12 : 6;
         factors.push({ label: reds >= 2 ? `${reds} red cards` : 'Red card', points: pts });
         score += pts;
+      }
+
+      // Late goal (80'+) in a close game — huge drama signal
+      if (g.lateGoal && diff <= 2) {
+        const pts = g.ninetyGoal ? 18 : 12;
+        factors.push({ label: g.ninetyGoal ? '⚡ 90th min goal' : '⚡ Late goal', points: pts });
+        score += pts;
+      }
+
+      // Penalty shootout — maximum drama, game was tied after 90'
+      if (g.penaltyShootout) {
+        factors.push({ label: '⚡ Penalty shootout', points: 40 });
+        score += 40;
       }
 
       const leagueTier = { 'Champions League': 1, 'Premier League': 1, 'La Liga': 2, 'Bundesliga': 2, 'Serie A': 2 };
@@ -1574,16 +1642,16 @@ exports.handler = async function (event, context) {
     const finalScore = Math.max(0, Math.min(100, Math.round(score)));
 
     // Sport-specific thresholds — different sports have different score ranges
-    const mustWatch = sport === 'football' ? 60
+    const mustWatch = sport === 'football' ? 55
                     : sport === 'nhl'      ? 48
                     : sport === 'nba'      ? 65
                     : sport === 'wnba'     ? 65
-                    : sport === 'cricket'  ? 38
+                    : sport === 'cricket'  ? 43
                     : sport === 'mlb'      ? 50
                     : sport === 'tennis'   ? 58
                     : sport === 'darts'    ? 50
                     : 60;
-    const watchable = sport === 'football' ? 38
+    const watchable = sport === 'football' ? 33
                     : sport === 'nhl'      ? 30
                     : sport === 'nba'      ? 28
                     : sport === 'wnba'     ? 28
