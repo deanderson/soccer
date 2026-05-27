@@ -1391,7 +1391,7 @@ exports.handler = async function (event, context) {
       else if (diff === 2) { factors.push({ label: '2 goal margin', points: 5  }); score += 5;  }
       else                 { factors.push({ label: 'Large margin', points: -40 }); score -= 40; }
       if (hasComeback)  { factors.push({ label: '⚡ Comeback', points: 25 }); score += 25; }
-      if (hasLateDrama) { factors.push({ label: '⚡ Late drama', points: 18 }); score += 18; }
+      if (hasLateDrama && !g.lateGoal) { factors.push({ label: '⚡ Late drama', points: 18 }); score += 18; }
       if (hasBackForth) { factors.push({ label: '⚡ Back & forth', points: 18 }); score += 18; }
 
       // Red cards — from scoreboard details (all games) or summary keyEvents
