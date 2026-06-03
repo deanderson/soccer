@@ -1578,6 +1578,37 @@ exports.handler = async function (event, context) {
       if (g.debug?.hadComeback)  { factors.push({ label: '⚡ Comeback', points: 18 }); score += 18; }
       if (g.debug?.walkOff)      { factors.push({ label: '⚡ Walk-off', points: 15 }); score += 15; }
 
+    } else if (sport === 'softball') {
+      // Scoring similar to MLB but softball is lower-scoring — 7 innings, fewer runs.
+      // Extra innings are dramatic. Team rankings add star power.
+      if      (total >= 12) { factors.push({ label: `${total} runs`, points: 25 }); score += 25; }
+      else if (total >= 8)  { factors.push({ label: `${total} runs`, points: 15 }); score += 15; }
+      else if (total >= 5)  { factors.push({ label: `${total} runs`, points: 8  }); score += 8;  }
+      else if (total <= 2)  { factors.push({ label: 'Low scoring',   points: -10 }); score -= 10; }
+
+      if      (diff === 0 || diff === 1) { factors.push({ label: diff === 0 ? 'Tie' : '1 run margin', points: 30 }); score += 30; }
+      else if (diff === 2)               { factors.push({ label: '2 run margin', points: 15 }); score += 15; }
+      else if (diff >= 5)                { factors.push({ label: 'Large margin', points: -35 }); score -= 35; }
+
+      // Extra innings — softball extras are sudden death, very dramatic
+      if (g.period > 7) {
+        const extraPts = g.period >= 10 ? 25 : 18;
+        factors.push({ label: `Extra innings (${g.period})`, points: extraPts }); score += extraPts;
+      }
+
+      // Team ranking bonus — top 25 ranked teams add prestige
+      // Linear: rank 1 → +8, rank 25 → +0.5
+      const calcSoftballRankBonus = r => (!r || r > 25) ? 0 : parseFloat((8.5 - r * 0.32).toFixed(1));
+      const hrb = calcSoftballRankBonus(g.homeRank);
+      const arb = calcSoftballRankBonus(g.awayRank);
+      const rankPts = Math.round((hrb + arb) * 10) / 10;
+      if (rankPts > 0) {
+        const rankLabel = g.homeRank && g.awayRank
+          ? `#${g.homeRank} vs #${g.awayRank}`
+          : g.homeRank ? `#${g.homeRank} ranked` : `#${g.awayRank} ranked`;
+        factors.push({ label: rankLabel, points: rankPts }); score += rankPts;
+      }
+
     } else if (sport === 'nfl') {
       if      (diff <= 3)  { factors.push({ label: `${diff} pt margin`, points: 30 }); score += 30; }
       else if (diff <= 7)  { factors.push({ label: `${diff} pt margin`, points: 20 }); score += 20; }
@@ -1648,6 +1679,7 @@ exports.handler = async function (event, context) {
                     : sport === 'wnba'     ? 65
                     : sport === 'cricket'  ? 43
                     : sport === 'mlb'      ? 50
+                    : sport === 'softball' ? 48
                     : sport === 'tennis'   ? 58
                     : sport === 'darts'    ? 50
                     : 60;
@@ -1657,6 +1689,7 @@ exports.handler = async function (event, context) {
                     : sport === 'wnba'     ? 28
                     : sport === 'cricket'  ? 22
                     : sport === 'mlb'      ? 28
+                    : sport === 'softball' ? 25
                     : sport === 'tennis'   ? 35
                     : sport === 'darts'    ? 25
                     : 38;
@@ -1776,6 +1809,94 @@ exports.handler = async function (event, context) {
   // Route to the appropriate fetcher. These attach confidence only — the
   // watch field is added per-request later because country-aware providers
   // can't be baked into a shared blob.
+  // ── COLLEGE SOFTBALL ─────────────────────────────────────────────────
+  // Uses ESPN's scoreboard header API (different path from other sports).
+  // Covers NCAA tournament and regular season. Team rankings available.
+  async function fetchSoftball() {
+    const SOFTBALL_API = 'https://site.web.api.espn.com/apis/v2/scoreboard/header';
+    const twoWeeksAgo = Date.now() - 14 * 86400000;
+    const fourDaysAhead = Date.now() + 4 * 86400000;
+
+    // Build date range string
+    function dateStr(ts) {
+      return new Date(ts).toISOString().slice(0, 10).replace(/-/g, '');
+    }
+    const dateRange = `${dateStr(twoWeeksAgo)}-${dateStr(fourDaysAhead)}`;
+
+    let events = [];
+    try {
+      const data = await fetchESPN(
+        `${SOFTBALL_API}?sport=softball&league=college-softball&dates=${dateRange}&limit=100`
+      );
+      events = data?.sports?.[0]?.leagues?.[0]?.events || [];
+    } catch (err) {
+      console.error('fetchSoftball error:', err.message);
+      return { recent: [], upcoming: [] };
+    }
+
+    const recent = [];
+    const upcoming = [];
+
+    for (const ev of events) {
+      const status = ev.fullStatus?.type?.state ?? ev.status ?? '';
+      const completed = ev.fullStatus?.type?.completed ?? false;
+      const date = new Date(ev.date);
+      const ts = date.getTime();
+
+      const home = ev.competitors?.find(c => c.homeAway === 'home') ?? {};
+      const away = ev.competitors?.find(c => c.homeAway === 'away') ?? {};
+
+      const h = parseInt(home.score ?? '0', 10) || 0;
+      const a = parseInt(away.score ?? '0', 10) || 0;
+      const period = ev.period ?? 7; // softball is 7 innings
+
+      // ET date formatting (same as normalizeEvents)
+      const etFormatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+      });
+      const etParts = etFormatter.formatToParts(date).reduce((acc, p) => {
+        if (p.type !== 'literal') acc[p.type] = p.value;
+        return acc;
+      }, {});
+      const dateKey = `${etParts.year}-${etParts.month}-${etParts.day}`;
+      const displayDate = date.toLocaleDateString('en-US', {
+        timeZone: 'America/New_York',
+        weekday: 'short', month: 'short', day: 'numeric',
+      });
+
+      // Tournament context from notes
+      const note = ev.notes?.[0]?.text || ev.note || '';
+
+      const game = {
+        id: ev.id,
+        home: home.displayName ?? 'TBD',
+        away: away.displayName ?? 'TBD',
+        h, a,
+        date: displayDate,
+        dateKey,
+        time: date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }),
+        league: note || 'NCAA Softball',
+        ts,
+        period,
+        homeRank: home.rank ?? null,
+        awayRank: away.rank ?? null,
+        broadcast: ev.broadcast || '',
+      };
+
+      if (completed && ts >= twoWeeksAgo) {
+        recent.push(game);
+      } else if (!completed && ts <= fourDaysAhead) {
+        upcoming.push(game);
+      }
+    }
+
+    return {
+      recent: recent.sort((a, b) => b.ts - a.ts),
+      upcoming: upcoming.sort((a, b) => a.ts - b.ts).slice(0, 10),
+    };
+  }
+
   const SPORT_FETCHERS = {
     football: async () => { const r = await fetchAllSoccer();        return { soccer:  { ...r, recent: attachConfidence(r.recent,  'football') } }; },
     nhl:      async () => { const r = await fetchNHLWithTimeline();   return { nhl:     { ...r, recent: attachConfidence(r.recent,  'nhl')      } }; },
@@ -1785,6 +1906,7 @@ exports.handler = async function (event, context) {
     nfl:      async () => { const r = await fetchSport(`${BASE}/football/nfl/scoreboard`, "NFL");     return { nfl: { ...r, recent: attachConfidence(r.recent, 'nfl') } }; },
     cricket:  async () => { const r = await fetchCricket();           return { cricket: { ...r, recent: attachConfidence(r.recent,  'cricket')  } }; },
     tennis:   async () => { const r = await fetchTennis();            return { tennis:  { ...r, recent: attachConfidence(r.recent,  'tennis')   } }; },
+    softball: async () => { const r = await fetchSoftball();          return { softball: { ...r, recent: attachConfidence(r.recent, 'softball') } }; },
     darts:    async () => { const r = await fetchDarts();             return { darts:   { ...r, recent: attachConfidence(r.recent,  'darts')    } }; },
   };
 
@@ -1792,7 +1914,7 @@ exports.handler = async function (event, context) {
   let fetchedAt = Date.now();
 
   if (sportParam === 'all' || !SPORT_FETCHERS[sportParam]) {
-    const [soccer, nhl, mlb, nba, wnba, nfl, cricket, tennis, darts] = await Promise.all([
+    const [soccer, nhl, mlb, nba, wnba, nfl, cricket, tennis, darts, softball] = await Promise.all([
       fetchAllSoccer(),
       fetchNHLWithTimeline(),
       fetchSport(`${BASE}/baseball/mlb/scoreboard`,   "MLB", 15),
@@ -1802,6 +1924,7 @@ exports.handler = async function (event, context) {
       fetchCricket(),
       fetchTennis(),
       fetchDarts(),
+      fetchSoftball(),
     ]);
     body = {
       soccer:  { ...soccer,  recent: attachConfidence(soccer.recent,  'football') },
@@ -1813,6 +1936,7 @@ exports.handler = async function (event, context) {
       cricket: { ...cricket, recent: attachConfidence(cricket.recent, 'cricket')  },
       tennis:  { ...tennis,  recent: attachConfidence(tennis.recent,  'tennis')   },
       darts:   { ...darts,   recent: attachConfidence(darts.recent,   'darts')    },
+      softball:{ ...softball,recent: attachConfidence(softball.recent,'softball') },
     };
 
     // Save full fetch to blob for future requests — note we save BEFORE

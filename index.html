@@ -612,6 +612,7 @@
     cricket:  { filterDefs: CRICKET_FILTER_DEFS }, // cricket uses its own render path
     tennis:   { filterDefs: TENNIS_FILTER_DEFS  }, // tennis uses its own render path
     darts:    { filterDefs: FILTER_DEFS  }, // darts uses its own render path
+    softball: { cat: (h,a) => categorizeMLB(h,a), filterDefs: FILTER_DEFS }, // same categorize as MLB
   };
 
   const FILTER_LABELS = {
@@ -686,6 +687,13 @@
       {key:'blowout',     label:'Skip',          color:'var(--red)',    icon:'🎯'},
       {key:'defensive',   label:'Skip',          color:'var(--blue)',   icon:'🧱'},
     ],
+    softball: [
+      {key:'scorefest',   label:'Score Fest',    color:'var(--orange)', icon:'🔥'},
+      {key:'watchworthy', label:'Must Watch',    color:'var(--green)',  icon:'👀'},
+      {key:'watchable',   label:'Watchable',     color:'var(--muted)',  icon:'😐'},
+      {key:'blowout',     label:'Blowout',       color:'var(--red)',    icon:'🎯'},
+      {key:'defensive',   label:'Low Scoring',   color:'var(--blue)',   icon:'🧱'},
+    ],
   };
 
   const HOW_DEFS = {
@@ -756,18 +764,16 @@
     cricket:  { cat: 'all' },
     tennis:   { cat: 'all', tour: 'all' },
     darts:    { cat: 'all' },
+    softball: { cat: 'all' },
   };
   let allData = {};
 
   // ── SPORT VISIBILITY (feature #5) ──────────────────────────────────────
-  // group: 'identity' = sports where this site has a real curatorial niche.
-  //        'major'    = conventional US/global majors covered by every site.
-  // Visual grouping in the tab strip reflects the site's positioning without
-  // labeling it explicitly (a subtle dot divider does the work).
   const ALL_SPORTS = [
     { key:'football', label:'⚽ Football',      group:'identity' },
     { key:'cricket',  label:'🏏 Cricket (T20)', group:'identity' },
     { key:'wnba',     label:'🏀 WNBA',          group:'identity' },
+    { key:'softball', label:'🥎 Softball',      group:'identity' },
     { key:'darts',    label:'🎯 Darts',         group:'identity' },
     { key:'nba',      label:'🏀 NBA',           group:'major'    },
     { key:'nfl',      label:'🏈 NFL',           group:'major'    },
@@ -1011,7 +1017,7 @@
 
   // ── LOAD ───────────────────────────────────────────────────────────────
   // Map from frontend sport key to API response key
-  const API_KEY = { football:'soccer', nhl:'nhl', mlb:'mlb', nba:'nba', wnba:'wnba', nfl:'nfl', cricket:'cricket', tennis:'tennis', darts:'darts' };
+  const API_KEY = { football:'soccer', nhl:'nhl', mlb:'mlb', nba:'nba', wnba:'wnba', nfl:'nfl', cricket:'cricket', tennis:'tennis', darts:'darts', softball:'softball' };
 
   const TIMELINE_CAT_MAP = {
     scorefest:   makeCat('scorefest'),
@@ -3045,7 +3051,7 @@
 
   // Hash routing — spoilerfreescores.com/#cricket lands on cricket tab
   const hashSport = window.location.hash.replace('#', '').toLowerCase();
-  const validSports = ['football','cricket','wnba','darts','tennis','nhl','nba','mlb','nfl'];
+  const validSports = ['football','cricket','wnba','darts','tennis','nhl','nba','mlb','nfl','softball'];
   if (hashSport && validSports.includes(hashSport)) activeSport = hashSport;
 
   function switchSport(sport, tabEl) {
