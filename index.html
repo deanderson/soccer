@@ -631,6 +631,7 @@
     tennis:   { filterDefs: TENNIS_FILTER_DEFS  }, // tennis uses its own render path
     darts:    { filterDefs: FILTER_DEFS  }, // darts uses its own render path
     softball: { cat: (h,a) => categorizeMLB(h,a), filterDefs: FILTER_DEFS }, // same categorize as MLB
+    cs2:      { cat: (h,a) => ({ cls: 'watchable', score: 0 }), filterDefs: FILTER_DEFS }, // scoring handled by backend
   };
 
   const FILTER_LABELS = {
@@ -821,7 +822,6 @@
     for (const s of visibleSports) {
       if (prevGroup && s.group !== prevGroup) {
         if (s.group === 'esports') {
-          // Close any open esports row shouldn't happen, but be safe
           html += '<div class="sport-tabs-esports-row"><span class="sport-tabs-esports-label">Esports</span>';
           esportsOpen = true;
         } else {
@@ -3098,6 +3098,21 @@
     else if (sport === 'tennis')  renderTennis();
     else if (sport === 'darts')   renderDarts();
     else                          renderGames(sport);
+  }
+
+  if (location.protocol === 'file:') {
+    const _origFetch = window.fetch;
+    window.fetch = (url, ...args) => {
+      if (typeof url === 'string' && url.includes('get-scores')) {
+        const emptyData = {};
+        const sports = ['soccer','nhl','mlb','nba','wnba','nfl','cricket','tennis','darts','softball','cs2'];
+        sports.forEach(k => { emptyData[k] = { recent: [], upcoming: [] }; });
+        return Promise.resolve(new Response(JSON.stringify(emptyData), {
+          status: 200, headers: { 'Content-Type': 'application/json' }
+        }));
+      }
+      return _origFetch(url, ...args);
+    };
   }
 
   loadScores();
