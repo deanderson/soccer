@@ -1959,12 +1959,10 @@ exports.handler = async function (event, context) {
     const twoDaysAhead = new Date(Date.now() + 2 * 86400000).toISOString();
 
     const url = [
-      'https://api.pandascore.co/csgo/matches',
+      'https://api.pandascore.co/csgo/matches/past',
       '?filter[videogame_title]=cs2',
-      '&filter[status][]=finished',
       '&sort=-end_at',
       '&page[size]=50',
-      `&range[end_at]=${sevenDaysAgo},${new Date().toISOString()}`,
     ].join('');
 
     let matches = [];
