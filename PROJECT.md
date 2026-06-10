@@ -161,3 +161,24 @@ Maintain a DEPLOYED.md or check Netlify dashboard. Sometimes local files
 contain unshipped changes. Today (May 8) we shipped: night-summary view,
 Top Picks per-sport windows, Matchplay parser, format-aware darts scoring.
 
+
+## Session start checklist (added 2026-06-10)
+
+Before writing any code:
+1. Read PROJECT.md working agreements out loud
+2. Confirm which files are the source of truth for this session
+3. For any new external API: ask user to run a curl first to confirm response shape
+4. State blast radius before first edit
+
+## Esports
+
+CS2 added 2026-06-10 via PandaScore free tier.
+- Endpoint: `/csgo/matches/past` and `/csgo/matches/upcoming` (legacy `/csgo/` prefix — no `/cs2/`)
+- Videogame title filter slug: `cs-2` (NOT `cs2`)
+- Status filter: `filter[status]=finished` required — endpoint returns canceled matches otherwise
+- Sort: `-begin_at` (end_at is null on most matches)
+- Free tier: 1000 req/hour, schedules + results only (no round-level data)
+- Scoring: series distance (Bo3 2-1 = +35, Bo5 3-2 = +50) + tournament tier (S=+25, A=+12)
+- Token: `PANDASCORE_TOKEN` env var in Netlify (scoped to Functions)
+
+Valorant is next — same round-based engine, ports directly from CS2.

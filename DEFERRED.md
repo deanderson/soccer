@@ -502,3 +502,25 @@ where relevant.
   `fetchNHLWithTimeline` only fetched past 14 days, never future. Three
   sports had never shown upcoming games. Added parallel fetch for
   `dates=${espnDate(1)}-${espnDate(4)}`.
+
+---
+
+## Status as of 2026-06-10 evening
+
+**Shipped today:**
+- CS2 fetcher via PandaScore free tier (`fetchCS2` in get-scores.js)
+- CS2 scoring engine in `computeConfidence` (series distance + tournament tier)
+- Esports tab row in index.html — purple accent, separate row inside sport-tabs box
+- CS2 panel stub (panel-cs2, cs2-filters, cs2-games)
+- Local dev fetch stub (file:// protocol intercept for visual iteration without deploys)
+- `pandascore-debug.js` diagnostic endpoint (keep until CS2 confirmed stable, then delete)
+
+**Open — CS2 follow-up:**
+- Confirm past matches appear after next cron run (slug fix `cs-2` + `filter[status]=finished` just deployed)
+- Delete `pandascore-debug.js` once CS2 data confirmed working
+- Add Valorant (same round-based engine as CS2, nearly free to add)
+- Consider LoL + Dota2 together after Valorant (MOBA scoring is harder, solve once)
+
+**Open — process:**
+- Add "verify external API with curl before writing fetcher" to PROJECT.md working agreements
+- Add session-start checklist to PROJECT.md: read working agreements aloud, confirm file tracking plan
