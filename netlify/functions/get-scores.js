@@ -1960,7 +1960,7 @@ exports.handler = async function (event, context) {
 
     const url = [
       'https://api.pandascore.co/csgo/matches/past',
-      '?filter[videogame_title]=cs2',
+      '?filter[videogame_title]=cs-2',
       '&sort=-end_at',
       '&page[size]=50',
     ].join('');
@@ -1990,7 +1990,7 @@ exports.handler = async function (event, context) {
     try {
       const upUrl = [
         'https://api.pandascore.co/csgo/matches/upcoming',
-        '?filter[videogame_title]=cs2',
+        '?filter[videogame_title]=cs-2',
         '&sort=begin_at',
         '&page[size]=20',
       ].join('');
