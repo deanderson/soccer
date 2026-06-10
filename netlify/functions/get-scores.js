@@ -1616,6 +1616,42 @@ exports.handler = async function (event, context) {
       if      (total >= 50) { factors.push({ label: `${total} pts`, points: 20 }); score += 20; }
       else if (total <= 20) { factors.push({ label: 'Low scoring', points: -10 }); score -= 10; }
 
+    } else if (sport === 'cs2') {
+      // CS2 scoring — free tier only, so we score on series shape, not round counts.
+      // Key signals:
+      //   - Series distance (went full maps) — strongest single signal
+      //   - One map from distance (competitive even if not full distance)
+      //   - Tournament tier (S/A = high stakes)
+      //   - Bo1 is a single map — limited context, moderate floor
+
+      const { wentDistance, wentPenultimate, numGames, mapsPlayed, tier } = g.debug || {};
+
+      if (wentDistance && numGames >= 5) {
+        // Bo5 full distance (3-2) — maximum drama
+        factors.push({ label: 'Went full distance (Bo5)', points: 50 }); score += 50;
+      } else if (wentDistance && numGames >= 3) {
+        // Bo3 full distance (2-1) — decisive, exciting
+        factors.push({ label: 'Went full distance (Bo3)', points: 35 }); score += 35;
+      } else if (wentPenultimate && numGames >= 5) {
+        // Bo5 went to map 4 — competitive even if not 3-2
+        factors.push({ label: 'Competitive series', points: 22 }); score += 22;
+      } else if (wentDistance && numGames === 1) {
+        // Bo1 — single map, no series context
+        factors.push({ label: 'Single map result', points: 10 }); score += 10;
+      } else if (mapsPlayed >= 1) {
+        // Series ended early (e.g. 2-0 Bo3) — not very exciting
+        factors.push({ label: 'Series not competitive', points: -10 }); score -= 10;
+      }
+
+      // Tournament tier bonus
+      if (tier === 's') {
+        factors.push({ label: 'S-tier event', points: 25 }); score += 25;
+      } else if (tier === 'a') {
+        factors.push({ label: 'A-tier event', points: 12 }); score += 12;
+      } else if (tier === 'b') {
+        factors.push({ label: 'B-tier event', points: 5 }); score += 5;
+      }
+
     } else if (sport === 'darts') {
       // Darts has variable formats: Premier League is best-of-11 (first to 6),
       // World Matchplay R1 is first-to-10, finals can go to 18+, etc. Score
@@ -1682,6 +1718,7 @@ exports.handler = async function (event, context) {
                     : sport === 'softball' ? 48
                     : sport === 'tennis'   ? 58
                     : sport === 'darts'    ? 50
+                    : sport === 'cs2'      ? 55
                     : 60;
     const watchable = sport === 'football' ? 33
                     : sport === 'nhl'      ? 30
@@ -1692,6 +1729,7 @@ exports.handler = async function (event, context) {
                     : sport === 'softball' ? 25
                     : sport === 'tennis'   ? 35
                     : sport === 'darts'    ? 25
+                    : sport === 'cs2'      ? 28
                     : 38;
 
     // Derive category from score
@@ -1897,6 +1935,169 @@ exports.handler = async function (event, context) {
     };
   }
 
+
+  // ── CS2 (Counter-Strike 2) via PandaScore ────────────────────────────
+  // Free tier: schedules, results, series context. No round-level data.
+  // Endpoint: /csgo/matches/past  (legacy prefix — there is no /cs2/)
+  // Filter to CS2 only via videogame_title slug to exclude old CSGO data.
+  //
+  // Scoring signals available on free tier:
+  //   - Series distance: Bo3 going 2-1, Bo5 going 3-2 → decisive
+  //   - Tournament tier: S/A-tier events are high stakes
+  //   - Match type + number_of_games lets us detect the deciding map
+  //
+  // OT per map is NOT on the free tier (that's in the live frames API).
+  // We score on series shape only for v1.
+  async function fetchCS2() {
+    const token = process.env.PANDASCORE_TOKEN;
+    if (!token) {
+      console.warn('fetchCS2: PANDASCORE_TOKEN not set, skipping');
+      return { recent: [], upcoming: [] };
+    }
+
+    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+    const twoDaysAhead = new Date(Date.now() + 2 * 86400000).toISOString();
+
+    const url = [
+      'https://api.pandascore.co/csgo/matches',
+      '?filter[videogame_title]=cs2',
+      '&filter[status][]=finished',
+      '&sort=-end_at',
+      '&page[size]=50',
+      `&range[end_at]=${sevenDaysAgo},${new Date().toISOString()}`,
+    ].join('');
+
+    let matches = [];
+    try {
+      const res = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!res.ok) {
+        console.error(`fetchCS2: PandaScore returned ${res.status}`);
+        return { recent: [], upcoming: [] };
+      }
+      matches = await res.json();
+      if (!Array.isArray(matches)) {
+        console.error('fetchCS2: unexpected response shape');
+        return { recent: [], upcoming: [] };
+      }
+    } catch (err) {
+      console.error('fetchCS2 fetch error:', err.message);
+      return { recent: [], upcoming: [] };
+    }
+
+    // Also fetch upcoming matches for the "Coming Up" section
+    let upcoming = [];
+    try {
+      const upUrl = [
+        'https://api.pandascore.co/csgo/matches/upcoming',
+        '?filter[videogame_title]=cs2',
+        '&sort=begin_at',
+        '&page[size]=20',
+      ].join('');
+      const upRes = await fetch(upUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (upRes.ok) {
+        const upData = await upRes.json();
+        if (Array.isArray(upData)) upcoming = upData;
+      }
+    } catch (err) {
+      console.warn('fetchCS2 upcoming fetch error:', err.message); // non-fatal
+    }
+
+    function parseMatch(m, isUpcoming) {
+      const ts = new Date(m.end_at || m.begin_at || Date.now()).getTime();
+      const date = new Date(ts);
+
+      const etFormatter = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'America/New_York',
+        year: 'numeric', month: '2-digit', day: '2-digit',
+      });
+      const etParts = etFormatter.formatToParts(date).reduce((acc, p) => {
+        if (p.type !== 'literal') acc[p.type] = p.value;
+        return acc;
+      }, {});
+      const dateKey = `${etParts.year}-${etParts.month}-${etParts.day}`;
+      const displayDate = date.toLocaleDateString('en-US', {
+        timeZone: 'America/New_York',
+        weekday: 'short', month: 'short', day: 'numeric',
+      });
+
+      // Opponents — PandaScore uses opponents[] array with .opponent sub-object
+      const ops = m.opponents || [];
+      const teamA = ops[0]?.opponent?.name || 'TBD';
+      const teamB = ops[1]?.opponent?.name || 'TBD';
+
+      // Series score from results[] — each entry has team score (maps won)
+      const results = m.results || [];
+      const scoreA = results[0]?.score ?? 0;
+      const scoreB = results[1]?.score ?? 0;
+
+      // Number of maps actually played = total maps won by both sides
+      const mapsPlayed = scoreA + scoreB;
+
+      // Match format signals
+      const matchType     = m.match_type || 'best_of';   // 'best_of' | 'first_to'
+      const numGames      = m.number_of_games || 1;       // max maps in series
+      // For best_of N, maps needed to win = ceil(N/2)
+      const mapsToWin     = Math.ceil(numGames / 2);
+      // Did series go the distance? e.g. Bo3→3 maps, Bo5→5 maps
+      const wentDistance  = mapsPlayed === numGames;
+      // One map from elimination — loser had mapsToWin-1 wins
+      const wentPenultimate = mapsPlayed === numGames - 1 && numGames >= 3;
+
+      // Tournament tier from PandaScore: 's', 'a', 'b', 'c', 'd'
+      const tier = (m.tournament?.tier || m.serie?.tier || '').toLowerCase();
+
+      // League/tournament display name
+      const leagueName = m.league?.name || m.tournament?.name || 'CS2';
+
+      return {
+        id: `cs2-${m.id}`,
+        home: teamA,
+        away: teamB,
+        // h/a = maps won — used by frontend matchup display
+        h: scoreA,
+        a: scoreB,
+        date: displayDate,
+        dateKey,
+        time: isUpcoming ? date.toLocaleTimeString('en-US', {
+          hour: 'numeric', minute: '2-digit', timeZone: 'America/New_York', timeZoneName: 'short',
+        }) : null,
+        ts,
+        league: leagueName,
+        status: isUpcoming ? 'upcoming' : 'finished',
+        // CS2-specific scoring signals passed via debug
+        debug: {
+          matchType,
+          numGames,
+          mapsPlayed,
+          mapsToWin,
+          wentDistance,
+          wentPenultimate,
+          tier,
+        },
+      };
+    }
+
+    const recentParsed = matches
+      .filter(m => m.status === 'finished' && m.opponents?.length >= 2)
+      .map(m => parseMatch(m, false));
+
+    const upcomingParsed = upcoming
+      .filter(m => m.opponents?.length >= 2)
+      .map(m => parseMatch(m, true))
+      .slice(0, 10);
+
+    return {
+      recent:   recentParsed.sort((a, b) => b.ts - a.ts),
+      upcoming: upcomingParsed.sort((a, b) => a.ts - b.ts),
+    };
+  }
+
   const SPORT_FETCHERS = {
     football: async () => { const r = await fetchAllSoccer();        return { soccer:  { ...r, recent: attachConfidence(r.recent,  'football') } }; },
     nhl:      async () => { const r = await fetchNHLWithTimeline();   return { nhl:     { ...r, recent: attachConfidence(r.recent,  'nhl')      } }; },
@@ -1908,13 +2109,14 @@ exports.handler = async function (event, context) {
     tennis:   async () => { const r = await fetchTennis();            return { tennis:  { ...r, recent: attachConfidence(r.recent,  'tennis')   } }; },
     softball: async () => { const r = await fetchSoftball();          return { softball: { ...r, recent: attachConfidence(r.recent, 'softball') } }; },
     darts:    async () => { const r = await fetchDarts();             return { darts:   { ...r, recent: attachConfidence(r.recent,  'darts')    } }; },
+    cs2:      async () => { const r = await fetchCS2();              return { cs2:     { ...r, recent: attachConfidence(r.recent,  'cs2')      } }; },
   };
 
   let body;
   let fetchedAt = Date.now();
 
   if (sportParam === 'all' || !SPORT_FETCHERS[sportParam]) {
-    const [soccer, nhl, mlb, nba, wnba, nfl, cricket, tennis, darts, softball] = await Promise.all([
+    const [soccer, nhl, mlb, nba, wnba, nfl, cricket, tennis, darts, softball, cs2] = await Promise.all([
       fetchAllSoccer(),
       fetchNHLWithTimeline(),
       fetchSport(`${BASE}/baseball/mlb/scoreboard`,   "MLB", 15),
@@ -1925,6 +2127,7 @@ exports.handler = async function (event, context) {
       fetchTennis(),
       fetchDarts(),
       fetchSoftball(),
+      fetchCS2(),
     ]);
     body = {
       soccer:  { ...soccer,  recent: attachConfidence(soccer.recent,  'football') },
@@ -1937,6 +2140,7 @@ exports.handler = async function (event, context) {
       tennis:  { ...tennis,  recent: attachConfidence(tennis.recent,  'tennis')   },
       darts:   { ...darts,   recent: attachConfidence(darts.recent,   'darts')    },
       softball:{ ...softball,recent: attachConfidence(softball.recent,'softball') },
+      cs2:     { ...cs2,     recent: attachConfidence(cs2.recent,    'cs2')      },
     };
 
     // Save full fetch to blob for future requests — note we save BEFORE

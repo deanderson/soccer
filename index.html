@@ -18,7 +18,7 @@
     --orange:#f0883e; --orange-bg:rgba(240,136,62,0.1);
     --red:#f85149;    --red-bg:rgba(248,81,73,0.1);
     --purple:#bc8cff; --purple-bg:rgba(188,140,255,0.08);
-    --esports:#a371f7; --esports-bg:rgba(163,113,247,0.1);
+    --esports:#b57bff; --esports-bg:rgba(181,123,255,0.12);
     --yellow:#e3b341; --yellow-bg:rgba(227,179,65,0.1);
   }
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -346,14 +346,15 @@
   .sport-tab:has(+ .sport-tab-divider){border-right:none;}
   .sport-tab:hover{color:var(--text);background:var(--card);}
   .sport-tab.active{background:var(--card);color:var(--text);box-shadow:inset 0 -2px 0 var(--green);}
-  .sport-tab.esports{color:var(--muted);}
-  .sport-tab.esports:hover{color:var(--esports);}
-  .sport-tab.esports.active{box-shadow:inset 0 -2px 0 var(--esports);color:var(--esports);}
-  .sport-tab.esports.active .tab-count{background:var(--esports-bg);color:var(--esports);}
-  .sport-tab-divider.esports-divider{padding:0 10px 0 6px;color:var(--muted);font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;align-self:center;opacity:0.45;border-left:1px solid var(--border);margin-left:4px;}
   /* Group divider: subtle dot separating identity sports from major sports.
      Sits aligned with tab heights, slightly muted. */
   .sport-tab-divider{flex:0 0 auto;display:flex;align-items:center;justify-content:center;padding:0 8px;color:var(--border);font-size:20px;user-select:none;font-family:'Outfit',sans-serif;line-height:1;}
+  .sport-tabs-esports-row{width:100%;display:flex;align-items:stretch;border-top:1px solid var(--border);background:rgba(181,123,255,0.06);}
+  .sport-tabs-esports-label{display:flex;align-items:center;padding:0 12px;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--esports);border-right:1px solid var(--border);white-space:nowrap;user-select:none;opacity:0.9;}
+  .sport-tab.esports{color:var(--muted);}
+  .sport-tab.esports:hover{color:var(--esports);background:rgba(181,123,255,0.08);}
+  .sport-tab.esports.active{background:rgba(181,123,255,0.1);color:var(--esports);box-shadow:inset 0 -2px 0 var(--esports);}
+  .sport-tab.esports.active .tab-count{background:var(--esports-bg);color:var(--esports);}
   .tab-count{background:rgba(255,255,255,0.08);border-radius:10px;padding:1px 6px;font-size:10px;color:var(--muted);font-weight:600;}
   .sport-tab.active .tab-count{background:var(--green-bg);color:var(--green);}
 
@@ -816,10 +817,13 @@
     // vs major). The divider is skipped if either group is empty (all hidden).
     let html = '';
     let prevGroup = null;
+    let esportsOpen = false;
     for (const s of visibleSports) {
       if (prevGroup && s.group !== prevGroup) {
         if (s.group === 'esports') {
-          html += '<span class="sport-tab-divider esports-divider" aria-hidden="true">ESPORTS</span>';
+          // Close any open esports row shouldn't happen, but be safe
+          html += '<div class="sport-tabs-esports-row"><span class="sport-tabs-esports-label">Esports</span>';
+          esportsOpen = true;
         } else {
           html += '<span class="sport-tab-divider" aria-hidden="true">·</span>';
         }
@@ -831,6 +835,7 @@
         </button>`;
       prevGroup = s.group;
     }
+    if (esportsOpen) html += '</div>';
     tabsEl.innerHTML = html;
 
     // Show saved sport panel
