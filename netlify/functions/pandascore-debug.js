@@ -14,17 +14,16 @@ exports.handler = async function(event) {
       const isArray = Array.isArray(data);
       return {
         label, url,
-        status: res.status,
+        httpStatus: res.status,
         count: isArray ? data.length : null,
-        firstItem: isArray && data[0] ? {
-          id: data[0].id,
-          status: data[0].status,
-          name: data[0].name,
-          videogame: data[0].videogame?.name,
-          videogame_title: data[0].videogame_title,
-          end_at: data[0].end_at,
-          opponents: (data[0].opponents||[]).map(o=>o?.opponent?.name),
-        } : data,
+        statuses: isArray ? [...new Set(data.map(m => m.status))] : null,
+        sample: isArray ? data.slice(0, 2).map(m => ({
+          id: m.id,
+          name: m.name,
+          status: m.status,
+          end_at: m.end_at,
+          videogame_title_slug: m.videogame_title?.slug,
+        })) : data,
       };
     } catch(err) {
       return { label, error: err.message };
@@ -32,10 +31,9 @@ exports.handler = async function(event) {
   }
 
   const results = await Promise.all([
-    pandaFetch('past_no_filter',     'https://api.pandascore.co/csgo/matches/past?sort=-end_at&page[size]=3'),
-    pandaFetch('past_cs2_filter',    'https://api.pandascore.co/csgo/matches/past?filter[videogame_title]=cs2&sort=-end_at&page[size]=3'),
-    pandaFetch('past_csgo_filter',   'https://api.pandascore.co/csgo/matches/past?filter[videogame_title]=csgo&sort=-end_at&page[size]=3'),
-    pandaFetch('videogame_titles',   'https://api.pandascore.co/videogame-titles?filter[videogame_id]=3&page[size]=10'),
+    pandaFetch('past_cs-2_filter',    'https://api.pandascore.co/csgo/matches/past?filter[videogame_title]=cs-2&sort=-end_at&page[size]=10'),
+    pandaFetch('past_no_filter',      'https://api.pandascore.co/csgo/matches/past?sort=-end_at&page[size]=10'),
+    pandaFetch('past_finished_only',  'https://api.pandascore.co/csgo/matches/past?filter[videogame_title]=cs-2&filter[status]=finished&sort=-end_at&page[size]=10'),
   ]);
 
   return {
