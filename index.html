@@ -18,7 +18,6 @@
     --orange:#f0883e; --orange-bg:rgba(240,136,62,0.1);
     --red:#f85149;    --red-bg:rgba(248,81,73,0.1);
     --purple:#bc8cff; --purple-bg:rgba(188,140,255,0.08);
-    --esports:#b57bff; --esports-bg:rgba(181,123,255,0.12);
     --yellow:#e3b341; --yellow-bg:rgba(227,179,65,0.1);
   }
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -349,12 +348,6 @@
   /* Group divider: subtle dot separating identity sports from major sports.
      Sits aligned with tab heights, slightly muted. */
   .sport-tab-divider{flex:0 0 auto;display:flex;align-items:center;justify-content:center;padding:0 8px;color:var(--border);font-size:20px;user-select:none;font-family:'Outfit',sans-serif;line-height:1;}
-  .sport-tabs-esports-row{width:100%;display:flex;align-items:stretch;border-top:1px solid var(--border);background:rgba(181,123,255,0.06);}
-  .sport-tabs-esports-label{display:flex;align-items:center;padding:0 12px;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--esports);border-right:1px solid var(--border);white-space:nowrap;user-select:none;opacity:0.9;}
-  .sport-tab.esports{color:var(--muted);}
-  .sport-tab.esports:hover{color:var(--esports);background:rgba(181,123,255,0.08);}
-  .sport-tab.esports.active{background:rgba(181,123,255,0.1);color:var(--esports);box-shadow:inset 0 -2px 0 var(--esports);}
-  .sport-tab.esports.active .tab-count{background:var(--esports-bg);color:var(--esports);}
   .tab-count{background:rgba(255,255,255,0.08);border-radius:10px;padding:1px 6px;font-size:10px;color:var(--muted);font-weight:600;}
   .sport-tab.active .tab-count{background:var(--green-bg);color:var(--green);}
 
@@ -473,11 +466,6 @@
     <div class="sport-panel" id="panel-softball">
       <div class="filters" id="softball-filters"></div>
       <div id="softball-games"></div>
-    </div>
-
-    <div class="sport-panel" id="panel-cs2">
-      <div class="filters" id="cs2-filters"></div>
-      <div id="cs2-games"></div>
     </div>
 
 <script>
@@ -631,7 +619,6 @@
     tennis:   { filterDefs: TENNIS_FILTER_DEFS  }, // tennis uses its own render path
     darts:    { filterDefs: FILTER_DEFS  }, // darts uses its own render path
     softball: { cat: (h,a) => categorizeMLB(h,a), filterDefs: FILTER_DEFS }, // same categorize as MLB
-    cs2:      { cat: (h,a) => ({ cls: 'watchable', score: 0 }), filterDefs: FILTER_DEFS }, // scoring handled by backend
   };
 
   const FILTER_LABELS = {
@@ -784,6 +771,7 @@
     tennis:   { cat: 'all', tour: 'all' },
     darts:    { cat: 'all' },
     softball: { cat: 'all' },
+    cs2:      { cat: 'all' },
   };
   let allData = {};
 
@@ -799,7 +787,6 @@
     { key:'mlb',      label:'⚾ MLB',           group:'major'    },
     { key:'nhl',      label:'🏒 NHL',           group:'major'    },
     { key:'tennis',   label:'🎾 Tennis',        group:'major'    },
-    { key:'cs2',      label:'🎮 CS2',           group:'esports'  },
   ];
 
   // Load hidden sports from localStorage
@@ -818,24 +805,16 @@
     // vs major). The divider is skipped if either group is empty (all hidden).
     let html = '';
     let prevGroup = null;
-    let esportsOpen = false;
     for (const s of visibleSports) {
       if (prevGroup && s.group !== prevGroup) {
-        if (s.group === 'esports') {
-          html += '<div class="sport-tabs-esports-row"><span class="sport-tabs-esports-label">Esports</span>';
-          esportsOpen = true;
-        } else {
-          html += '<span class="sport-tab-divider" aria-hidden="true">·</span>';
-        }
+        html += '<span class="sport-tab-divider" aria-hidden="true">·</span>';
       }
-      const esportsCls = s.group === 'esports' ? ' esports' : '';
-      html += `<button class="sport-tab${esportsCls} ${s.key === activeSport ? 'active' : ''}"
+      html += `<button class="sport-tab ${s.key === activeSport ? 'active' : ''}"
           onclick="switchSport('${s.key}',this)">${s.label}
           <span class="tab-count" id="${s.key}-count">—</span>
         </button>`;
       prevGroup = s.group;
     }
-    if (esportsOpen) html += '</div>';
     tabsEl.innerHTML = html;
 
     // Show saved sport panel
@@ -1045,7 +1024,7 @@
 
   // ── LOAD ───────────────────────────────────────────────────────────────
   // Map from frontend sport key to API response key
-  const API_KEY = { football:'soccer', nhl:'nhl', mlb:'mlb', nba:'nba', wnba:'wnba', nfl:'nfl', cricket:'cricket', tennis:'tennis', darts:'darts', softball:'softball', cs2:'cs2' };
+  const API_KEY = { football:'soccer', nhl:'nhl', mlb:'mlb', nba:'nba', wnba:'wnba', nfl:'nfl', cricket:'cricket', tennis:'tennis', darts:'darts', softball:'softball' };
 
   const TIMELINE_CAT_MAP = {
     scorefest:   makeCat('scorefest'),
@@ -3098,21 +3077,6 @@
     else if (sport === 'tennis')  renderTennis();
     else if (sport === 'darts')   renderDarts();
     else                          renderGames(sport);
-  }
-
-  if (location.protocol === 'file:') {
-    const _origFetch = window.fetch;
-    window.fetch = (url, ...args) => {
-      if (typeof url === 'string' && url.includes('get-scores')) {
-        const emptyData = {};
-        const sports = ['soccer','nhl','mlb','nba','wnba','nfl','cricket','tennis','darts','softball','cs2'];
-        sports.forEach(k => { emptyData[k] = { recent: [], upcoming: [] }; });
-        return Promise.resolve(new Response(JSON.stringify(emptyData), {
-          status: 200, headers: { 'Content-Type': 'application/json' }
-        }));
-      }
-      return _origFetch(url, ...args);
-    };
   }
 
   loadScores();
