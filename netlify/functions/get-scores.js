@@ -2111,6 +2111,7 @@ exports.handler = async function (event, context) {
 
     const recentParsed = matches
       .filter(m => m.status === 'finished' && m.opponents?.length >= 2)
+      .filter(m => (m.tournament?.tier || m.serie?.tier || '').toLowerCase() !== 'd')  // skip D-tier noise
       .map(m => parseMatch(m, false));
 
     const upcomingParsed = upcoming

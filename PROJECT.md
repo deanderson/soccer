@@ -179,6 +179,27 @@ CS2 added 2026-06-10 via PandaScore free tier.
 - Sort: `-begin_at` (end_at is null on most matches)
 - Free tier: 1000 req/hour, schedules + results only (no round-level data)
 - Scoring: series distance (Bo3 2-1 = +35, Bo5 3-2 = +50) + tournament tier (S=+25, A=+12)
+- D-tier matches filtered out — too many low-quality matches flood the tab
 - Token: `PANDASCORE_TOKEN` env var in Netlify (scoped to Functions)
 
 Valorant is next — same round-based engine, ports directly from CS2.
+
+## Reddit enrichment (enrich-reddit.js)
+
+Daily cron at 5pm ET (21:00 UTC). Enriches CS2 finished matches in the blob with
+Reddit post-match thread data via Arctic Shift (free, no auth required).
+
+- Source: Arctic Shift API (`arctic-shift.photon-reddit.com`) — indexes r/GlobalOffensive
+- Per match: upvotes, comment count, map scores (parsed from post body), player ratings
+- Skips matches already having `redditData` — enriched once, stored permanently
+- Matches with no thread get `redditData: { found: false }` to avoid retrying
+- Bot posts from `CS2_PostMatchThreads` preferred over user posts
+- D-tier CS2 matches filtered out before scoring — too many low-quality matches
+
+## NBA/WNBA comeback scaling (2026-06-12)
+
+Comeback bonus now scales with deficit size rather than flat +20:
+- NBA: 10pt deficit = +22, 15pt = +30, 20pt = +38, 25pt+ = +45
+- WNBA: scaled ~0.73x from NBA (smaller margins)
+- Label tiers: "Comeback" / "Big comeback" / "Huge comeback" (spoiler-safe)
+- Both "Huge comeback" and "Big comeback" surface in Why watch? insight tags

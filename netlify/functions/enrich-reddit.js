@@ -52,11 +52,18 @@ exports.handler = async function (event, context) {
     return respond(200, { message: 'All CS2 matches already enriched', total: matches.length });
   }
 
-  console.log(`enrich-reddit: ${toEnrich.length} matches to enrich`);
+  // Cap per-run to avoid Netlify's 26s scheduled function timeout.
+  // 20 matches × ~800ms each = ~16s, safely under the limit.
+  // Remaining matches get picked up on the next daily run.
+  const MAX_PER_RUN = 20;
+  const batch = toEnrich.slice(0, MAX_PER_RUN);
+  const deferred = toEnrich.length - batch.length;
+
+  console.log(`enrich-reddit: ${toEnrich.length} to enrich, processing ${batch.length}${deferred > 0 ? `, deferring ${deferred}` : ''}`);
 
   const results = [];
 
-  for (const match of toEnrich) {
+  for (const match of batch) {
     // Build search query: "TeamA TeamB match thread"
     // Keep it tight — subreddit restriction handles false positives
     const query = `${match.home} ${match.away} match thread`;
@@ -91,6 +98,7 @@ exports.handler = async function (event, context) {
 
   return respond(200, {
     enriched: results.length,
+    deferred,
     results,
   });
 };
@@ -102,7 +110,6 @@ async function searchReddit(query, match) {
   url.searchParams.set('subreddit', SUBREDDIT);
   url.searchParams.set('title', query);
   url.searchParams.set('limit', '5');
-  url.searchParams.set('sort', '-created_utc'); // newest first
 
   const res = await fetch(url.toString(), {
     headers: { 'User-Agent': 'spoilerfreescores/1.0' },
