@@ -1460,8 +1460,12 @@
   // shows a fallback message ("Nothing notable.") for the empty state.
   const INSIGHT_MAP = {
     // SPOILERS — suppress entirely (engine still uses them; UI doesn't show)
-    '⚡ Comeback':      null,
+    '⚡ Comeback':      null,   // generic comeback reveals winner — suppress
     '⚡ Late drama':    null,   // softly hints at when drama happened — borderline; suppress to be safe
+
+    // COMEBACK SCALE — safe to show, doesn't reveal winner
+    '⚡ Huge comeback': 'A massive comeback happened',
+    '⚡ Big comeback':  'A big comeback happened',
 
     // DRAMA SIGNALS — these are great for users
     '⚡ Overtime':          'Went to overtime',

@@ -6,3 +6,6 @@
 
 [functions."archive-scores-job"]
   schedule = "0 * * * *"
+
+[functions."enrich-reddit"]
+  schedule = "0 21 * * *"

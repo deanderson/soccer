@@ -1454,7 +1454,21 @@ exports.handler = async function (event, context) {
         const otLabel = otPeriods >= 2 ? '⚡ Exciting overtime' : '⚡ Overtime';
         factors.push({ label: otLabel, points: otPts }); score += otPts;
       }
-      if (hasComeback) { factors.push({ label: '⚡ Comeback', points: 20 }); score += 20; }
+      if (hasComeback) {
+        // Scale comeback bonus by how large the deficit was.
+        // 5pt comeback = ordinary; 20pt = rare; 25+ = historic
+        const deficit = g.debug?.largestLead ?? 10;
+        const comebackPts = deficit >= 25 ? 45
+                          : deficit >= 20 ? 38
+                          : deficit >= 15 ? 30
+                          : deficit >= 10 ? 22
+                          : 15;
+        const comebackLabel = deficit >= 25 ? '⚡ Huge comeback'
+                            : deficit >= 15 ? '⚡ Big comeback'
+                            : '⚡ Comeback';
+        factors.push({ label: comebackLabel, points: comebackPts });
+        score += comebackPts;
+      }
       const lc = g.debug?.leadChanges ?? 0;
       if      (lc >= 15) { factors.push({ label: `${lc} lead changes`, points: 25 }); score += 25; }
       else if (lc >= 8)  { factors.push({ label: `${lc} lead changes`, points: 12 }); score += 12; }
@@ -1475,7 +1489,20 @@ exports.handler = async function (event, context) {
         const otLabel = otPeriods >= 2 ? '⚡ Exciting overtime' : '⚡ Overtime';
         factors.push({ label: otLabel, points: otPts }); score += otPts;
       }
-      if (hasComeback) { factors.push({ label: '⚡ Comeback', points: 20 }); score += 20; }
+      if (hasComeback) {
+        // Scale comeback bonus by deficit size (WNBA margins ~0.73x NBA)
+        const deficit = g.debug?.largestLead ?? 8;
+        const comebackPts = deficit >= 20 ? 42
+                          : deficit >= 15 ? 35
+                          : deficit >= 12 ? 28
+                          : deficit >= 8  ? 20
+                          : 14;
+        const comebackLabel = deficit >= 20 ? '⚡ Huge comeback'
+                            : deficit >= 12 ? '⚡ Big comeback'
+                            : '⚡ Comeback';
+        factors.push({ label: comebackLabel, points: comebackPts });
+        score += comebackPts;
+      }
       const lc = g.debug?.leadChanges ?? 0;
       if      (lc >= 12) { factors.push({ label: `${lc} lead changes`, points: 25 }); score += 25; }
       else if (lc >= 6)  { factors.push({ label: `${lc} lead changes`, points: 12 }); score += 12; }
@@ -1991,7 +2018,7 @@ exports.handler = async function (event, context) {
     try {
       const upUrl = [
         'https://api.pandascore.co/csgo/matches/upcoming',
-        '?filter[videogame_title]=cs2',
+        '?filter[videogame_title]=cs-2',
         '&sort=begin_at',
         '&page[size]=20',
       ].join('');
