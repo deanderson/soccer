@@ -144,8 +144,10 @@ attachment happens per-request inside get-scores.
   When parsing APIs, scraping pages, or working against real data, the
   cost of "paste me the wikitext" is much lower than burning a deploy
   cycle on a guess.
-- **Deploys cost ~$0.01 each.** Bundle small things together when possible.
-  Don't avoid shipping when something's worth shipping.
+- **Deploys cost 15 Netlify credits each** (~$0.15 at add-on rates). 24 deploys = 360 credits.
+  Bundle everything into one deploy per session. Never deploy to test something
+  that can be verified with a curl command or local script first.
+  Do not recommend a deploy unless the change is verified and user-facing.
 
 ## Estimation calibration
 

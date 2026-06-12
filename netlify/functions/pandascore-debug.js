@@ -18,6 +18,18 @@ exports.handler = async function(event) {
         count: isArray ? data.length : null,
         statuses: isArray ? [...new Set(data.map(m => m.status))] : null,
         tiers: isArray ? [...new Set(data.map(m => m.tournament?.tier))] : null,
+        tierCounts: isArray ? data.reduce((acc, m) => {
+          const t = m.tournament?.tier || 'null';
+          acc[t] = (acc[t] || 0) + 1;
+          return acc;
+        }, {}) : null,
+        saTierMatches: isArray ? data.filter(m => ['s','a'].includes(m.tournament?.tier)).map(m => ({
+          id: m.id,
+          tier: m.tournament?.tier,
+          begin_at: m.begin_at,
+          league: m.league?.name,
+          opponents: (m.opponents||[]).map(o => o?.opponent?.name),
+        })) : null,
         sample: isArray ? data.slice(0, 2).map(m => ({
           id: m.id,
           name: m.name,
