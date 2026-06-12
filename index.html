@@ -1464,8 +1464,8 @@
     '⚡ Late drama':    null,   // softly hints at when drama happened — borderline; suppress to be safe
 
     // COMEBACK SCALE — safe to show, doesn't reveal winner
-    '⚡ Huge comeback': 'A massive comeback happened',
-    '⚡ Big comeback':  'A big comeback happened',
+    '⚡ Huge comeback': 'Massive comeback',
+    '⚡ Big comeback':  'Big comeback',
 
     // DRAMA SIGNALS — these are great for users
     '⚡ Overtime':          'Went to overtime',
@@ -1670,7 +1670,9 @@
     // like "Down to the wire" are misleading (one team may have led wire-to-wire)
     const lcFactor = factors.find(f => f.label?.match(/^(\d+) lead changes$/));
     const leadChanges = lcFactor ? parseInt(lcFactor.label, 10) : 0;
-    const hasRealBackAndForth = leadChanges >= 3;
+    const hasComeback = factors.some(f => f.label?.includes('comeback') || f.label?.includes('Comeback'));
+    // A comeback proves it wasn't wire-to-wire even with few recorded lead changes
+    const hasRealBackAndForth = leadChanges >= 3 || hasComeback;
 
     const phrases = [];
     const seen = new Set();

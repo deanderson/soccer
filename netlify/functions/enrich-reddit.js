@@ -42,10 +42,12 @@ exports.handler = async function (event, context) {
 
   // Find matches that need enrichment:
   // - finished (not upcoming)
+  // - S or A tier only — lower tiers rarely have r/GlobalOffensive post-match threads
   // - missing redditData
   const toEnrich = matches.filter(m =>
     m.status === 'finished' &&
-    !m.redditData
+    !m.redditData &&
+    ['s', 'a'].includes((m.debug?.tier || '').toLowerCase())
   );
 
   if (toEnrich.length === 0) {
