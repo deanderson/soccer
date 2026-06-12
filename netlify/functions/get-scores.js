@@ -2116,6 +2116,7 @@ exports.handler = async function (event, context) {
 
     const upcomingParsed = upcoming
       .filter(m => m.opponents?.length >= 2)
+      .filter(m => ['s', 'a', 'b'].includes((m.tournament?.tier || m.serie?.tier || '').toLowerCase()))  // only S/A/B tier
       .map(m => parseMatch(m, true))
       .slice(0, 10);
 

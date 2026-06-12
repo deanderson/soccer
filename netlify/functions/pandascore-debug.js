@@ -41,6 +41,8 @@ exports.handler = async function(event) {
   const results = await Promise.all([
     pandaFetch('exact_get_scores_url',
       'https://api.pandascore.co/csgo/matches/past?filter[videogame_title]=cs-2&filter[status]=finished&sort=-begin_at&page[size]=50'),
+    pandaFetch('with_date_range',
+      `https://api.pandascore.co/csgo/matches/past?filter[videogame_title]=cs-2&filter[status]=finished&range[begin_at]=${new Date(Date.now()-14*86400000).toISOString()},${new Date(Date.now()+86400000).toISOString()}&sort=-begin_at&page[size]=50`),
     pandaFetch('upcoming_exact_url',
       'https://api.pandascore.co/csgo/matches/upcoming?filter[videogame_title]=cs-2&sort=begin_at&page[size]=20'),
   ]);
