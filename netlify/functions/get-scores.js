@@ -1381,7 +1381,7 @@ exports.handler = async function (event, context) {
     const hasCloseChase  = hints.some(h => h.toLowerCase().includes('chase'));
     const hasHighScoring = hints.some(h => h.toLowerCase().includes('scoring'));
 
-    if (sport === 'football') {
+    if (sport === 'worldcup' || sport === 'football') {
       if      (total >= 7) { factors.push({ label: `${total} goals`, points: 25 }); score += 25; }
       else if (total >= 5) { factors.push({ label: `${total} goals`, points: 18 }); score += 18; }
       else if (total >= 3) { factors.push({ label: `${total} goals`, points: 12 }); score += 12; }
@@ -1415,10 +1415,13 @@ exports.handler = async function (event, context) {
         score += 40;
       }
 
-      const leagueTier = { 'Champions League': 1, 'Premier League': 1, 'La Liga': 2, 'Bundesliga': 2, 'Serie A': 2 };
-      const tier = leagueTier[g.league];
-      if      (tier === 1) { factors.push({ label: g.league, points: 6 }); score += 6; }
-      else if (tier === 2) { factors.push({ label: g.league, points: 3 }); score += 3; }
+      if (sport !== 'worldcup') {
+        // League prestige bonus — not needed for World Cup (dedicated tab, all games equal)
+        const leagueTier = { 'Champions League': 1, 'Premier League': 1, 'La Liga': 2, 'Bundesliga': 2, 'Serie A': 2 };
+        const tier = leagueTier[g.league];
+        if      (tier === 1) { factors.push({ label: g.league, points: 6 }); score += 6; }
+        else if (tier === 2) { factors.push({ label: g.league, points: 3 }); score += 3; }
+      }
 
     } else if (sport === 'nhl') {
       if      (total >= 8) { factors.push({ label: `${total} goals`, points: 25 }); score += 25; }
@@ -1658,7 +1661,7 @@ exports.handler = async function (event, context) {
         factors.push({ label: 'Went full distance (Bo5)', points: 50 }); score += 50;
       } else if (wentDistance && numGames >= 3) {
         // Bo3 full distance (2-1) — decisive, exciting
-        factors.push({ label: 'Went full distance (Bo3)', points: 35 }); score += 35;
+        factors.push({ label: 'Went full distance (Bo3)', points: 40 }); score += 40;
       } else if (wentPenultimate && numGames >= 5) {
         // Bo5 went to map 4 — competitive even if not 3-2
         factors.push({ label: 'Competitive series', points: 22 }); score += 22;
@@ -1677,6 +1680,37 @@ exports.handler = async function (event, context) {
         factors.push({ label: 'A-tier event', points: 12 }); score += 12;
       } else if (tier === 'b') {
         factors.push({ label: 'B-tier event', points: 5 }); score += 5;
+      }
+
+      // Reddit enrichment signals — map-level closeness and community excitement.
+      // Only applied when redditData.found is true (verified post-match thread exists).
+      const rd = g.redditData;
+      if (rd?.found && Array.isArray(rd.mapScores) && rd.mapScores.length > 0) {
+        const maps = rd.mapScores;
+
+        // Close maps (margin ≤ 3): each one adds points
+        const closeMaps = maps.filter(m => m.isClose);
+        if (closeMaps.length >= 2) {
+          factors.push({ label: `${closeMaps.length} close maps`, points: 18 }); score += 18;
+        } else if (closeMaps.length === 1) {
+          factors.push({ label: '1 close map', points: 8 }); score += 8;
+        }
+
+        // OT maps: a map that went to overtime is extra drama
+        const otMaps = maps.filter(m => m.wentOT);
+        if (otMaps.length >= 2) {
+          factors.push({ label: `${otMaps.length} maps went OT`, points: 22 }); score += 22;
+        } else if (otMaps.length === 1) {
+          factors.push({ label: '1 map went OT', points: 12 }); score += 12;
+        }
+
+        // Community excitement — upvotes as weak modifier
+        const upvotes = rd.upvotes || 0;
+        if (upvotes >= 500) {
+          factors.push({ label: 'High community excitement', points: 10 }); score += 10;
+        } else if (upvotes >= 100) {
+          factors.push({ label: 'Community interest', points: 5 }); score += 5;
+        }
       }
 
     } else if (sport === 'darts') {
@@ -1982,14 +2016,13 @@ exports.handler = async function (event, context) {
       return { recent: [], upcoming: [] };
     }
 
-    const sevenDaysAgo = new Date(Date.now() - 14 * 86400000).toISOString();
+    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
     const twoDaysAhead = new Date(Date.now() + 2 * 86400000).toISOString();
 
     const url = [
       'https://api.pandascore.co/csgo/matches/past',
       '?filter[videogame_title]=cs-2',
       '&filter[status]=finished',
-      `&range[begin_at]=${sevenDaysAgo},${new Date(Date.now() + 86400000).toISOString()}`,
       '&sort=-begin_at',
       '&page[size]=50',
     ].join('');
@@ -2112,12 +2145,10 @@ exports.handler = async function (event, context) {
 
     const recentParsed = matches
       .filter(m => m.status === 'finished' && m.opponents?.length >= 2)
-      .filter(m => ['s', 'a', 'b'].includes((m.tournament?.tier || m.serie?.tier || '').toLowerCase()))  // only S/A/B tier
       .map(m => parseMatch(m, false));
 
     const upcomingParsed = upcoming
       .filter(m => m.opponents?.length >= 2)
-      .filter(m => ['s', 'a', 'b'].includes((m.tournament?.tier || m.serie?.tier || '').toLowerCase()))  // only S/A/B tier
       .map(m => parseMatch(m, true))
       .slice(0, 10);
 
@@ -2125,6 +2156,13 @@ exports.handler = async function (event, context) {
       recent:   recentParsed.sort((a, b) => b.ts - a.ts),
       upcoming: upcomingParsed.sort((a, b) => a.ts - b.ts),
     };
+  }
+
+  // ── WORLD CUP FETCHER ───────────────────────────────────────────────────
+  // Separate from SOCCER_LEAGUES — World Cup gets its own tab and key in the blob.
+  async function fetchWorldCup() {
+    const results = await fetchSoccerLeague('fifa.world', 'FIFA World Cup');
+    return results; // { recent: [...], upcoming: [...] }
   }
 
   const SPORT_FETCHERS = {
@@ -2139,13 +2177,14 @@ exports.handler = async function (event, context) {
     softball: async () => { const r = await fetchSoftball();          return { softball: { ...r, recent: attachConfidence(r.recent, 'softball') } }; },
     darts:    async () => { const r = await fetchDarts();             return { darts:   { ...r, recent: attachConfidence(r.recent,  'darts')    } }; },
     cs2:      async () => { const r = await fetchCS2();              return { cs2:     { ...r, recent: attachConfidence(r.recent,  'cs2')      } }; },
+    worldcup: async () => { const r = await fetchWorldCup();          return { worldcup: { ...r, recent: attachConfidence(r.recent, 'worldcup') } }; },
   };
 
   let body;
   let fetchedAt = Date.now();
 
   if (sportParam === 'all' || !SPORT_FETCHERS[sportParam]) {
-    const [soccer, nhl, mlb, nba, wnba, nfl, cricket, tennis, darts, softball, cs2] = await Promise.all([
+    const [soccer, nhl, mlb, nba, wnba, nfl, cricket, tennis, darts, softball, cs2, worldcup] = await Promise.all([
       fetchAllSoccer(),
       fetchNHLWithTimeline(),
       fetchSport(`${BASE}/baseball/mlb/scoreboard`,   "MLB", 15),
@@ -2157,6 +2196,7 @@ exports.handler = async function (event, context) {
       fetchDarts(),
       fetchSoftball(),
       fetchCS2(),
+      fetchWorldCup(),
     ]);
     body = {
       soccer:  { ...soccer,  recent: attachConfidence(soccer.recent,  'football') },
@@ -2170,6 +2210,7 @@ exports.handler = async function (event, context) {
       darts:   { ...darts,   recent: attachConfidence(darts.recent,   'darts')    },
       softball:{ ...softball,recent: attachConfidence(softball.recent,'softball') },
       cs2:     { ...cs2,     recent: attachConfidence(cs2.recent,    'cs2')      },
+      worldcup:{ ...worldcup, recent: attachConfidence(worldcup.recent, 'worldcup') },
     };
 
     // Save full fetch to blob for future requests — note we save BEFORE

@@ -164,13 +164,19 @@ contain unshipped changes. Today (May 8) we shipped: night-summary view,
 Top Picks per-sport windows, Matchplay parser, format-aware darts scoring.
 
 
-## Session start checklist (added 2026-06-10)
+## Session start checklist (added 2026-06-10, updated 2026-06-12)
 
-Before writing any code:
-1. Read PROJECT.md working agreements out loud
-2. Confirm which files are the source of truth for this session
-3. For any new external API: ask user to run a curl first to confirm response shape
-4. State blast radius before first edit
+**This checklist is mandatory. Claude writes zero code until every item is checked.
+User reads it out loud. Neither party skips it. It exists because we keep making
+the same mistakes when we skip it.**
+
+1. User states the session goal explicitly
+2. User confirms current Netlify credit balance (15 credits/deploy) — check dashboard, not this file
+3. Confirm which uploaded files are the source of truth for this session
+4. Read deploy working agreement out loud: one deploy per session maximum, bundle everything, no exceptions
+5. For any new external API: run a curl first, confirm response shape before writing any code
+6. Before recommending any deploy: state what curl test or debug endpoint confirms the fix first
+7. State blast radius before first edit
 
 ## Esports
 

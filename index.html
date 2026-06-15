@@ -115,6 +115,47 @@
   /* LEAGUE SUBHEADING — inside football tab */
   .league-heading{font-size:13px;font-weight:700;color:var(--blue);margin:28px 0 10px;display:flex;align-items:center;gap:8px;letter-spacing:0.02em;}
   .league-heading::after{content:'';flex:1;height:1px;background:rgba(56,139,253,0.2);}
+  .league-heading.world-cup{color:#f0c040;font-size:15px;letter-spacing:0.04em;}
+  .league-heading.world-cup::after{background:rgba(240,192,64,0.3);}
+
+  /* World Cup tab sparkle animation */
+  @keyframes wc-sparkle {
+    0%,100% { text-shadow: 0 0 6px rgba(240,192,64,0); }
+    50%      { text-shadow: 0 0 12px rgba(240,192,64,0.8), 0 0 24px rgba(240,192,64,0.4); }
+  }
+  @keyframes wc-float-left {
+    0%   { transform: translateY(0) rotate(-10deg); opacity: 1; }
+    100% { transform: translateY(-14px) rotate(-25deg); opacity: 0; }
+  }
+  @keyframes wc-float-right {
+    0%   { transform: translateY(0) rotate(10deg); opacity: 1; }
+    100% { transform: translateY(-14px) rotate(25deg); opacity: 0; }
+  }
+  .tab-btn[data-sport="worldcup"] {
+    position: relative;
+    animation: wc-sparkle 2.4s ease-in-out infinite;
+  }
+  .tab-btn[data-sport="worldcup"]::before,
+  .tab-btn[data-sport="worldcup"]::after {
+    content: '✨';
+    position: absolute;
+    font-size: 10px;
+    top: 2px;
+    pointer-events: none;
+    animation-duration: 1.8s;
+    animation-iteration-count: infinite;
+    animation-timing-function: ease-out;
+  }
+  .tab-btn[data-sport="worldcup"]::before {
+    left: -2px;
+    animation-name: wc-float-left;
+    animation-delay: 0s;
+  }
+  .tab-btn[data-sport="worldcup"]::after {
+    right: -2px;
+    animation-name: wc-float-right;
+    animation-delay: 0.9s;
+  }
 
   /* UPCOMING DIVIDER */
   .upcoming-divider{display:flex;align-items:center;gap:12px;margin:32px 0 20px;font-size:13px;font-weight:600;color:var(--purple);}
@@ -415,6 +456,12 @@
       <div class="all-games-title">ALL <span>GAMES</span></div>
     </div>
 
+    <!-- WORLD CUP -->
+    <div class="sport-panel" id="panel-worldcup">
+      <div class="filters" id="worldcup-filters"></div>
+      <div id="worldcup-games"></div>
+    </div>
+
     <!-- SOCCER -->
     <div class="sport-panel active" id="panel-football">
       <div class="filter-group" id="football-filters"></div>
@@ -631,6 +678,7 @@
     tennis:   { filterDefs: TENNIS_FILTER_DEFS  }, // tennis uses its own render path
     darts:    { filterDefs: FILTER_DEFS  }, // darts uses its own render path
     softball: { cat: (h,a) => categorizeMLB(h,a), filterDefs: FILTER_DEFS }, // same categorize as MLB
+    worldcup: { cat: (h,a) => categorizeFootball(h,a), filterDefs: FILTER_DEFS },
     cs2:      { cat: (h,a) => ({ cls: 'watchable', score: 0 }), filterDefs: FILTER_DEFS }, // scoring handled by backend
   };
 
@@ -784,12 +832,14 @@
     tennis:   { cat: 'all', tour: 'all' },
     darts:    { cat: 'all' },
     softball: { cat: 'all' },
+    worldcup: { cat: 'all' },
     cs2:      { cat: 'all' },
   };
   let allData = {};
 
   // ── SPORT VISIBILITY (feature #5) ──────────────────────────────────────
   const ALL_SPORTS = [
+    { key:'worldcup', label:'🏆 World Cup',      group:'identity' },
     { key:'football', label:'⚽ Football',      group:'identity' },
     { key:'cricket',  label:'🏏 Cricket (T20)', group:'identity' },
     { key:'wnba',     label:'🏀 WNBA',          group:'identity' },
@@ -830,7 +880,7 @@
         }
       }
       const esportsCls = s.group === 'esports' ? ' esports' : '';
-      html += `<button class="sport-tab${esportsCls} ${s.key === activeSport ? 'active' : ''}"
+      html += `<button class="sport-tab${esportsCls} ${s.key === activeSport ? 'active' : ''}" data-sport="${s.key}"
           onclick="switchSport('${s.key}',this)">${s.label}
           <span class="tab-count" id="${s.key}-count">—</span>
         </button>`;
@@ -1046,7 +1096,7 @@
 
   // ── LOAD ───────────────────────────────────────────────────────────────
   // Map from frontend sport key to API response key
-  const API_KEY = { football:'soccer', nhl:'nhl', mlb:'mlb', nba:'nba', wnba:'wnba', nfl:'nfl', cricket:'cricket', tennis:'tennis', darts:'darts', softball:'softball', cs2:'cs2' };
+  const API_KEY = { football:'soccer', nhl:'nhl', mlb:'mlb', nba:'nba', wnba:'wnba', nfl:'nfl', cricket:'cricket', tennis:'tennis', darts:'darts', softball:'softball', cs2:'cs2', worldcup:'worldcup' };
 
   const TIMELINE_CAT_MAP = {
     scorefest:   makeCat('scorefest'),
@@ -1352,7 +1402,7 @@
     const el = document.getElementById(`${sport}-filters`);
     const labels = (sport === 'tennis') ? FILTER_LABELS : STD_FILTER_LABELS;
 
-    if (sport === 'football') {
+    if (sport === 'football' || sport === 'worldcup') {
       // Two filter rows: category + league
       el.innerHTML = `
         <div class="filter-label">Category</div>
@@ -1426,7 +1476,7 @@
 
   // ── TOP PICKS HERO ─────────────────────────────────────────────────────
   const SPORT_LABELS = {
-    football:'⚽ Football', nhl:'🏒 NHL', mlb:'⚾ MLB',
+    worldcup:'🏆 World Cup', football:'⚽ Football', nhl:'🏒 NHL', mlb:'⚾ MLB',
     nba:'🏀 NBA', wnba:'🏀 WNBA', nfl:'🏈 NFL', cricket:'🏏 Cricket', tennis:'🎾 Tennis'
   };
 
@@ -1464,8 +1514,8 @@
     '⚡ Late drama':    null,   // softly hints at when drama happened — borderline; suppress to be safe
 
     // COMEBACK SCALE — safe to show, doesn't reveal winner
-    '⚡ Huge comeback': 'Massive comeback',
-    '⚡ Big comeback':  'Big comeback',
+    '⚡ Huge comeback': 'A massive comeback happened',
+    '⚡ Big comeback':  'A big comeback happened',
 
     // DRAMA SIGNALS — these are great for users
     '⚡ Overtime':          'Went to overtime',
@@ -1670,9 +1720,7 @@
     // like "Down to the wire" are misleading (one team may have led wire-to-wire)
     const lcFactor = factors.find(f => f.label?.match(/^(\d+) lead changes$/));
     const leadChanges = lcFactor ? parseInt(lcFactor.label, 10) : 0;
-    const hasComeback = factors.some(f => f.label?.includes('comeback') || f.label?.includes('Comeback'));
-    // A comeback proves it wasn't wire-to-wire even with few recorded lead changes
-    const hasRealBackAndForth = leadChanges >= 3 || hasComeback;
+    const hasRealBackAndForth = leadChanges >= 3;
 
     const phrases = [];
     const seen = new Set();
@@ -2306,18 +2354,19 @@
     const now = Date.now();
     let html = '';
 
-    if (sport === 'football') {
-      // Apply both category and league filters
+    if (sport === 'football' || sport === 'worldcup') {
+      // Apply category filter; worldcup has no league filter
       let filtered = recent;
-      if (state.football.cat !== 'all') {
-        const allowed = FILTER_CLS_MAP[state.football.cat] || [];
+      const catState = sport === 'football' ? state.football.cat : (state[sport]?.cat || 'all');
+      if (catState !== 'all') {
+        const allowed = FILTER_CLS_MAP[catState] || [];
         filtered = filtered.filter(g => allowed.includes(g.cat.cls));
       }
-      if (state.football.league !== 'all') filtered = filtered.filter(g => g.league === state.football.league);
+      if (sport === 'football' && state.football.league !== 'all') filtered = filtered.filter(g => g.league === state.football.league);
 
       if (filtered.length === 0) {
         html += '<p class="no-games">Nothing in this filter right now.</p>';
-      } else if (state.football.league === 'all') {
+      } else if (sport === 'worldcup' || state.football.league === 'all') {
         const bestPick = sortByExcitement(filtered)[0];
         const byDate = {};
         filtered.forEach(g => {
@@ -2351,7 +2400,7 @@
 
       // Upcoming — filter by league only (no scores yet to filter by category)
       let upcomingFiltered = upcoming;
-      if (state.football.league !== 'all') upcomingFiltered = upcomingFiltered.filter(g => g.league === state.football.league);
+      if (sport === 'football' && state.football.league !== 'all') upcomingFiltered = upcomingFiltered.filter(g => g.league === state.football.league);
 
       if (upcomingFiltered.length > 0) {
         html += `<div class="upcoming-divider">📅 Coming Up This Week</div>`;
@@ -3086,7 +3135,7 @@
 
   // Hash routing — spoilerfreescores.com/#cricket lands on cricket tab
   const hashSport = window.location.hash.replace('#', '').toLowerCase();
-  const validSports = ['football','cricket','wnba','darts','tennis','nhl','nba','mlb','nfl','softball'];
+  const validSports = ['worldcup','football','cricket','wnba','darts','tennis','nhl','nba','mlb','nfl','softball'];
   if (hashSport && validSports.includes(hashSport)) activeSport = hashSport;
 
   function switchSport(sport, tabEl) {
@@ -3112,7 +3161,7 @@
     window.fetch = (url, ...args) => {
       if (typeof url === 'string' && url.includes('get-scores')) {
         const emptyData = {};
-        ['soccer','nhl','mlb','nba','wnba','nfl','cricket','tennis','darts','softball','cs2'].forEach(k => { emptyData[k] = { recent: [], upcoming: [] }; });
+        ['soccer','nhl','mlb','nba','wnba','nfl','cricket','tennis','darts','softball','cs2','worldcup'].forEach(k => { emptyData[k] = { recent: [], upcoming: [] }; });
         return Promise.resolve(new Response(JSON.stringify(emptyData), { status: 200, headers: { 'Content-Type': 'application/json' } }));
       }
       return _origFetch(url, ...args);
