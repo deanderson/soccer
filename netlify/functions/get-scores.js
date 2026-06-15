@@ -2147,12 +2147,16 @@ exports.handler = async function (event, context) {
       };
     }
 
+    const ALLOWED_TIERS = new Set(['s', 'a', 'b']);
+
     const recentParsed = matches
       .filter(m => m.status === 'finished' && m.opponents?.length >= 2)
+      .filter(m => ALLOWED_TIERS.has((m.tournament?.tier || m.serie?.tier || '').toLowerCase()))
       .map(m => parseMatch(m, false));
 
     const upcomingParsed = upcoming
       .filter(m => m.opponents?.length >= 2)
+      .filter(m => ALLOWED_TIERS.has((m.tournament?.tier || m.serie?.tier || '').toLowerCase()))
       .map(m => parseMatch(m, true))
       .slice(0, 10);
 

@@ -123,13 +123,9 @@
     0%,100% { text-shadow: 0 0 6px rgba(240,192,64,0); }
     50%      { text-shadow: 0 0 12px rgba(240,192,64,0.8), 0 0 24px rgba(240,192,64,0.4); }
   }
-  @keyframes wc-float-left {
-    0%   { transform: translateY(0) rotate(-10deg); opacity: 1; }
-    100% { transform: translateY(-14px) rotate(-25deg); opacity: 0; }
-  }
-  @keyframes wc-float-right {
-    0%   { transform: translateY(0) rotate(10deg); opacity: 1; }
-    100% { transform: translateY(-14px) rotate(25deg); opacity: 0; }
+  @keyframes wc-pulse {
+    0%,100% { opacity: 0.4; transform: scale(1); }
+    50%      { opacity: 1;   transform: scale(1.2); }
   }
   .sport-tab[data-sport="worldcup"] {
     position: relative;
@@ -139,21 +135,18 @@
   .sport-tab[data-sport="worldcup"]::after {
     content: '✨';
     position: absolute;
-    font-size: 10px;
-    top: 2px;
+    font-size: 9px;
+    top: 50%;
+    transform: translateY(-50%);
     pointer-events: none;
-    animation-duration: 1.8s;
-    animation-iteration-count: infinite;
-    animation-timing-function: ease-out;
+    animation: wc-pulse 1.8s ease-in-out infinite;
   }
   .sport-tab[data-sport="worldcup"]::before {
-    left: -2px;
-    animation-name: wc-float-left;
+    left: 3px;
     animation-delay: 0s;
   }
   .sport-tab[data-sport="worldcup"]::after {
-    right: -2px;
-    animation-name: wc-float-right;
+    right: 3px;
     animation-delay: 0.9s;
   }
 
@@ -1402,7 +1395,7 @@
     const el = document.getElementById(`${sport}-filters`);
     const labels = (sport === 'tennis') ? FILTER_LABELS : STD_FILTER_LABELS;
 
-    if (sport === 'football' || sport === 'worldcup') {
+    if (sport === 'football') {
       // Two filter rows: category + league
       el.innerHTML = `
         <div class="filter-label">Category</div>
@@ -2555,8 +2548,15 @@
     const replayHTML = isWNBA ? buildReplayStatusHTML(g) : '';
     // For WNBA Must Watch: replayHTML handles League Pass button + network info
     // For non-Must Watch WNBA and all other sports: standard League Pass button (watchworthy only)
+    // CS2: show HLTV replay link if enriched and game is finished
+    const hltvUrl = g.redditData?.hltvUrl;
+    const hltvBtn = hltvUrl
+      ? `<a class="watch-btn" href="${hltvUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">▶ Watch replay on HLTV</a>`
+      : '';
     const watchBtn = replayHTML
       ? replayHTML
+      : hltvBtn
+      ? hltvBtn
       : (g.watch && g.cat.cls === 'watchworthy' && !shouldHideWatchProvider(g))
         ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
         : '';

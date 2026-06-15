@@ -40,60 +40,26 @@ exports.handler = async function (event, context) {
 
   const matches = cached.data.cs2.recent;
 
-  // ?reset=1 clears existing redditData so matches can be re-enriched.
-  // Useful after fixing the enrichment logic without waiting for blob rotation.
-  const forceReset = event.queryStringParameters?.reset === '1';
-  if (forceReset) {
-    matches.forEach(m => { delete m.redditData; });
-    console.log('enrich-reddit: reset mode — cleared existing redditData');
-  }
-
   // Find matches that need enrichment:
   // - finished (not upcoming)
-  // - S or A tier only — lower tiers rarely have r/GlobalOffensive post-match threads
   // - missing redditData
   const toEnrich = matches.filter(m =>
     m.status === 'finished' &&
-    !m.redditData &&
-    ['s', 'a'].includes((m.debug?.tier || '').toLowerCase())
+    !m.redditData
   );
 
   if (toEnrich.length === 0) {
     return respond(200, { message: 'All CS2 matches already enriched', total: matches.length });
   }
 
-  // Cap per-run to avoid Netlify's 26s scheduled function timeout.
-  // 20 matches × ~800ms each = ~16s, safely under the limit.
-  // Remaining matches get picked up on the next daily run.
-  const MAX_PER_RUN = 20;
-  const batch = toEnrich.slice(0, MAX_PER_RUN);
-  const deferred = toEnrich.length - batch.length;
-
-  console.log(`enrich-reddit: ${toEnrich.length} to enrich, processing ${batch.length}${deferred > 0 ? `, deferring ${deferred}` : ''}`);
+  console.log(`enrich-reddit: ${toEnrich.length} matches to enrich`);
 
   const results = [];
 
-  for (const match of batch) {
-    // Arctic Shift title search — post titles follow:
-    //   "TeamA vs TeamB / Tournament / Post-Match Discussion"
-    // Team names in titles are often abbreviated (BetBoom→BB, Team Falcons→Falcons)
-    // so we search home team (stripped of common prefixes) + league name for specificity.
-    // Strip common org suffixes so "G2 Esports" → "G2", "paiN Gaming" → "paiN"
-    const homeName = match.home
-      .replace(/^Team /i, '')
-      .replace(/\s+Esports?/i, '')
-      .replace(/\s+Gaming/i, '')
-      .replace(/\s+Clan/i, '')
-      .trim();
-    // Use first 3 words of league + extract year for specificity
-    // "IEM Cologne Major 2026" → "IEM Cologne Major" + year appended
-    const leagueParts = (match.league || '').split(' ');
-    const yearMatch = (match.league || '').match(/(20\d\d)/);
-    const leagueName = leagueParts.slice(0, 3).join(' ');
-    const year = yearMatch ? yearMatch[1] : '';
-    const query = leagueName
-      ? `${homeName} ${leagueName}${year && !leagueName.includes(year) ? ' '+year : ''}`
-      : homeName;
+  for (const match of toEnrich) {
+    // Build search query: "TeamA TeamB match thread"
+    // Keep it tight — subreddit restriction handles false positives
+    const query = `${match.home} ${match.away} match thread`;
 
     let redditData;
     try {
@@ -125,7 +91,6 @@ exports.handler = async function (event, context) {
 
   return respond(200, {
     enriched: results.length,
-    deferred,
     results,
   });
 };
@@ -154,42 +119,32 @@ async function searchReddit(query, match) {
     return { found: false, checkedAt: Date.now() };
   }
 
-  // Require either the official bot account or a post-match flair/title.
-  // Never fall back to posts[0] blindly — news articles and discussion posts
-  // will match the query but aren't post-match threads.
+  // Find best match — prefer CS2_PostMatchThreads author (the bot)
+  // Fall back to highest-scored post with "Post-Match" in title
   const botPost = posts.find(p => p.author === 'CS2_PostMatchThreads');
   const fallback = posts.find(p =>
     p.title?.toLowerCase().includes('post-match') ||
     p.link_flair_text?.toLowerCase().includes('post-match')
   );
-  const post = botPost || fallback || null;
-  if (!post) return { found: false, checkedAt: Date.now() };
+  const post = botPost || fallback || posts[0];
 
   if (!post) {
     return { found: false, checkedAt: Date.now() };
   }
 
-  // Verify it's actually about this match — check normalized home team name in title.
-  // Post titles abbreviate team names (BetBoom→BB, Team Falcons→Falcons) so we
-  // strip common prefixes and check a short token rather than the full name.
+  // Verify it's actually about this match by checking both team names appear in title
   const titleLower = (post.title || '').toLowerCase();
-  // Normalize team name to a reliable search token.
-  // "The MongolZ" → "the mongolz" (two words — "the" alone is too generic)
-  // "Team Falcons" → "falcons", "G2 Esports" → "g2"
-  const _homeNorm = match.home
-    .replace(/^Team /i, '')
-    .replace(/\s+Esports?/i, '')
-    .replace(/\s+Gaming/i, '')
-    .trim();
-  const _homeWords = _homeNorm.toLowerCase().split(/\s+/);
-  const homeToken = (_homeWords[0] === 'the' && _homeWords.length > 1)
-    ? _homeWords[0] + ' ' + _homeWords[1]   // "the mongolz"
-    : _homeWords[0];                          // "falcons", "big", "nrg"
-  if (!titleLower.includes(homeToken)) {
+  const homeLower = match.home.toLowerCase();
+  const awayLower = match.away.toLowerCase();
+  if (!titleLower.includes(homeLower) && !titleLower.includes(awayLower)) {
     return { found: false, checkedAt: Date.now() };
   }
 
   const body = post.selftext || '';
+
+  // Extract HLTV match URL — always in the post header as the series score link
+  const hltvMatch = body.match(/https:\/\/www\.hltv\.org\/matches\/(\d+)\/[\w-]+/);
+  const hltvUrl = hltvMatch ? hltvMatch[0] : null;
 
   const mapScores     = parseMapScores(body);
   const playerRatings = parsePlayerRatings(body);
@@ -197,18 +152,19 @@ async function searchReddit(query, match) {
   const highlightStats = parseHighlights(body);
 
   // Parse quality flags — helps detect format changes on the dev dashboard
-  const expectedMaps    = body.match(/## Map \d+:/g)?.length ?? 0;
+  const expectedMaps = (body.match(/## Map \d+:/g) || []).length;
   const parseQuality = {
     mapsExpected:  expectedMaps,
     mapsParsed:    mapScores.length,
     playersParsed: playerRatings.length,
     mapsOk:        expectedMaps === 0 || mapScores.length === expectedMaps,
-    playersOk:     playerRatings.length >= 6,   // at least 6 = both teams partial
+    playersOk:     playerRatings.length >= 6,
   };
 
   return {
     found: true,
     postId: post.id,
+    hltvUrl,
     upvotes: post.ups || post.score || 0,
     upvoteRatio: post.upvote_ratio || null,
     comments: post.num_comments || 0,
@@ -222,14 +178,10 @@ async function searchReddit(query, match) {
 }
 
 // ── Parser: elimination / advancement ───────────────────────────────────────
-// Detects "**TeamA advances to Stage 3.**" and "**TeamB is eliminated.**"
-// Present on knockout/advancement matches, absent on round-robin — that
-// distinction itself is a signal (elimination match = higher stakes).
 function parseElimination(body) {
   const advances  = [];
   const eliminated = [];
-  const matches = body.matchAll(/\*\*([^*]+)\*\*/g);
-  for (const m of matches) {
+  for (const m of body.matchAll(/\*\*([^*]+)\*\*/g)) {
     const text = m[1].trim();
     if (/advances?|qualif/i.test(text)) advances.push(text);
     if (/eliminat/i.test(text))          eliminated.push(text);
@@ -242,8 +194,6 @@ function parseElimination(body) {
 }
 
 // ── Parser: highlights ────────────────────────────────────────────────────────
-// Highlights follow format: ##### [M1R4 | playerName - description](url)
-// Not always present — treat absence as unknown, not zero.
 function parseHighlights(body) {
   const highlights = [];
   const pattern = /M(\d+)R(\d+)\s*\|\s*(\w+)\s*-\s*([^\]]+)/g;
@@ -265,7 +215,6 @@ function parseHighlights(body) {
     count:    highlights.length,
     aces:     highlights.filter(h => h.isAce).length,
     clutches: highlights.filter(h => h.isClutch).length,
-    multiKills: highlights.filter(h => h.isMulti).length,
     items:    highlights,
   };
 }
@@ -343,24 +292,7 @@ function parsePlayerRatings(body) {
     players.push({ name, kd, adr, rating });
   }
 
-  // Dedupe by name — post repeats each player for overall + each map.
-  // First occurrence = overall match rating (aggregate).
-  // Track peak map rating separately — a 2.01 on one map is meaningful
-  // even if the player's overall is 1.3.
-  const byName = new Map();
-  for (const p of players) {
-    if (!byName.has(p.name)) {
-      // First occurrence = overall rating
-      byName.set(p.name, { ...p, peakRating: p.rating });
-    } else {
-      // Subsequent occurrences = per-map ratings, track the peak
-      const existing = byName.get(p.name);
-      if (p.rating > existing.peakRating) {
-        existing.peakRating = p.rating;
-      }
-    }
-  }
-  return Array.from(byName.values());
+  return players;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
