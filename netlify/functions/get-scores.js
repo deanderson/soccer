@@ -1387,8 +1387,8 @@ exports.handler = async function (event, context) {
       if      (total >= 7) { factors.push({ label: `${total} goals`, points: 25 }); score += 25; }
       else if (total >= 5) { factors.push({ label: `${total} goals`, points: 18 }); score += 18; }
       else if (total >= 3) { factors.push({ label: `${total} goals`, points: 12 }); score += 12; }
-      else if (total <= 1) { factors.push({ label: 'Very low scoring', points: -12 }); score -= 12; }
-      if      (diff === 0) { factors.push({ label: 'Draw', points: 13 }); score += 13; }
+      else if (total <= 1 && sport !== 'worldcup') { factors.push({ label: 'Very low scoring', points: -12 }); score -= 12; }
+      if      (diff === 0) { factors.push({ label: 'Draw', points: sport === 'worldcup' ? 20 : 13 }); score += sport === 'worldcup' ? 20 : 13; }
       else if (diff === 1) { factors.push({ label: '1 goal margin', points: 16 }); score += 16; }
       else if (diff === 2) { factors.push({ label: '2 goal margin', points: 5  }); score += 5;  }
       else                 { factors.push({ label: 'Large margin', points: -40 }); score -= 40; }
@@ -1417,8 +1417,10 @@ exports.handler = async function (event, context) {
         score += 40;
       }
 
-      if (sport !== 'worldcup') {
-        // League prestige bonus — not needed for World Cup (dedicated tab, all games equal)
+      if (sport === 'worldcup') {
+        // Small baseline for World Cup — every match has stakes, even low-scoring ones
+        factors.push({ label: 'World Cup', points: 10 }); score += 10;
+      } else {
         const leagueTier = { 'Champions League': 1, 'Premier League': 1, 'La Liga': 2, 'Bundesliga': 2, 'Serie A': 2 };
         const tier = leagueTier[g.league];
         if      (tier === 1) { factors.push({ label: g.league, points: 6 }); score += 6; }
@@ -2200,6 +2202,24 @@ exports.handler = async function (event, context) {
       fetchCS2(),
       fetchWorldCup(),
     ]);
+
+    // Merge redditData from the existing blob onto fresh CS2 matches before scoring.
+    // fetchCS2() returns fresh PandaScore data without redditData — the enrichment
+    // cron writes redditData to the blob separately. Without this merge, every live
+    // fetch would score CS2 matches without Reddit signals.
+    try {
+      const blobStore = getStore('scores');
+      const existingBlob = await blobStore.get('latest', { type: 'json' });
+      const existingCS2 = existingBlob?.data?.cs2?.recent || [];
+      if (existingCS2.length > 0) {
+        const redditByID = {};
+        existingCS2.forEach(m => { if (m.redditData) redditByID[m.id] = m.redditData; });
+        cs2.recent = cs2.recent.map(m => redditByID[m.id] ? { ...m, redditData: redditByID[m.id] } : m);
+      }
+    } catch (e) {
+      console.warn('CS2 reddit merge failed:', e.message);
+    }
+
     body = {
       soccer:  { ...soccer,  recent: attachConfidence(soccer.recent,  'football') },
       nhl:     { ...nhl,     recent: attachConfidence(nhl.recent,     'nhl')      },

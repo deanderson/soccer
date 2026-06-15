@@ -131,12 +131,12 @@
     0%   { transform: translateY(0) rotate(10deg); opacity: 1; }
     100% { transform: translateY(-14px) rotate(25deg); opacity: 0; }
   }
-  .tab-btn[data-sport="worldcup"] {
+  .sport-tab[data-sport="worldcup"] {
     position: relative;
     animation: wc-sparkle 2.4s ease-in-out infinite;
   }
-  .tab-btn[data-sport="worldcup"]::before,
-  .tab-btn[data-sport="worldcup"]::after {
+  .sport-tab[data-sport="worldcup"]::before,
+  .sport-tab[data-sport="worldcup"]::after {
     content: '✨';
     position: absolute;
     font-size: 10px;
@@ -146,12 +146,12 @@
     animation-iteration-count: infinite;
     animation-timing-function: ease-out;
   }
-  .tab-btn[data-sport="worldcup"]::before {
+  .sport-tab[data-sport="worldcup"]::before {
     left: -2px;
     animation-name: wc-float-left;
     animation-delay: 0s;
   }
-  .tab-btn[data-sport="worldcup"]::after {
+  .sport-tab[data-sport="worldcup"]::after {
     right: -2px;
     animation-name: wc-float-right;
     animation-delay: 0.9s;
@@ -1514,8 +1514,8 @@
     '⚡ Late drama':    null,   // softly hints at when drama happened — borderline; suppress to be safe
 
     // COMEBACK SCALE — safe to show, doesn't reveal winner
-    '⚡ Huge comeback': 'A massive comeback happened',
-    '⚡ Big comeback':  'A big comeback happened',
+    '⚡ Huge comeback': 'Massive comeback',
+    '⚡ Big comeback':  'Big comeback',
 
     // DRAMA SIGNALS — these are great for users
     '⚡ Overtime':          'Went to overtime',
@@ -1565,6 +1565,26 @@
     'Quarter-final':   'Quarter-final stakes',
     'Semi-final':      'Semi-final stakes',
     'Final':           'Tournament final',
+
+    // CS2 SERIES SHAPE
+    'Went full distance (Bo3)': 'Went the full 3 maps',
+    'Went full distance (Bo5)': 'Went the full 5 maps',
+    'Competitive series':       'Competitive series',
+    'Series not competitive':   null,  // suppress — not useful to show
+    'Single map result':        null,  // suppress
+    'S-tier event':             null,  // suppress — all CS2 shown is S/A/B
+    'A-tier event':             null,
+    'B-tier event':             null,
+
+    // CS2 REDDIT MAP SIGNALS
+    '2 close maps':             'Both maps were closely contested',
+    '3 close maps':             'All maps were tightly contested',
+    '1 close map':              'One map went down to the wire',
+    '1 map went OT':            'A map went to overtime',
+    '2 maps went OT':           'Two maps went to overtime',
+    '3 maps went OT':           'All three maps went to overtime',
+    'Community interest':       null,  // internal signal, don't surface
+    'High community excitement':null,  // internal signal, don't surface
   };
 
   // For dynamic labels like "5 goals", "8 pts", "3 pt margin" — match patterns.
@@ -1720,7 +1740,9 @@
     // like "Down to the wire" are misleading (one team may have led wire-to-wire)
     const lcFactor = factors.find(f => f.label?.match(/^(\d+) lead changes$/));
     const leadChanges = lcFactor ? parseInt(lcFactor.label, 10) : 0;
-    const hasRealBackAndForth = leadChanges >= 3;
+    const hasComeback = factors.some(f => f.label?.includes('comeback') || f.label?.includes('Comeback'));
+    // A comeback proves it wasn't wire-to-wire even with few recorded lead changes
+    const hasRealBackAndForth = leadChanges >= 3 || hasComeback;
 
     const phrases = [];
     const seen = new Set();
