@@ -166,6 +166,8 @@ exports.handler = async function (event, context) {
       const away   = comp?.competitors?.find(c => c.homeAway === "away");
       const status = ev.status?.type?.name ?? "";
       const date   = new Date(ev.date);
+      // Guard against null/malformed dates from ESPN — skip events that can't be parsed
+      if (isNaN(date.getTime())) return null;
       // US sports primarily play in ET, so we anchor both the grouping key
       // and the display date to ET. Otherwise late-night ET games (which are
       // already past midnight UTC) get bucketed to the next calendar day,
@@ -216,7 +218,7 @@ exports.handler = async function (event, context) {
         out.awayLinescores = (away?.linescores || []).map(l => parseInt(l.value ?? 0, 10));
       }
       return out;
-    });
+    }).filter(Boolean);
   }
 
   const BASE = "https://site.api.espn.com/apis/site/v2/sports";
