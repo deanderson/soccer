@@ -47,23 +47,37 @@ exports.handler = async function (event, context) {
     console.log('enrich-reddit: reset=1, cleared all redditData');
   }
 
-  // Find matches that need enrichment:
-  // - finished (not upcoming)
-  // - missing redditData (or reset cleared it)
+  // Only enrich matches from last 3 days — older matches are stable and
+  // the daily cron keeps recent ones current. Full backfill via reset=1
+  // if needed but time-boxed per run.
+  const threeDaysAgo = Date.now() - 3 * 24 * 60 * 60 * 1000;
+
   const toEnrich = matches.filter(m =>
     m.status === 'finished' &&
-    !m.redditData
+    !m.redditData &&
+    (m.ts || 0) >= threeDaysAgo
   );
 
   if (toEnrich.length === 0) {
-    return respond(200, { message: 'All CS2 matches already enriched', total: matches.length });
+    return respond(200, { message: 'All recent CS2 matches enriched', total: matches.length });
   }
 
-  console.log(`enrich-reddit: ${toEnrich.length} matches to enrich`);
+  // Time-budgeted loop — keep enriching until 20s elapsed (safe under 26s limit)
+  // Failsafe: never process more than 30 matches per run regardless of time
+  const TIME_BUDGET_MS = 20000;
+  const MAX_PER_RUN = 30;
+  const startTime = Date.now();
+
+  console.log(`enrich-reddit: ${toEnrich.length} recent matches pending`);
 
   const results = [];
 
   for (const match of toEnrich) {
+    if (results.length >= MAX_PER_RUN) break;
+    if (Date.now() - startTime > TIME_BUDGET_MS) {
+      console.log(`enrich-reddit: time budget reached after ${results.length} matches`);
+      break;
+    }
     // Build search query using normalized team names
     // Posts use "TeamA vs TeamB / IEM..." format, not "match thread"
     // Some teams are abbreviated in titles (BetBoom Team → BB, etc.)
@@ -99,8 +113,15 @@ exports.handler = async function (event, context) {
     return respond(500, { error: 'Failed to write enriched blob', detail: err.message });
   }
 
+  const elapsed = Date.now() - startTime;
+  const stillPending = toEnrich.length - results.length;
+
   return respond(200, {
     enriched: results.length,
+    deferred: stillPending,
+    runAgain: stillPending > 0,
+    elapsedMs: elapsed,
+    hint: stillPending > 0 ? 'Hit enrich-reddit (no reset) to continue' : undefined,
     results,
   });
 };
