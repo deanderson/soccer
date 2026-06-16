@@ -40,9 +40,16 @@ exports.handler = async function (event, context) {
 
   const matches = cached.data.cs2.recent;
 
+  // ?reset=1 clears existing redditData so all matches get re-enriched
+  const isReset = event.queryStringParameters?.reset === '1';
+  if (isReset) {
+    matches.forEach(m => { delete m.redditData; });
+    console.log('enrich-reddit: reset=1, cleared all redditData');
+  }
+
   // Find matches that need enrichment:
   // - finished (not upcoming)
-  // - missing redditData
+  // - missing redditData (or reset cleared it)
   const toEnrich = matches.filter(m =>
     m.status === 'finished' &&
     !m.redditData

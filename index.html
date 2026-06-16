@@ -209,6 +209,8 @@
   .watch-btn:hover{background:rgba(63,185,80,0.2);border-color:var(--green);}
   .score-reveal{font-size:16px;font-weight:700;font-family:'Bebas Neue',sans-serif;letter-spacing:0.05em;display:none;flex-shrink:0;min-width:52px;text-align:center;}
 
+  .insight-tag--historic { background: rgba(240,192,64,0.12); border-color: rgba(240,192,64,0.4); color: #f0c040; font-style: italic; }
+
   /* Insight tags — appear when the user taps "Why watch?" before revealing score.
      In game cards (flex-wrap), flex-basis:100% forces a full row. In top-pick-cards
      (block layout), it naturally fills the width. Hidden by default; shown via
@@ -761,7 +763,7 @@
       {icon:'🔥', title:'Score Fest',     desc:'6 or more total goals. End-to-end madness.'},
       {icon:'🧱', title:'Defensive',      desc:'2 or fewer total goals. Tight, tense, low scoring.'},
       {icon:'🎯', title:'Blowout',        desc:'One team won by 3+ goals. Never really in doubt.'},
-      {icon:'👀', title:'Worth Watching', desc:'Close scoreline, late drama, a comeback, or lead changes. A proper contest.'},
+      {icon:'👀', title:'Worth Watching', desc:'Close scoreline, late drama, a rally, or lead changes. A proper contest.'},
       {icon:'😐', title:'Watchable',      desc:'Everything else. Decent enough game.'},
     ],
     nhl: [
@@ -1503,12 +1505,12 @@
   // shows a fallback message ("Nothing notable.") for the empty state.
   const INSIGHT_MAP = {
     // SPOILERS — suppress entirely (engine still uses them; UI doesn't show)
-    '⚡ Comeback':      null,   // generic comeback reveals winner — suppress
+    '⚡ Rally':            'One team mounted a rally',
     '⚡ Late drama':    null,   // softly hints at when drama happened — borderline; suppress to be safe
 
     // COMEBACK SCALE — safe to show, doesn't reveal winner
-    '⚡ Huge comeback': 'Massive comeback',
-    '⚡ Big comeback':  'Big comeback',
+    '⚡ Huge rally':            'Massive rally',
+    '⚡ Big rally':             'Big rally',
 
     // DRAMA SIGNALS — these are great for users
     '⚡ Overtime':          'Went to overtime',
@@ -1521,7 +1523,7 @@
     'Red card':             'A player was sent off',
     '⚡ Late goal':         'Decided by a late goal',
     '⚡ 90th min goal':     'Decided in injury time',
-    '⚡ Penalty shootout':  'Went to a penalty shootout',
+    '⚡ Penalty shootout':  null,  // spoiler — reveals game was tied after 90min
     '⭐ Standout 40+ pt game': 'A player went off (40+ pts)',
     '⭐ Standout 30+ pt game': 'Standout individual performance',
     '⭐ Bench scorer 20+':     'A bench player put up big numbers',
@@ -1553,6 +1555,12 @@
     'Both 100+ avg':   'Elite shooting from both',
     'One 100+ avg':    'One player at elite level',
     'Both sub-90 avg': 'Off night for both players',
+
+    // HISTORIC RECORDS
+    '🏆 Historic scoring game':     'Historically high scoring',
+    '🏆 Huge rally':               'Massive rally',
+    '🏆 Triple overtime thriller':  'Triple overtime thriller',
+    'Marathon extra innings':       null,  // handled dynamically below
 
     // ROUND CONTEXT
     'Quarter-final':   'Quarter-final stakes',
@@ -1702,9 +1710,12 @@
     m = label.match(/^Extra innings \((\d+)\)$/);
     if (m) {
       const innings = parseInt(m[1], 10);
+      if (innings >= 13) return '🏆 Marathon extra innings';
       if (innings >= 12) return 'Marathon extra innings';
       return 'Went to extra innings';
     }
+    m = label.match(/^Marathon extra innings \((\d+)\)$/);
+    if (m) return '🏆 Marathon extra innings';
 
     // ── Red cards ────────────────────────────────────────────────────────
     m = label.match(/^(\d+) red cards$/);
@@ -1733,7 +1744,7 @@
     // like "Down to the wire" are misleading (one team may have led wire-to-wire)
     const lcFactor = factors.find(f => f.label?.match(/^(\d+) lead changes$/));
     const leadChanges = lcFactor ? parseInt(lcFactor.label, 10) : 0;
-    const hasComeback = factors.some(f => f.label?.includes('comeback') || f.label?.includes('Comeback'));
+    const hasComeback = factors.some(f => f.label?.includes('rally') || f.label?.includes('Rally'));
     // A comeback proves it wasn't wire-to-wire even with few recorded lead changes
     const hasRealBackAndForth = leadChanges >= 3 || hasComeback;
 
@@ -1773,15 +1784,19 @@
   // scoreBtnArgs is the JS-literal string used inside the toggleScore call,
   // e.g. "5,3" for sports with numeric h/a, or "'set scores','' " for cricket/
   // tennis. Caller pre-builds it so this helper stays sport-agnostic.
-  function buildInsightHTML(factors, sport, scoreBtnArgs) {
+  function buildInsightHTML(factors, sport, scoreBtnArgs, espnHeadline) {
     const phrases = getInsightPhrases(factors, sport);
+    // Historic headline goes first, styled differently
+    const historicHTML = espnHeadline
+      ? `<span class="insight-tag insight-tag--historic">${espnHeadline}</span>`
+      : '';
     const tagsHTML = phrases.length
       ? phrases.map(p => `<span class="insight-tag">${p}</span>`).join('')
-      : '<span class="insight-tag insight-tag--empty">Nothing notable.</span>';
+      : (espnHeadline ? '' : '<span class="insight-tag insight-tag--empty">Nothing notable.</span>');
     const scoreBtn = scoreBtnArgs
       ? `<button class="insight-score-btn" onclick="toggleScore(this,${scoreBtnArgs})">Show Score →</button>`
       : '';
-    return tagsHTML + scoreBtn;
+    return historicHTML + tagsHTML + scoreBtn;
   }
 
   // Broadcast info for upcoming games. Returns null when nothing useful to
@@ -2308,7 +2323,7 @@
         const cycleArgs = (isCricket || isTennis)
           ? `'${escapedScore}',''`
           : `${g.h},${g.a}`;
-        const insightHTML = buildInsightHTML(g.confidence?.factors, g.sport, cycleArgs);
+        const insightHTML = buildInsightHTML(g.confidence?.factors, g.sport, cycleArgs, g.espnHeadline);
         const dateLabel = g.date || g.dateStr || '';
         const leagueLabel = g.league || g.leagueName || g.tournament || '';
         // In Top Picks every card is a deliberate recommendation, so show the
@@ -2528,7 +2543,7 @@
             <span class="${f.points >= 0 ? 'pos' : 'neg'}">${f.points >= 0 ? '+' : ''}${f.points}</span>
           </div>`).join('')}
         ${g.debug ? `<div class="debug-factor" style="margin-top:4px;color:var(--blue)">
-          <span>LC:${g.debug.leadChanges ?? '—'} · Lead:${g.debug.largestLead ?? '—'}${g.debug.hasOT ? ' · OT' : ''}${g.debug.hadComeback ? ' · Comeback' : ''}${(g.debug.fouledOut != null || g.debug.fiveFouls != null) ? ` · 6PF:${g.debug.fouledOut ?? 0} · 5PF:${g.debug.fiveFouls ?? 0}` : ''}${g.debug.topScorer ? ` · ${g.debug.topScorer}` : ''}${g.debug.benchStandout ? ` · ${g.debug.benchStandout}` : ''}</span>
+          <span>LC:${g.debug.leadChanges ?? '—'} · Lead:${g.debug.largestLead ?? '—'}${g.debug.hasOT ? ' · OT' : ''}${g.debug.hadComeback ? ' · Rally' : ''}${(g.debug.fouledOut != null || g.debug.fiveFouls != null) ? ` · 6PF:${g.debug.fouledOut ?? 0} · 5PF:${g.debug.fiveFouls ?? 0}` : ''}${g.debug.topScorer ? ` · ${g.debug.topScorer}` : ''}${g.debug.benchStandout ? ` · ${g.debug.benchStandout}` : ''}</span>
         </div>` : ''}
       </div>`;
   }
@@ -2560,7 +2575,7 @@
       : (g.watch && g.cat.cls === 'watchworthy' && !shouldHideWatchProvider(g))
         ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
         : '';
-    const insightHTML = buildInsightHTML(g.confidence?.factors, sport || g.sport, `${g.h},${g.a}`);
+    const insightHTML = buildInsightHTML(g.confidence?.factors, sport || g.sport, `${g.h},${g.a}`, g.espnHeadline);
     return `
       <div class="game-card ${g.cat.cls}${isBestPick?' best-pick':''}" data-game-id="${gameId.replace(/"/g, '&quot;')}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
         <div class="teams" style="flex:1;min-width:0;">

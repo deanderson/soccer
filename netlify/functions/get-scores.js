@@ -1392,7 +1392,7 @@ exports.handler = async function (event, context) {
       else if (diff === 1) { factors.push({ label: '1 goal margin', points: 16 }); score += 16; }
       else if (diff === 2) { factors.push({ label: '2 goal margin', points: 5  }); score += 5;  }
       else                 { factors.push({ label: 'Large margin', points: -40 }); score -= 40; }
-      if (hasComeback)  { factors.push({ label: '⚡ Comeback', points: 25 }); score += 25; }
+      if (hasComeback)  { factors.push({ label: '⚡ Rally', points: 25 }); score += 25; }
       if (hasLateDrama && !g.lateGoal) { factors.push({ label: '⚡ Late drama', points: 18 }); score += 18; }
       if (hasBackForth) { factors.push({ label: '⚡ Back & forth', points: 18 }); score += 18; }
 
@@ -1438,18 +1438,21 @@ exports.handler = async function (event, context) {
       else                 { factors.push({ label: 'Large margin', points: -40 }); score -= 40; }
       if (hasOT) {
         const otPeriods = Math.max(1, (g.period ?? 4) - 3);
-        const otPts = otPeriods >= 2 ? 35 : 25;
-        const otLabel = otPeriods >= 2 ? '⚡ Exciting overtime' : '⚡ Overtime';
+        const otPts = otPeriods >= 3 ? 45 : otPeriods >= 2 ? 35 : 25;
+        const otLabel = otPeriods >= 3 ? '🏆 Triple overtime thriller'
+                      : otPeriods >= 2 ? '⚡ Double overtime'
+                      : '⚡ Overtime';
         factors.push({ label: otLabel, points: otPts }); score += otPts;
       }
-      if (hasComeback)  { factors.push({ label: '⚡ Comeback', points: 22 }); score += 22; }
+      if (hasComeback)  { factors.push({ label: '⚡ Rally', points: 22 }); score += 22; }
       if (hasBackForth) { factors.push({ label: '⚡ Back & forth', points: 18 }); score += 18; }
       if (hasLateDrama) { factors.push({ label: '⚡ Late drama', points: 18 }); score += 18; }
       const lc = g.debug?.leadChanges ?? 0;
       if (lc >= 2 && !hasBackForth) { factors.push({ label: `${lc} lead changes`, points: 12 }); score += 12; }
 
     } else if (sport === 'nba') {
-      if      (total >= 230) { factors.push({ label: `${total} pts`, points: 15 }); score += 15; }
+      if      (total >= 270) { factors.push({ label: '🏆 Historic scoring game', points: 25 }); score += 25; }
+      else if (total >= 230) { factors.push({ label: `${total} pts`, points: 15 }); score += 15; }
       else if (total >= 210) { factors.push({ label: `${total} pts`, points: 8  }); score += 8;  }
       if      (diff <= 5)  { factors.push({ label: `${diff} pt margin`, points: 25 }); score += 25; }
       else if (diff <= 10) { factors.push({ label: `${diff} pt margin`, points: 15 }); score += 15; }
@@ -1470,9 +1473,9 @@ exports.handler = async function (event, context) {
                           : deficit >= 15 ? 30
                           : deficit >= 10 ? 22
                           : 15;
-        const comebackLabel = deficit >= 25 ? '⚡ Huge comeback'
-                            : deficit >= 15 ? '⚡ Big comeback'
-                            : '⚡ Comeback';
+        const comebackLabel = deficit >= 20 ? '🏆 Huge rally'
+                            : deficit >= 10 ? '⚡ Big rally'
+                            : '⚡ Rally';
         factors.push({ label: comebackLabel, points: comebackPts });
         score += comebackPts;
       }
@@ -1504,9 +1507,9 @@ exports.handler = async function (event, context) {
                           : deficit >= 12 ? 28
                           : deficit >= 8  ? 20
                           : 14;
-        const comebackLabel = deficit >= 20 ? '⚡ Huge comeback'
-                            : deficit >= 12 ? '⚡ Big comeback'
-                            : '⚡ Comeback';
+        const comebackLabel = deficit >= 20 ? '🏆 Huge rally'
+                            : deficit >= 12 ? '⚡ Big rally'
+                            : '⚡ Rally';
         factors.push({ label: comebackLabel, points: comebackPts });
         score += comebackPts;
       }
@@ -1603,13 +1606,17 @@ exports.handler = async function (event, context) {
       if      (diff === 0 || diff === 1) { factors.push({ label: `${diff === 0 ? 'Tie' : '1 run margin'}`, points: 35 }); score += 35; }
       else if (diff === 2)               { factors.push({ label: '2 run margin', points: 18 }); score += 18; }
       else if (diff >= 5)                { factors.push({ label: 'Large margin', points: -40 }); score -= 40; }
-      if (g.period > 9) { factors.push({ label: `Extra innings (${g.period})`, points: 20 }); score += 20; }
+      if (g.period > 9) {
+        const extraPts = g.period >= 13 ? 30 : 20;
+        const extraLabel = g.period >= 13 ? `Marathon extra innings (${g.period})` : `Extra innings (${g.period})`;
+        factors.push({ label: extraLabel, points: extraPts }); score += extraPts;
+      }
 
       // Linescore-derived drama signals
       const lc = g.debug?.leadChanges ?? 0;
       if      (lc >= 4) { factors.push({ label: `${lc} lead changes`, points: 20 }); score += 20; }
       else if (lc >= 2) { factors.push({ label: `${lc} lead changes`, points: 10 }); score += 10; }
-      if (g.debug?.hadComeback)  { factors.push({ label: '⚡ Comeback', points: 18 }); score += 18; }
+      if (g.debug?.hadComeback)  { factors.push({ label: '⚡ Rally', points: 18 }); score += 18; }
       if (g.debug?.walkOff)      { factors.push({ label: '⚡ Walk-off', points: 15 }); score += 15; }
 
     } else if (sport === 'softball') {
@@ -2239,6 +2246,9 @@ exports.handler = async function (event, context) {
       worldcup:{ ...worldcup, recent: attachConfidence(worldcup.recent, 'worldcup') },
     };
 
+    // Enrich high-scoring games with ESPN headline flavor (record/historic games)
+    await enrichHeadlines(body);
+
     // Save full fetch to blob for future requests — note we save BEFORE
     // attaching watch, so the blob stays country-neutral and can be served
     // to users in any region with their own watch links applied per-request.
@@ -2252,6 +2262,66 @@ exports.handler = async function (event, context) {
     }
   } else {
     body = await SPORT_FETCHERS[sportParam]();
+  }
+
+  // ── ESPN Headline enrichment ──────────────────────────────────────────────
+  // For high-scoring games (≥70), fetch the ESPN summary article headline.
+  // If it contains record/historic language, store spoiler-free flavor text
+  // and give a small bonus. Only runs on internal cron calls.
+  async function enrichHeadlines(bodyData) {
+    const RECORD_KEYWORDS = ['record', 'historic', 'all-time', 'milestone',
+      'first time', 'most ever', 'marathon', 'stunning', 'rally', 'remarkable',
+      'incredible', 'legendary', 'unprecedented', 'outlast'];
+
+    const FLAVOR_MAP = [
+      [['all-time', 'most ever', 'unprecedented'],  '🏆 All-time historic'],
+      [['record', 'historic', 'milestone'],          '🏆 Historic performance'],
+      [['rally', 'stunning'],                        '⚡ Stunning rally'],
+      [['marathon', 'outlast'],                      '⏱️ Grueling contest'],
+      [['remarkable', 'incredible', 'legendary'],    '🏆 Remarkable contest'],
+    ];
+
+    const ESPN_SUMMARY = {
+      nba:  'basketball/nba',
+      wnba: 'basketball/wnba',
+      mlb:  'baseball/mlb',
+      nhl:  'hockey/nhl',
+      nfl:  'football/nfl',
+    };
+
+    for (const [sport, path] of Object.entries(ESPN_SUMMARY)) {
+      const games = bodyData[sport === 'nba' ? 'nba' : sport]?.recent || [];
+      for (const g of games) {
+        if (!g.id || (g.confidence?.score ?? 0) < 70) continue;
+        try {
+          const url = `https://site.api.espn.com/apis/site/v2/sports/${path}/summary?event=${g.id}`;
+          const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+          if (!res.ok) continue;
+          const data = await res.json();
+          const headline = (data?.article?.headline || '').toLowerCase();
+          if (!headline) continue;
+          // Check for record keywords
+          const matched = RECORD_KEYWORDS.filter(k => headline.includes(k));
+          if (matched.length === 0) continue;
+          // Map to spoiler-free flavor
+          let flavor = null;
+          for (const [keywords, phrase] of FLAVOR_MAP) {
+            if (keywords.some(k => matched.includes(k))) { flavor = phrase; break; }
+          }
+          if (!flavor) flavor = '🏆 Historic performance';
+          g.espnHeadline = flavor;
+          // Small score boost for confirmed record games
+          if (g.confidence) {
+            g.confidence.score = Math.min(100, g.confidence.score + 10);
+            g.confidence.factors = [...(g.confidence.factors || []),
+              { label: flavor, points: 10 }];
+          }
+          console.log(`enrichHeadlines: ${g.id} → "${flavor}" (from: "${headline.slice(0,60)}")`);
+        } catch (e) {
+          // Non-fatal — just skip this game
+        }
+      }
+    }
   }
 
   // Final pass — attach watch links for the user's country. Skipped on

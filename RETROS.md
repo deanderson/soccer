@@ -251,3 +251,48 @@ We have good working agreements written down and neither of us enforces them at 
 - Name the session goal explicitly upfront. Today drifted across NBA scoring, CS2 enrichment, deploy debugging, cost reckoning. A stated goal would have helped stop earlier with a cleaner outcome.
 - Push back immediately when the agent recommends a deploy without first stating what test would confirm it works.
 
+
+---
+
+## Session: 2026-06-15 — World Cup tab, CS2 Reddit scoring, deploy fixes
+
+**What worked**
+
+- World Cup tab end-to-end. New sport key, fetcher, scoring branch, panel, filters, tab animation — all wired correctly on the first attempt. fifa.world slug verified with curl before writing any code. Tab shows before Football, only World Cup games, correct scoring.
+- CS2 Reddit scoring logic. Map closeness (+8/+18), OT maps (+12/+22), upvote signal (+5/+10). TheMongolz vs B8 correctly goes from 20 to 50. Bo3 base raised from 35→40 so S-tier deciders hit Must Watch floor without Reddit data.
+- The flavor test simulation before deploying. Running all 10 real matches through the scoring engine locally caught the Bo3 floor issue before it shipped.
+- NaVi vs Falcons showing 90/100 with "1 close map +8, 1 map went OT +12" — Reddit merge working correctly after deploy.
+- D-tier filter finally working — 3 S-tier matches only, no noise.
+- Checklist enforced at session start. Credit balance verified, deploy cost confirmed, source of truth files confirmed. First time checklist was actually followed.
+
+**What didn't**
+
+- reset=1 was never wired up in enrich-reddit.js. We ran it every session as a dev tool and it was a no-op the whole time. Should have been caught the first time it was used — a simple grep for `queryStringParameters` would have shown it wasn't reading the param.
+- D-tier filter was in the wrong place again. Written after parseMatch, not before — so D-tier matches got parsed and stored. Same mistake as a previous session. The test checked "does the string exist" not "does the filter actually run before parsing."
+- buildFilters football/worldcup bleed. Added `|| sport === 'worldcup'` to the wrong if block — caused Premier League/La Liga filters to show on the World Cup tab. Caught post-deploy from a screenshot.
+- Confetti clipping. Floated upward into overflow:hidden. Should have checked sport-tabs CSS before writing the animation. Changed to pulse animation which stays within bounds.
+- NHL crash on deploy. normalizeEvents had no null date guard. Transient ESPN bad date took the whole site down via Promise.all rejection. Not caused by our changes but revealed by them.
+- Tests check existence not behavior. grep-based checks confirmed code strings are present but not that they work. reset=1 and the D-tier filter both passed existence checks and failed behavioral ones.
+
+**The real pattern**
+
+Tests need to verify behavior not presence. "Does this string exist in the file" is not the same as "does this feature work." For the next session, any new feature needs a behavioral test — a simulation, a curl, or a debug endpoint result — not just a grep.
+
+**Try differently next session**
+
+- For any new parameter or query string handler: test it immediately by calling the function and verifying the behavior changed. Don't trust that reading a param works without confirming it.
+- Before deploying CSS animations: check parent overflow properties first.
+- When adding a sport to an if block: grep all if blocks for that sport afterward to catch any missed or wrongly-added cases.
+
+**Keep doing**
+
+- Flavor test simulations before deploying scoring changes.
+- Curl verification of external API slugs before writing fetchers.
+- Bundling fixes into single deploys rather than iterating.
+- Checking session-start checklist (first time it actually happened).
+
+**What the human could do better**
+
+- End of session docs same day. Yesterday's session ended without retro/DEFERRED update, meaning context is reconstructed from memory today.
+- When a deploy causes a regression: check Netlify function logs immediately rather than refreshing the site repeatedly.
+

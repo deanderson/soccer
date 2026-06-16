@@ -524,3 +524,63 @@ where relevant.
 **Open — process:**
 - Add "verify external API with curl before writing fetcher" to PROJECT.md working agreements
 - Add session-start checklist to PROJECT.md: read working agreements aloud, confirm file tracking plan
+
+---
+
+## Status as of 2026-06-12 evening
+
+**Shipped today:**
+- NBA/WNBA comeback scaling: flat +20 → scaled by deficit size (10pt=+22, 15pt=+30, 20pt=+38, 25pt+=+45)
+- Comeback label tiers: "Comeback" / "Big comeback" / "Huge comeback" (spoiler-safe)
+- "Huge/Big comeback" insight tags now surface in Why watch? panel
+- "Down to the wire" now shows on comeback games (was suppressed due to low lead change count)
+- CS2 Reddit enrichment via Arctic Shift (enrich-reddit.js, daily cron 5pm ET)
+- CS2 tier filter: S/A/B only for recent + upcoming (D/C tier noise eliminated)
+- CS2 date range filter on PandaScore URL (fixes empty tab — S-tier matches were buried by null begin_at)
+- dev-dashboard.js: parse health, tier distribution, enrichment state
+- cs2-debug.js: per-match Reddit data inspector
+- Netlify deploy cost corrected in PROJECT.md: 15 credits each, not ~$0.01
+
+**Open — CS2 scoring from Reddit data:**
+- Map closeness bonus: each map with margin ≤ 3 adds points; OT maps add more
+- Map OT bonus: separate from series OT — each individual map that went OT is its own signal
+- Upvotes as weak modifier: 200+ upvotes = small bonus (community excitement signal)
+- TheMongolz vs B8 is the reference case: 225 upvotes, Mirage OT, two close maps, scored 20 — should be much higher
+
+**Open — CS2 replay links:**
+- Add one-click replay links to CS2 match cards using HLTV URLs
+- Reddit post-match threads always contain HLTV match URL in post body
+- Parse it from selftext during enrichment and store as redditData.hltvUrl
+- Frontend: show "▶ Watch replay" button on CS2 cards (similar to WNBA League Pass button)
+- Spoiler-safe: button always visible, doesn't reveal score
+
+**Open — other:**
+- Delete pandascore-debug.js once CS2 confirmed stable long-term
+- Valorant (same engine as CS2, nearly free to add)
+- FUT vs G2 enrichment miss: found: false stored, won't retry — needs reset or fix to retry not-found matches after N days
+
+---
+
+## Status as of 2026-06-15 evening
+
+**Shipped yesterday:**
+- World Cup tab — first tab, own fetcher (fifa.world), own scoring branch, sparkle/pulse animation, no prestige bonus, no low-scoring penalty, draw +20, +10 WC baseline
+- CS2 Reddit map scoring — close maps +8/+18, OT maps +12/+22, upvotes +5/+10
+- CS2 Reddit merge fix — redditData from blob merged onto fresh PandaScore matches before scoring (was lost on every cron cycle)
+- Bo3 full distance raised 35→40 — S-tier Bo3 deciders hit Must Watch floor without Reddit data
+- D-tier filter in correct place — filters before parseMatch, only S/A/B matches stored
+- NHL null date crash guard — isNaN check + filter(Boolean) in normalizeEvents
+- HLTV replay link — parsed from Reddit post body, stored as redditData.hltvUrl, "▶ Watch replay on HLTV" button on CS2 cards
+- reset=1 wired up in enrich-reddit.js — was a no-op before, now actually clears redditData
+- Comeback insights — "Massive comeback" / "Big comeback" wording, Down to the wire exemption
+- CS2 insight labels in INSIGHT_MAP — "Both maps closely contested", "A map went to overtime" etc.
+- archive-scores-job — worldcup added to SPORT_KEYS
+
+**Still open:**
+- FUT vs G2 enrichment miss — found:false stored, reset=1 now works so next enrich run will retry
+- Valorant — same engine as CS2, near-free to add
+- NCAAFB — requested before August
+- World Matchplay darts parser — targeting July
+- Map-level Reddit scoring refinements (Aurora vs Monte triple-OT still scores low)
+- pandascore-debug.js cleanup — can be deleted once CS2 confirmed stable
+
