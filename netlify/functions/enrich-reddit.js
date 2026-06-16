@@ -64,13 +64,16 @@ exports.handler = async function (event, context) {
   const results = [];
 
   for (const match of toEnrich) {
-    // Build search query: "TeamA TeamB match thread"
-    // Keep it tight — subreddit restriction handles false positives
-    const query = `${match.home} ${match.away} match thread`;
+    // Build search query using normalized team names
+    // Posts use "TeamA vs TeamB / IEM..." format, not "match thread"
+    // Some teams are abbreviated in titles (BetBoom Team → BB, etc.)
+    const homeNorm = normalizeTeamName(match.home);
+    const awayNorm = normalizeTeamName(match.away);
+    const query = `${homeNorm} ${awayNorm}`;
 
     let redditData;
     try {
-      redditData = await searchReddit(query, match);
+      redditData = await searchReddit(query, match, homeNorm, awayNorm);
     } catch (err) {
       console.warn(`enrich-reddit: search failed for ${match.id}:`, err.message);
       redditData = { found: false, checkedAt: Date.now(), error: err.message };
@@ -104,48 +107,96 @@ exports.handler = async function (event, context) {
 
 // ── Arctic Shift search + parse ──────────────────────────────────────────────
 
-async function searchReddit(query, match) {
-  const url = new URL(ARCTIC_SHIFT_BASE);
-  url.searchParams.set('subreddit', SUBREDDIT);
-  url.searchParams.set('title', query);
-  url.searchParams.set('limit', '5');
+function normalizeTeamName(name) {
+  const abbrevs = {
+    'betboom team': 'BB', 'betboom': 'BB',
+    'natus vincere': 'Natus Vincere',
+    'fut esports': 'FUT',
+    'team falcons': 'Falcons',
+    'team spirit': 'Spirit',
+    'team vitality': 'Vitality',
+  };
+  return abbrevs[name.toLowerCase()] || name.replace(/\s+(esports|gaming|team)$/i, '').trim();
+}
 
-  const res = await fetch(url.toString(), {
-    headers: { 'User-Agent': 'spoilerfreescores/1.0' },
-    signal: AbortSignal.timeout(8000),
-  });
+async function searchReddit(query, match, homeNorm, awayNorm) {
+  // Strategy: search broadly by tournament/league name, then score candidates
+  // by how well they match our teams. This avoids brittle exact-name matching.
 
-  if (!res.ok) {
-    throw new Error(`Arctic Shift returned ${res.status}`);
+  // Build candidate queries from most to least specific
+  const queries = [
+    // Try normalized team names first
+    `${homeNorm} ${awayNorm}`,
+    // Try just home team with tournament context
+    `${homeNorm} ${match.league || ''}`.trim(),
+    // Try just away team with tournament context
+    `${awayNorm} ${match.league || ''}`.trim(),
+    // Broad tournament search (for bot posts)
+    match.league || query,
+  ].filter((q, i, arr) => q && arr.indexOf(q) === i); // dedupe
+
+  let bestPost = null;
+  let bestScore = 0;
+
+  for (const q of queries) {
+    const url = new URL(ARCTIC_SHIFT_BASE);
+    url.searchParams.set('subreddit', SUBREDDIT);
+    url.searchParams.set('title', q);
+    url.searchParams.set('limit', '10');
+
+    let posts = [];
+    try {
+      const res = await fetch(url.toString(), {
+        headers: { 'User-Agent': 'spoilerfreescores/1.0' },
+        signal: AbortSignal.timeout(8000),
+      });
+      if (!res.ok) continue;
+      const json = await res.json();
+      posts = json.data || [];
+    } catch (e) { continue; }
+
+    // Score each post by how well it matches our match
+    for (const post of posts) {
+      const title = (post.title || '').toLowerCase();
+      const isBot = post.author === 'CS2_PostMatchThreads';
+      const isPostMatch = title.includes('post-match') || title.includes('post match');
+      if (!isPostMatch && !isBot) continue;
+
+      let score = 0;
+
+      // Strong signals
+      if (isBot) score += 10;
+      if (isPostMatch) score += 5;
+
+      // Team name matching — check all variants
+      const homeVariants = [homeNorm, match.home, match.home.replace(/\s+(esports|gaming|team)$/i,'')].map(s => s.toLowerCase());
+      const awayVariants = [awayNorm, match.away, match.away.replace(/\s+(esports|gaming|team)$/i,'')].map(s => s.toLowerCase());
+
+      const homeMatch = homeVariants.some(v => v && title.includes(v));
+      const awayMatch = awayVariants.some(v => v && title.includes(v));
+
+      if (homeMatch) score += 8;
+      if (awayMatch) score += 8;
+      if (homeMatch && awayMatch) score += 5; // both teams = very confident
+
+      // Must have at least one team or be very clearly a post-match thread
+      if (!homeMatch && !awayMatch) continue;
+
+      if (score > bestScore) {
+        bestScore = score;
+        bestPost = post;
+      }
+    }
+
+    // If we found a confident match (both teams), stop searching
+    if (bestScore >= 26) break;
   }
 
-  const json = await res.json();
-  const posts = json.data || [];
-
-  if (posts.length === 0) {
+  if (!bestPost) {
     return { found: false, checkedAt: Date.now() };
   }
 
-  // Find best match — prefer CS2_PostMatchThreads author (the bot)
-  // Fall back to highest-scored post with "Post-Match" in title
-  const botPost = posts.find(p => p.author === 'CS2_PostMatchThreads');
-  const fallback = posts.find(p =>
-    p.title?.toLowerCase().includes('post-match') ||
-    p.link_flair_text?.toLowerCase().includes('post-match')
-  );
-  const post = botPost || fallback || posts[0];
-
-  if (!post) {
-    return { found: false, checkedAt: Date.now() };
-  }
-
-  // Verify it's actually about this match by checking both team names appear in title
-  const titleLower = (post.title || '').toLowerCase();
-  const homeLower = match.home.toLowerCase();
-  const awayLower = match.away.toLowerCase();
-  if (!titleLower.includes(homeLower) && !titleLower.includes(awayLower)) {
-    return { found: false, checkedAt: Date.now() };
-  }
+  const post = bestPost;
 
   const body = post.selftext || '';
 

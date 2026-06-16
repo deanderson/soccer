@@ -1392,7 +1392,7 @@ exports.handler = async function (event, context) {
       else if (diff === 1) { factors.push({ label: '1 goal margin', points: 16 }); score += 16; }
       else if (diff === 2) { factors.push({ label: '2 goal margin', points: 5  }); score += 5;  }
       else                 { factors.push({ label: 'Large margin', points: -40 }); score -= 40; }
-      if (hasComeback)  { factors.push({ label: '⚡ Rally', points: 25 }); score += 25; }
+      if (hasComeback)  { factors.push({ label: '⚡ Close game after big lead', points: 25 }); score += 25; }
       if (hasLateDrama && !g.lateGoal) { factors.push({ label: '⚡ Late drama', points: 18 }); score += 18; }
       if (hasBackForth) { factors.push({ label: '⚡ Back & forth', points: 18 }); score += 18; }
 
@@ -1444,7 +1444,7 @@ exports.handler = async function (event, context) {
                       : '⚡ Overtime';
         factors.push({ label: otLabel, points: otPts }); score += otPts;
       }
-      if (hasComeback)  { factors.push({ label: '⚡ Rally', points: 22 }); score += 22; }
+      if (hasComeback)  { factors.push({ label: '⚡ Close game after big lead', points: 22 }); score += 22; }
       if (hasBackForth) { factors.push({ label: '⚡ Back & forth', points: 18 }); score += 18; }
       if (hasLateDrama) { factors.push({ label: '⚡ Late drama', points: 18 }); score += 18; }
       const lc = g.debug?.leadChanges ?? 0;
@@ -1473,9 +1473,9 @@ exports.handler = async function (event, context) {
                           : deficit >= 15 ? 30
                           : deficit >= 10 ? 22
                           : 15;
-        const comebackLabel = deficit >= 20 ? '🏆 Huge rally'
-                            : deficit >= 10 ? '⚡ Big rally'
-                            : '⚡ Rally';
+        const comebackLabel = deficit >= 20 ? '⚡ Close game after huge lead'
+                            : deficit >= 10 ? '⚡ Close game after big lead'
+                            : '⚡ Close game after big lead';
         factors.push({ label: comebackLabel, points: comebackPts });
         score += comebackPts;
       }
@@ -1507,9 +1507,9 @@ exports.handler = async function (event, context) {
                           : deficit >= 12 ? 28
                           : deficit >= 8  ? 20
                           : 14;
-        const comebackLabel = deficit >= 20 ? '🏆 Huge rally'
-                            : deficit >= 12 ? '⚡ Big rally'
-                            : '⚡ Rally';
+        const comebackLabel = deficit >= 20 ? '⚡ Close game after huge lead'
+                            : deficit >= 12 ? '⚡ Close game after big lead'
+                            : '⚡ Close game after big lead';
         factors.push({ label: comebackLabel, points: comebackPts });
         score += comebackPts;
       }
@@ -1616,7 +1616,7 @@ exports.handler = async function (event, context) {
       const lc = g.debug?.leadChanges ?? 0;
       if      (lc >= 4) { factors.push({ label: `${lc} lead changes`, points: 20 }); score += 20; }
       else if (lc >= 2) { factors.push({ label: `${lc} lead changes`, points: 10 }); score += 10; }
-      if (g.debug?.hadComeback)  { factors.push({ label: '⚡ Rally', points: 18 }); score += 18; }
+      if (g.debug?.hadComeback)  { factors.push({ label: '⚡ Close game after big lead', points: 18 }); score += 18; }
       if (g.debug?.walkOff)      { factors.push({ label: '⚡ Walk-off', points: 15 }); score += 15; }
 
     } else if (sport === 'softball') {
