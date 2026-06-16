@@ -206,6 +206,8 @@
      read as a clear "here's where to watch" callout rather than competing
      with the reveal button for horizontal space. */
   .watch-btn{display:flex;align-items:center;justify-content:center;gap:6px;flex-basis:100%;order:99;background:transparent;border:1px solid rgba(63,185,80,0.35);border-radius:8px;padding:8px 12px;font-size:12px;font-weight:600;color:var(--green);text-decoration:none;white-space:nowrap;transition:background 0.15s,border-color 0.15s;font-family:'Outfit',sans-serif;margin-top:4px;}
+  .watch-btn--spoiler{border-color:rgba(232,168,56,0.4);color:#e8a838;}
+  .watch-btn-warning{font-weight:400;font-size:10px;opacity:0.75;}
   .watch-btn:hover{background:rgba(63,185,80,0.2);border-color:var(--green);}
   .score-reveal{font-size:16px;font-weight:700;font-family:'Bebas Neue',sans-serif;letter-spacing:0.05em;display:none;flex-shrink:0;min-width:52px;text-align:center;}
 
@@ -2563,15 +2565,15 @@
     const replayHTML = isWNBA ? buildReplayStatusHTML(g) : '';
     // For WNBA Must Watch: replayHTML handles League Pass button + network info
     // For non-Must Watch WNBA and all other sports: standard League Pass button (watchworthy only)
-    // CS2: show HLTV replay link if enriched and game is finished
-    const hltvUrl = g.redditData?.hltvUrl;
-    const hltvBtn = hltvUrl
-      ? `<a class="watch-btn" href="${hltvUrl}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">▶ Watch replay on HLTV</a>`
+    // CS2: YouTube search button using team names + league
+    const ytQuery = encodeURIComponent(`${g.home} ${g.away} ${g.league || ''} full match`).replace(/%20/g, '+');
+    const ytBtn = (sport === 'cs2' || g.sport === 'cs2')
+      ? `<a class="watch-btn watch-btn--spoiler" href="https://www.youtube.com/results?search_query=${ytQuery}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">▶ Watch on YouTube <span class="watch-btn-warning">⚠️ titles may spoil</span></a>`
       : '';
     const watchBtn = replayHTML
       ? replayHTML
-      : hltvBtn
-      ? hltvBtn
+      : ytBtn
+      ? ytBtn
       : (g.watch && g.cat.cls === 'watchworthy' && !shouldHideWatchProvider(g))
         ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
         : '';
