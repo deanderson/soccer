@@ -2034,10 +2034,9 @@ exports.handler = async function (event, context) {
       'https://api.pandascore.co/csgo/matches/past',
       '?filter[videogame_title]=cs-2',
       '&filter[status]=finished',
-      '&filter[tournament_tier]=s,a,b',
       `&range[begin_at]=${fourteenDaysAgo},${twoDaysAhead}`,
       '&sort=-begin_at',
-      '&page[size]=50',
+      '&page[size]=100',
     ].join('');
 
     // Paginate through all results — no arbitrary cap
