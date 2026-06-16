@@ -2027,13 +2027,14 @@ exports.handler = async function (event, context) {
       return { recent: [], upcoming: [] };
     }
 
-    const sevenDaysAgo = new Date(Date.now() - 7 * 86400000).toISOString();
+    const fourteenDaysAgo = new Date(Date.now() - 14 * 86400000).toISOString();
     const twoDaysAhead = new Date(Date.now() + 2 * 86400000).toISOString();
 
     const url = [
       'https://api.pandascore.co/csgo/matches/past',
       '?filter[videogame_title]=cs-2',
       '&filter[status]=finished',
+      `&range[begin_at]=${fourteenDaysAgo},${twoDaysAhead}`,
       '&sort=-begin_at',
       '&page[size]=50',
     ].join('');
