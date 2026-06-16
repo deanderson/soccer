@@ -2030,33 +2030,40 @@ exports.handler = async function (event, context) {
     const fourteenDaysAgo = new Date(Date.now() - 14 * 86400000).toISOString();
     const twoDaysAhead = new Date(Date.now() + 2 * 86400000).toISOString();
 
-    const url = [
+    const baseUrl = [
       'https://api.pandascore.co/csgo/matches/past',
       '?filter[videogame_title]=cs-2',
       '&filter[status]=finished',
+      '&filter[tournament_tier]=s,a,b',
       `&range[begin_at]=${fourteenDaysAgo},${twoDaysAhead}`,
       '&sort=-begin_at',
       '&page[size]=50',
     ].join('');
 
+    // Paginate through all results — no arbitrary cap
     let matches = [];
     try {
-      const res = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` },
-        signal: AbortSignal.timeout(10000),
-      });
-      if (!res.ok) {
-        console.error(`fetchCS2: PandaScore returned ${res.status}`);
-        return { recent: [], upcoming: [] };
-      }
-      matches = await res.json();
-      if (!Array.isArray(matches)) {
-        console.error('fetchCS2: unexpected response shape');
-        return { recent: [], upcoming: [] };
+      let page = 1;
+      while (true) {
+        const res = await fetch(`${baseUrl}&page[number]=${page}`, {
+          headers: { Authorization: `Bearer ${token}` },
+          signal: AbortSignal.timeout(10000),
+        });
+        if (!res.ok) {
+          console.error(`fetchCS2: PandaScore returned ${res.status}`);
+          if (page === 1) return { recent: [], upcoming: [] };
+          break;
+        }
+        const page_data = await res.json();
+        if (!Array.isArray(page_data) || page_data.length === 0) break;
+        matches = matches.concat(page_data);
+        if (page_data.length < 100) break; // last page
+        page++;
+        if (page > 5) break; // safety limit — 500 matches max
       }
     } catch (err) {
       console.error('fetchCS2 fetch error:', err.message);
-      return { recent: [], upcoming: [] };
+      if (matches.length === 0) return { recent: [], upcoming: [] };
     }
 
     // Also fetch upcoming matches for the "Coming Up" section
