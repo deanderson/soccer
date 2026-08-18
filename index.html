@@ -181,6 +181,7 @@
      so it sits below the matchup/kickoff without competing for attention. */
   .broadcast-info{font-size:11px;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;}
   .broadcast-sub{color:var(--muted);font-size:10px;opacity:0.8;}
+  .collinsworth-warning{font-size:11px;color:var(--orange);background:var(--orange-bg);border-radius:6px;padding:2px 6px;margin-top:3px;display:inline-block;}
 
   .teams{flex:1;min-width:0;}
   .matchup{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
@@ -1557,6 +1558,8 @@
     'Both 100+ avg':   'Elite shooting from both',
     'One 100+ avg':    'One player at elite level',
     'Both sub-90 avg': 'Off night for both players',
+    'Big rushing game':      'Big rushing game',
+    'Lots of passing yards': 'Lots of passing yards',
 
     // HISTORIC RECORDS
     '🏆 Historic scoring game':     'Historically high scoring',
@@ -1570,8 +1573,8 @@
     'Final':           'Tournament final',
 
     // CS2 SERIES SHAPE
-    'Went full distance (Bo3)': 'Went the full 3 maps',
-    'Went full distance (Bo5)': 'Went the full 5 maps',
+    'Went full distance (Bo3)': null,  // suppressed — on every decider, not differentiating
+    'Went full distance (Bo5)': null,  // suppressed — on every decider, not differentiating
     'Competitive series':       'Competitive series',
     'Series not competitive':   null,  // suppress — not useful to show
     'Single map result':        null,  // suppress
@@ -2578,11 +2581,14 @@
         ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
         : '';
     const insightHTML = buildInsightHTML(g.confidence?.factors, sport || g.sport, `${g.h},${g.a}`, g.espnHeadline);
+    const collinsworthHTML = g.collinsworthWarning
+      ? `<div class="collinsworth-warning">🚨 Caution: Cris Collinsworth</div>` : '';
     return `
       <div class="game-card ${g.cat.cls}${isBestPick?' best-pick':''}" data-game-id="${gameId.replace(/"/g, '&quot;')}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
         <div class="teams" style="flex:1;min-width:0;">
           <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
           <div class="game-meta">${g.date} · ${g.league}</div>
+          ${collinsworthHTML}
         </div>
         ${isTopPick ? '<div class="best-pick-badge">⭐ Top Pick</div>' : ''}
         <div class="cat-badge">${g.cat.icon} ${g.cat.label}</div>
@@ -2755,6 +2761,8 @@
     const watchStatusHTML = isWNBA ? buildWatchStatusHTML(g) : '';
     const broadcast = (!watchStatusHTML && (g.geoBroadcasts !== undefined || g.broadcast))
       ? buildBroadcastHTML(g) : '';
+    const collinsworthHTML = g.collinsworthWarning
+      ? `<div class="collinsworth-warning">🚨 Caution: Cris Collinsworth</div>` : '';
     return `
       <div class="upcoming-card" style="animation-delay:${i*0.04}s">
         <div class="teams">
@@ -2762,6 +2770,7 @@
           <div class="game-meta">${g.league}</div>
           <div class="kickoff-time">🕐 ${formatGameTime(g.ts)}</div>
           ${watchStatusHTML || broadcast}
+          ${collinsworthHTML}
         </div>
         <div class="upcoming-badge">📅 Upcoming</div>
       </div>`;

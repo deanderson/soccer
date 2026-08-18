@@ -156,7 +156,7 @@ exports.handler = async function (event, context) {
   // geoBroadcasts for these to avoid bloating the blob with unused data
   // for sports like NHL/MLB where we don't surface broadcast info.
   // To add a sport, list its league name here and update the frontend.
-  const BROADCAST_SPORTS = new Set(['WNBA']);
+  const BROADCAST_SPORTS = new Set(['WNBA', 'NFL']);
 
   function normalizeEvents(data, leagueName) {
     const wantsBroadcast = BROADCAST_SPORTS.has(leagueName);
@@ -194,6 +194,24 @@ exports.handler = async function (event, context) {
       // Frontend decides how to display; we pass through verbatim.
       const broadcast     = wantsBroadcast ? (comp?.broadcast || ev.broadcast || '') : undefined;
       const geoBroadcasts = wantsBroadcast && Array.isArray(comp?.geoBroadcasts) ? comp.geoBroadcasts : undefined;
+
+      // NFL: flag Sunday Night Football games. Cris Collinsworth has been
+      // NBC's SNF analyst since 2009, re-signed through 2029-30 alongside
+      // Mike Tirico — a fixed weekly booth, not a per-game lookup. NBC
+      // occasionally runs an alt-crew simulcast on select games, so this
+      // isn't a 100% guarantee, but it's correct for the large majority of
+      // SNF broadcasts. Detected as: NBC national TV + Sunday + evening ET.
+      let collinsworthWarning = false;
+      if (leagueName === 'NFL' && Array.isArray(geoBroadcasts)) {
+        const isNBC = geoBroadcasts.some(b =>
+          b?.market?.type === 'National' && b?.type?.shortName === 'TV' && b?.media?.shortName === 'NBC'
+        );
+        if (isNBC) {
+          const etDay  = new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', weekday: 'short' }).format(date);
+          const etHour = parseInt(new Intl.DateTimeFormat('en-US', { timeZone: 'America/New_York', hour: '2-digit', hour12: false }).format(date), 10);
+          if (etDay === 'Sun' && etHour >= 18) collinsworthWarning = true;
+        }
+      }
       const out = {
         id:     ev.id ?? null,
         home:   home?.team?.displayName ?? "TBD",
@@ -212,6 +230,7 @@ exports.handler = async function (event, context) {
       };
       if (broadcast     !== undefined) out.broadcast     = broadcast;
       if (geoBroadcasts !== undefined) out.geoBroadcasts = geoBroadcasts;
+      if (collinsworthWarning) out.collinsworthWarning = true;
       // MLB: pass through inning-by-inning linescores for drama analysis
       if (leagueName === 'MLB') {
         out.homeLinescores = (home?.linescores || []).map(l => parseInt(l.value ?? 0, 10));
@@ -1657,6 +1676,16 @@ exports.handler = async function (event, context) {
       if      (total >= 50) { factors.push({ label: `${total} pts`, points: 20 }); score += 20; }
       else if (total <= 20) { factors.push({ label: 'Low scoring', points: -10 }); score -= 10; }
 
+      // Rushing/passing standout games — flavor insights, not big score
+      // swings. Thresholds calibrated against a real Week-10 2025 sample
+      // (20 team-games: rushing 73-226, passing 42-320): 200 rush yards and
+      // 300 pass yards each caught roughly 1-2 of 20, matching the
+      // conventional NFL "notable game" bars.
+      const maxRush = Math.max(g.homeRushYds || 0, g.awayRushYds || 0);
+      const maxPass = Math.max(g.homePassYds || 0, g.awayPassYds || 0);
+      if (maxRush >= 200) { factors.push({ label: 'Big rushing game', points: 8 }); score += 8; }
+      if (maxPass >= 300) { factors.push({ label: 'Lots of passing yards', points: 6 }); score += 6; }
+
     } else if (sport === 'cs2') {
       // CS2 scoring — free tier only, so we score on series shape, not round counts.
       // Key signals:
@@ -1869,6 +1898,56 @@ exports.handler = async function (event, context) {
           walkOff,
         },
       };
+    });
+  }
+
+  // Fetch rushing/passing yardage per team for recent final NFL games, via
+  // ESPN's summary/boxscore endpoint (not present on the scoreboard response,
+  // unlike MLB linescores — this needs one extra fetch per game). Attaches
+  // homeRushYds/awayRushYds/homePassYds/awayPassYds for the scoring engine
+  // to turn into "Big rushing game" / "Lots of passing yards" insight tags.
+  // Capped at 40 games — a 14-day NFL window is ~32 games max, so this
+  // never approaches NBA/WNBA-style volume concerns.
+  async function enrichNFL(games) {
+    const candidates = games.filter(g => g.id).slice(0, 40);
+    if (candidates.length === 0) return games;
+
+    const summaries = await Promise.all(
+      candidates.map(g =>
+        fetchESPNSummary(
+          `https://site.web.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=${g.id}&region=us&lang=en&contentorigin=espn`
+        ).catch(() => null)
+      )
+    );
+
+    return games.map(g => {
+      if (!g.id) return g;
+      const idx = candidates.findIndex(c => c.id === g.id);
+      if (idx === -1 || !summaries[idx]) return g;
+
+      const teams = summaries[idx]?.boxscore?.teams;
+      if (!Array.isArray(teams) || teams.length < 2) return g;
+
+      // ESPN's boxscore.teams doesn't reliably mark home/away — cross-reference
+      // against the competitors' team id, which we already captured on g.
+      const competitors = summaries[idx]?.header?.competitions?.[0]?.competitors || [];
+      const findYards = (teamIdx, statName) => {
+        const stat = teams[teamIdx]?.statistics?.find(s => s.name === statName);
+        return stat ? parseInt(stat.displayValue, 10) || 0 : null;
+      };
+
+      let homeRushYds = null, awayRushYds = null, homePassYds = null, awayPassYds = null;
+      teams.forEach((t, idx2) => {
+        const teamId = t?.team?.id;
+        const comp = competitors.find(c => c?.team?.id === teamId);
+        const isHome = comp?.homeAway === 'home';
+        const rush = findYards(idx2, 'rushingYards');
+        const pass = findYards(idx2, 'netPassingYards');
+        if (isHome) { homeRushYds = rush; homePassYds = pass; }
+        else        { awayRushYds = rush; awayPassYds = pass; }
+      });
+
+      return { ...g, homeRushYds, awayRushYds, homePassYds, awayPassYds };
     });
   }
 
@@ -2193,7 +2272,7 @@ exports.handler = async function (event, context) {
     mlb:      async () => { const r = await fetchSport(`${BASE}/baseball/mlb/scoreboard`, "MLB", 15); const enriched = enrichMLB(r.recent); return { mlb: { ...r, recent: attachConfidence(enriched, 'mlb') } }; },
     nba:      async () => { const r = await fetchNBAWithTimeline();   return { nba:     { ...r, recent: attachConfidence(r.recent,  'nba')      } }; },
     wnba:     async () => { const r = await fetchWNBAWithTimeline();  return { wnba:    { ...r, recent: attachConfidence(r.recent,  'wnba')     } }; },
-    nfl:      async () => { const r = await fetchSport(`${BASE}/football/nfl/scoreboard`, "NFL");     return { nfl: { ...r, recent: attachConfidence(r.recent, 'nfl') } }; },
+    nfl:      async () => { const r = await fetchSport(`${BASE}/football/nfl/scoreboard`, "NFL");     const enriched = await enrichNFL(r.recent); return { nfl: { ...r, recent: attachConfidence(enriched, 'nfl') } }; },
     cricket:  async () => { const r = await fetchCricket();           return { cricket: { ...r, recent: attachConfidence(r.recent,  'cricket')  } }; },
     tennis:   async () => { const r = await fetchTennis();            return { tennis:  { ...r, recent: attachConfidence(r.recent,  'tennis')   } }; },
     softball: async () => { const r = await fetchSoftball();          return { softball: { ...r, recent: attachConfidence(r.recent, 'softball') } }; },
@@ -2244,7 +2323,7 @@ exports.handler = async function (event, context) {
       mlb:     { ...mlb,     recent: attachConfidence(enrichMLB(mlb.recent),     'mlb')      },
       nba:     { ...nba,     recent: attachConfidence(nba.recent,     'nba')      },
       wnba:    { ...wnba,    recent: attachConfidence(wnba.recent,    'wnba')     },
-      nfl:     { ...nfl,     recent: attachConfidence(nfl.recent,     'nfl')      },
+      nfl:     { ...nfl,     recent: attachConfidence(await enrichNFL(nfl.recent),     'nfl')      },
       cricket: { ...cricket, recent: attachConfidence(cricket.recent, 'cricket')  },
       tennis:  { ...tennis,  recent: attachConfidence(tennis.recent,  'tennis')   },
       darts:   { ...darts,   recent: attachConfidence(darts.recent,   'darts')    },
