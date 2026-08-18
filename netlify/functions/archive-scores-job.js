@@ -24,6 +24,7 @@ const SPORT_KEYS = {
   nba:      'nba',
   wnba:     'wnba',
   nfl:      'nfl',
+  ncaaf:    'ncaaf',
   cricket:  'cricket',
   tennis:   'tennis',
   darts:    'darts',

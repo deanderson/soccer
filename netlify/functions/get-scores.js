@@ -231,6 +231,14 @@ exports.handler = async function (event, context) {
       if (broadcast     !== undefined) out.broadcast     = broadcast;
       if (geoBroadcasts !== undefined) out.geoBroadcasts = geoBroadcasts;
       if (collinsworthWarning) out.collinsworthWarning = true;
+
+      // Team rank (Top 25 poll position) — cheap to always attempt, only
+      // ESPN's college sports populate curatedRank; harmless no-op elsewhere.
+      // >25 or missing means unranked, normalized to null for clean display.
+      const homeRankRaw = home?.curatedRank?.current;
+      const awayRankRaw = away?.curatedRank?.current;
+      if (homeRankRaw && homeRankRaw <= 25) out.homeRank = homeRankRaw;
+      if (awayRankRaw && awayRankRaw <= 25) out.awayRank = awayRankRaw;
       // MLB: pass through inning-by-inning linescores for drama analysis
       if (leagueName === 'MLB') {
         out.homeLinescores = (home?.linescores || []).map(l => parseInt(l.value ?? 0, 10));
@@ -283,6 +291,116 @@ exports.handler = async function (event, context) {
     }
 
     return { recent: recent14, upcoming };
+  }
+
+  // ── NCAA COLLEGE FOOTBALL (D1/D2/D3) ────────────────────────────────────
+  //
+  // Division I (FBS + FCS): ESPN's site API, same reliable pattern as every
+  // other sport here. FBS = groups=80, FCS = groups=81 — both verified live.
+  //
+  // Division II & III: ESPN's public API tracks D2/D3 team rosters but has
+  // NO clean single-parameter way to fetch a full D2 or D3 scoreboard — its
+  // groups filter is fragmented across dozens of un-enumerable conference
+  // IDs (verified by direct testing, not assumption). The only clean
+  // per-division feed found is a third-party open-source proxy of ncaa.com's
+  // own data (ncaa-api.henrygd.me, MIT licensed, github.com/henrygd/ncaa-api).
+  // This is NOT an official/ESPN-grade source — it's a community-run demo
+  // instance (rate-limited 5 req/sec, no uptime guarantee). Wrapped
+  // defensively below: if it's down, D2/D3 sections just show empty rather
+  // than breaking FBS/FCS or any other sport's fetch.
+
+  const NCAA_API_BASE = 'https://ncaa-api.henrygd.me';
+
+  // College football's regular season conventionally starts the week
+  // containing the Saturday on/after Aug 24 (week 1). Self-adjusting per
+  // year — no hardcoded season-start table to maintain. Verified against a
+  // real confirmed date (Nov 8 2025 game, independently listed under
+  // ncaa.com's own "week 11" bucket — formula agrees).
+  function ncaaFootballWeek(date = new Date()) {
+    const year = date.getUTCFullYear();
+    const aug24 = new Date(Date.UTC(year, 7, 24));
+    const daysToSaturday = (6 - aug24.getUTCDay() + 7) % 7;
+    const week1Start = new Date(aug24.getTime() + daysToSaturday * 86400000);
+    const diffDays = Math.floor((date - week1Start) / 86400000);
+    return Math.max(1, Math.min(16, Math.floor(diffDays / 7) + 1));
+  }
+
+  // Fetch one division (FBS/FCS) via ESPN, tag each game with its division.
+  async function fetchNCAADivisionESPN(groupsId, division) {
+    const url = `${BASE}/football/college-football/scoreboard?groups=${groupsId}`;
+    const [recentData, upcomingData] = await Promise.all([
+      fetchESPN(`${url}&dates=${espnDate(-14)}-${espnDate(0)}&limit=200`),
+      fetchESPN(`${url}&dates=${espnDate(1)}-${espnDate(4)}&limit=100`),
+    ]);
+    const recentEvents   = normalizeEvents(recentData,   'NCAAF').map(g => ({ ...g, division }));
+    const upcomingEvents = normalizeEvents(upcomingData, 'NCAAF').map(g => ({ ...g, division }));
+    return {
+      recent:   recentEvents.filter(g => g.status === 'final' && g.ts >= twoWeeksAgo),
+      upcoming: upcomingEvents.filter(g => g.status === 'upcoming' && g.ts >= now),
+    };
+  }
+
+  // Fetch one division (D2/D3) via the ncaa-api proxy, for the current week
+  // plus the previous and next — approximates the "recent 14 days / next 4
+  // days" window the other fetchers use, since this API is week-indexed
+  // rather than date-range-indexed.
+  async function fetchNCAADivisionProxy(divisionSlug, division) {
+    const week = ncaaFootballWeek();
+    const weeksToFetch = [Math.max(1, week - 1), week, Math.min(16, week + 1)];
+    const uniqueWeeks = [...new Set(weeksToFetch)];
+    const year = new Date().getUTCFullYear();
+
+    const responses = await Promise.all(
+      uniqueWeeks.map(w =>
+        fetchESPNSummary(`${NCAA_API_BASE}/scoreboard/football/${divisionSlug}/${year}/${String(w).padStart(2,'0')}/all-conf`)
+          .catch(() => null)
+      )
+    );
+
+    const recent = [], upcoming = [];
+    for (const resp of responses) {
+      if (!resp || !Array.isArray(resp.games)) continue;
+      for (const wrapper of resp.games) {
+        const g = wrapper.game;
+        if (!g) continue;
+        const ts = parseInt(g.startTimeEpoch, 10) * 1000;
+        if (!ts) continue;
+        const h = parseInt(g.home?.score, 10);
+        const a = parseInt(g.away?.score, 10);
+        const base = {
+          id: `ncaa-${g.gameID}`,
+          home: g.home?.names?.short || '',
+          away: g.away?.names?.short || '',
+          league: 'NCAAF',
+          division,
+          ts,
+          date: new Date(ts).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+          dateKey: new Date(ts).toISOString().slice(0, 10),
+        };
+        if (g.gameState === 'final' && !isNaN(h) && !isNaN(a)) {
+          recent.push({ ...base, status: 'final', h, a });
+        } else if (g.gameState === 'pre' && ts >= now) {
+          upcoming.push({ ...base, status: 'upcoming', h: null, a: null });
+        }
+      }
+    }
+    return {
+      recent:   recent.filter(g => g.ts >= twoWeeksAgo).sort((a,b) => a.ts - b.ts),
+      upcoming: upcoming.sort((a,b) => a.ts - b.ts).slice(0, 50),
+    };
+  }
+
+  async function fetchNCAAF() {
+    const [fbs, fcs, d2, d3] = await Promise.all([
+      fetchNCAADivisionESPN(80, 'FBS'),
+      fetchNCAADivisionESPN(81, 'FCS'),
+      fetchNCAADivisionProxy('d2', 'D2').catch(() => ({ recent: [], upcoming: [] })),
+      fetchNCAADivisionProxy('d3', 'D3').catch(() => ({ recent: [], upcoming: [] })),
+    ]);
+    return {
+      recent:   [...fbs.recent, ...fcs.recent, ...d2.recent, ...d3.recent].sort((a,b) => b.ts - a.ts),
+      upcoming: [...fbs.upcoming, ...fcs.upcoming, ...d2.upcoming, ...d3.upcoming].sort((a,b) => a.ts - b.ts),
+    };
   }
 
   // ── SOCCER LEAGUES ────────────────────────────────────────────────────
@@ -1690,6 +1808,42 @@ exports.handler = async function (event, context) {
       if ((g.maxRecvLeader || 0) >= 120) { factors.push({ label: 'Big receiving day', points: 6 }); score += 6; }
       if ((g.gameSacks || 0) >= 7)       { factors.push({ label: 'Lots of sacks', points: 6 }); score += 6; }
 
+    } else if (sport === 'ncaaf') {
+      // Calibrated against a real Nov 8 2025 FBS Saturday (45 games): margins
+      // are much wider than NFL's — half of all games land within 7 points,
+      // but real blowout territory doesn't start until ~26-28 (vs NFL's 17).
+      // Totals run 23-86; ~13-18% of games clear 65+, matching NFL's rough
+      // "shootout" rarity band.
+      if      (diff <= 3)  { factors.push({ label: `${diff} pt margin`, points: 30 }); score += 30; }
+      else if (diff <= 7)  { factors.push({ label: `${diff} pt margin`, points: 18 }); score += 18; }
+      else if (diff <= 14) { factors.push({ label: `${diff} pt margin`, points: 8  }); score += 8;  }
+      else if (diff >= 28) { factors.push({ label: 'Blowout', points: -35 }); score -= 35; }
+      if      (total >= 65) { factors.push({ label: `${total} pts`, points: 18 }); score += 18; }
+      else if (total <= 30) { factors.push({ label: 'Low scoring', points: -8 }); score -= 8; }
+
+      // College OT (alternating possessions from the 25, mandatory 2-pt
+      // tries after multiple rounds) is a genuinely different, more dramatic
+      // format than NFL sudden death — weighted higher.
+      const hasCFBOT = (g.period ?? 4) > 4;
+      if (hasCFBOT) { factors.push({ label: '⚡ Overtime', points: 30 }); score += 30; }
+
+      // Ranked matchup — marquee-game signal using AP/Coaches-style Top 25.
+      const bothRanked = g.homeRank && g.awayRank;
+      const oneRanked  = g.homeRank || g.awayRank;
+      if (bothRanked)      { factors.push({ label: `#${g.homeRank} vs #${g.awayRank}`, points: 15 }); score += 15; }
+      else if (oneRanked)  { factors.push({ label: `#${g.homeRank || g.awayRank} ranked`, points: 6 }); score += 6; }
+
+      // Rushing/passing/standout thresholds carried over from NFL's
+      // calibration as a starting approximation — college's higher play
+      // volume means these may need their own dedicated calibration once a
+      // full season of data is available. Sacks skipped (see enrichNCAAF).
+      const maxRushCFB = Math.max(g.homeRushYds || 0, g.awayRushYds || 0);
+      const maxPassCFB = Math.max(g.homePassYds || 0, g.awayPassYds || 0);
+      if (maxRushCFB >= 200) { factors.push({ label: 'Big rushing game', points: 8 }); score += 8; }
+      if (maxPassCFB >= 300) { factors.push({ label: 'Lots of passing yards', points: 6 }); score += 6; }
+      if ((g.maxRushLeader || 0) >= 150) { factors.push({ label: 'Huge game on the ground', points: 7 }); score += 7; }
+      if ((g.maxRecvLeader || 0) >= 120) { factors.push({ label: 'Big receiving day', points: 6 }); score += 6; }
+
     } else if (sport === 'cs2') {
       // CS2 scoring — free tier only, so we score on series shape, not round counts.
       // Key signals:
@@ -1825,6 +1979,7 @@ exports.handler = async function (event, context) {
                     : sport === 'darts'    ? 50
                     : sport === 'cs2'      ? 55
                     : sport === 'nfl'      ? 45
+                    : sport === 'ncaaf'    ? 45
                     : 60;
     const watchable = sport === 'football' ? 33
                     : sport === 'nhl'      ? 30
@@ -1837,6 +1992,7 @@ exports.handler = async function (event, context) {
                     : sport === 'darts'    ? 25
                     : sport === 'cs2'      ? 28
                     : sport === 'nfl'      ? 20
+                    : sport === 'ncaaf'    ? 20
                     : 38;
 
     // Derive category from score
@@ -1850,9 +2006,9 @@ exports.handler = async function (event, context) {
       // A 3-point diff is a huge margin in soccer/hockey but a single field
       // goal in football — using the same >=3 bar mislabeled close NFL
       // games (e.g. a 3-point loss) as "blowout". NFL uses 17, matching the
-      // sport's own Blowout factor threshold above, so the label only
-      // applies to genuinely lopsided games.
-      const marginThreshold = sport === 'nfl' ? 17 : 3;
+      // sport's own Blowout factor threshold above. NCAAF uses 28, matching
+      // its own real-data-calibrated blowout bar (much wider margins than NFL).
+      const marginThreshold = sport === 'nfl' ? 17 : sport === 'ncaaf' ? 28 : 3;
       const isLargeMargin = (g.h != null && g.a != null && Math.abs(g.h - g.a) >= marginThreshold) ||
                             (g.resultType === 'wickets' && g.resultMargin >= 7) ||
                             (g.resultType === 'runs' && g.resultMargin >= 40);
@@ -2121,6 +2277,109 @@ exports.handler = async function (event, context) {
     };
   }
 
+  // ── NCAA FOOTBALL (FBS + FCS) ──────────────────────────────────────────
+  // ESPN's `groups` param separates FBS (80) and FCS (81) reliably, each
+  // with its own independent Top 25 poll. Division II and III are bucketed
+  // together by ESPN under group 35 with no reliable way to split them —
+  // excluded entirely rather than showing a false-precision "D3" label on
+  // data we can't actually isolate.
+  //
+  // Structured like the soccer/football bucket: one 'ncaaf' sport key,
+  // multiple `g.league` values ('FBS' / 'FCS') filterable on the frontend
+  // via the same league-filter pattern football already uses.
+  async function fetchNCAAFDivision(groupId, divisionLabel) {
+    const url = `${BASE}/football/college-football/scoreboard`;
+    const [recentData, upcomingData] = await Promise.all([
+      fetchESPN(`${url}?groups=${groupId}&dates=${espnDate(-14)}-${espnDate(0)}&limit=300`),
+      fetchESPN(`${url}?groups=${groupId}&dates=${espnDate(1)}-${espnDate(4)}&limit=300`),
+    ]);
+    const recentEvents   = normalizeEvents(recentData,   divisionLabel);
+    const upcomingEvents = normalizeEvents(upcomingData, divisionLabel);
+    const recent = recentEvents
+      .filter(g => g.status === "final" && g.ts >= twoWeeksAgo)
+      .sort((a, b) => a.ts - b.ts);
+    const upcoming = upcomingEvents
+      .filter(g => g.status === "upcoming" && g.ts >= now)
+      .sort((a, b) => a.ts - b.ts)
+      .slice(0, 150);
+    return { recent, upcoming };
+  }
+
+  async function fetchNCAAF() {
+    const [fbs, fcs] = await Promise.all([
+      fetchNCAAFDivision(80, 'FBS'),
+      fetchNCAAFDivision(81, 'FCS'),
+    ]);
+    return {
+      recent:   [...fbs.recent,   ...fcs.recent].sort((a, b) => a.ts - b.ts),
+      upcoming: [...fbs.upcoming, ...fcs.upcoming].sort((a, b) => a.ts - b.ts),
+    };
+  }
+
+  // Same rushing/passing/leaders enrichment as enrichNFL, pointed at the
+  // college-football summary endpoint. Sacks intentionally skipped — college
+  // boxscore has no team-level sacksYardsLost field (verified via curl); a
+  // player-level sum is possible but deferred to keep this addition scoped.
+  //
+  // Capped much lower than NFL's 40 and pre-filtered to closer games first
+  // (like NBA/WNBA's timeline enrichment does) — FBS+FCS combined has far
+  // more weekly games than NFL, and stacking a large parallel-fetch batch on
+  // top of NFL's own 40 + NBA/WNBA's ~30 each meaningfully raises the risk of
+  // tripping ESPN's own rate limiting on the shared "fetch all" cron run.
+  // Blowouts (diff>=28, our own NCAAF threshold) don't need enrichment to
+  // classify correctly anyway — enrichment mainly helps close/mid games.
+  async function enrichNCAAF(games) {
+    const sorted = [...games].sort((a, b) => Math.abs(a.h - a.a) - Math.abs(b.h - b.a));
+    const candidates = sorted.filter(g => g.id).slice(0, 25);
+    if (candidates.length === 0) return games;
+
+    const summaries = await Promise.all(
+      candidates.map(g =>
+        fetchESPNSummary(
+          `https://site.web.api.espn.com/apis/site/v2/sports/football/college-football/summary?event=${g.id}&region=us&lang=en&contentorigin=espn`
+        ).catch(() => null)
+      )
+    );
+
+    return games.map(g => {
+      if (!g.id) return g;
+      const idx = candidates.findIndex(c => c.id === g.id);
+      if (idx === -1 || !summaries[idx]) return g;
+
+      const summary = summaries[idx];
+      const teams = summary?.boxscore?.teams;
+      if (!Array.isArray(teams) || teams.length < 2) return g;
+
+      const competitors = summary?.header?.competitions?.[0]?.competitors || [];
+      const findYards = (teamIdx, statName) => {
+        const stat = teams[teamIdx]?.statistics?.find(s => s.name === statName);
+        return stat ? parseInt(stat.displayValue, 10) || 0 : null;
+      };
+
+      let homeRushYds = null, awayRushYds = null, homePassYds = null, awayPassYds = null;
+      teams.forEach((t, idx2) => {
+        const teamId = t?.team?.id;
+        const comp = competitors.find(c => c?.team?.id === teamId);
+        const isHome = comp?.homeAway === 'home';
+        const rush = findYards(idx2, 'rushingYards');
+        const pass = findYards(idx2, 'netPassingYards');
+        if (isHome) { homeRushYds = rush; homePassYds = pass; }
+        else        { awayRushYds = rush; awayPassYds = pass; }
+      });
+
+      let maxRushLeader = 0, maxRecvLeader = 0;
+      for (const teamLeaders of (summary?.leaders || [])) {
+        for (const cat of (teamLeaders.leaders || [])) {
+          const val = cat.leaders?.[0]?.value;
+          if (typeof val !== 'number') continue;
+          if (cat.name === 'rushingYards')   maxRushLeader = Math.max(maxRushLeader, val);
+          if (cat.name === 'receivingYards') maxRecvLeader = Math.max(maxRecvLeader, val);
+        }
+      }
+
+      return { ...g, homeRushYds, awayRushYds, homePassYds, awayPassYds, maxRushLeader, maxRecvLeader };
+    });
+  }
 
   // ── CS2 (Counter-Strike 2) via PandaScore ────────────────────────────
   // Free tier: schedules, results, series context. No round-level data.
@@ -2301,6 +2560,7 @@ exports.handler = async function (event, context) {
     nba:      async () => { const r = await fetchNBAWithTimeline();   return { nba:     { ...r, recent: attachConfidence(r.recent,  'nba')      } }; },
     wnba:     async () => { const r = await fetchWNBAWithTimeline();  return { wnba:    { ...r, recent: attachConfidence(r.recent,  'wnba')     } }; },
     nfl:      async () => { const r = await fetchSport(`${BASE}/football/nfl/scoreboard`, "NFL");     const enriched = await enrichNFL(r.recent); return { nfl: { ...r, recent: attachConfidence(enriched, 'nfl') } }; },
+    ncaaf:    async () => { const r = await fetchNCAAF();               const enriched = await enrichNCAAF(r.recent); return { ncaaf: { ...r, recent: attachConfidence(enriched, 'ncaaf') } }; },
     cricket:  async () => { const r = await fetchCricket();           return { cricket: { ...r, recent: attachConfidence(r.recent,  'cricket')  } }; },
     tennis:   async () => { const r = await fetchTennis();            return { tennis:  { ...r, recent: attachConfidence(r.recent,  'tennis')   } }; },
     softball: async () => { const r = await fetchSoftball();          return { softball: { ...r, recent: attachConfidence(r.recent, 'softball') } }; },
@@ -2312,13 +2572,14 @@ exports.handler = async function (event, context) {
   let fetchedAt = Date.now();
 
   if (sportParam === 'all' || !SPORT_FETCHERS[sportParam]) {
-    const [soccer, nhl, mlb, nba, wnba, nfl, cricket, tennis, darts, softball, cs2] = await Promise.all([
+    const [soccer, nhl, mlb, nba, wnba, nfl, ncaaf, cricket, tennis, darts, softball, cs2] = await Promise.all([
       fetchAllSoccer(),
       fetchNHLWithTimeline(),
       fetchSport(`${BASE}/baseball/mlb/scoreboard`,   "MLB", 15),
       fetchNBAWithTimeline(),
       fetchWNBAWithTimeline(),
       fetchSport(`${BASE}/football/nfl/scoreboard`,   "NFL"),
+      fetchNCAAF(),
       fetchCricket(),
       fetchTennis(),
       fetchDarts(),
@@ -2350,6 +2611,7 @@ exports.handler = async function (event, context) {
       nba:     { ...nba,     recent: attachConfidence(nba.recent,     'nba')      },
       wnba:    { ...wnba,    recent: attachConfidence(wnba.recent,    'wnba')     },
       nfl:     { ...nfl,     recent: attachConfidence(await enrichNFL(nfl.recent),     'nfl')      },
+      ncaaf:   { ...ncaaf,   recent: attachConfidence(await enrichNCAAF(ncaaf.recent), 'ncaaf')    },
       cricket: { ...cricket, recent: attachConfidence(cricket.recent, 'cricket')  },
       tennis:  { ...tennis,  recent: attachConfidence(tennis.recent,  'tennis')   },
       darts:   { ...darts,   recent: attachConfidence(darts.recent,   'darts')    },

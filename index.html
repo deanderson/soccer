@@ -458,6 +458,12 @@
       <div id="nfl-games"></div>
     </div>
 
+    <!-- NCAA FOOTBALL (FBS + FCS) -->
+    <div class="sport-panel" id="panel-ncaaf">
+      <div class="filter-group" id="ncaaf-filters"></div>
+      <div id="ncaaf-games"></div>
+    </div>
+
     <!-- CRICKET T20 -->
     <div class="sport-panel" id="panel-cricket">
       <div class="filters" id="cricket-filters"></div>
@@ -634,6 +640,7 @@
     nba:      { cat: (h,a) => categorizeNBA(h,a),       filterDefs: FILTER_DEFS },
     wnba:     { cat: (h,a) => categorizeWNBA(h,a),      filterDefs: FILTER_DEFS },
     nfl:      { cat: (h,a) => categorizeNFL(h,a),      filterDefs: FILTER_DEFS },
+    ncaaf:    { cat: (h,a) => categorizeNFL(h,a),      filterDefs: FILTER_DEFS },
     cricket:  { filterDefs: CRICKET_FILTER_DEFS }, // cricket uses its own render path
     tennis:   { filterDefs: TENNIS_FILTER_DEFS  }, // tennis uses its own render path
     darts:    { filterDefs: FILTER_DEFS  }, // darts uses its own render path
@@ -787,6 +794,7 @@
     nba:      { cat: 'all' },
     wnba:     { cat: 'all' },
     nfl:      { cat: 'all' },
+    ncaaf:    { cat: 'all', division: 'all' },
     cricket:  { cat: 'all' },
     tennis:   { cat: 'all', tour: 'all' },
     darts:    { cat: 'all' },
@@ -804,6 +812,7 @@
     { key:'darts',    label:'🎯 Darts',         group:'identity' },
     { key:'nba',      label:'🏀 NBA',           group:'major'    },
     { key:'nfl',      label:'🏈 NFL',           group:'major'    },
+    { key:'ncaaf',    label:'🎓 College Football', group:'major' },
     { key:'mlb',      label:'⚾ MLB',           group:'major'    },
     { key:'nhl',      label:'🏒 NHL',           group:'major'    },
     { key:'tennis',   label:'🎾 Tennis',        group:'major'    },
@@ -820,15 +829,16 @@
     return (d.recent?.length || 0) === 0 && (d.upcoming?.length || 0) === 0;
   }
 
-  // Sorts within each group (identity/major/esports) so out-of-season sports
-  // sink to the end of their group, rather than a global reorder — keeps the
-  // existing group-divider UI intact instead of scrambling it.
+  // Sort key is: esports always last (its own visually distinct row) →
+  // season status (in-season sports first, globally — not just within their
+  // own identity/major group, since a fan doesn't care that NFL is
+  // technically "major" if Darts is in-season and NFL isn't) → otherwise
+  // stable, preserving ALL_SPORTS' original identity-before-major ordering.
   function getOrderedSports() {
-    const groupOrder = { identity: 0, major: 1, esports: 2 };
     return [...ALL_SPORTS].sort((a, b) => {
-      const gA = groupOrder[a.group] ?? 99;
-      const gB = groupOrder[b.group] ?? 99;
-      if (gA !== gB) return gA - gB;
+      const aEsports = a.group === 'esports';
+      const bEsports = b.group === 'esports';
+      if (aEsports !== bEsports) return aEsports ? 1 : -1;
       const aOut = isOutOfSeason(a.key);
       const bOut = isOutOfSeason(b.key);
       if (aOut !== bOut) return aOut ? 1 : -1;
@@ -848,26 +858,32 @@
       activeSport = visibleSports[0]?.key || 'football';
     }
 
-    // Render tabs with a subtle dot divider between sport groups (identity
-    // vs major). The divider is skipped if either group is empty (all hidden).
+    // Render tabs with a subtle dot divider between in-season and
+    // out-of-season sports (not the old identity/major grouping — with
+    // season status as the primary sort key, those groups now interleave,
+    // so a group-change divider would scatter multiple dots through the
+    // list). Esports keeps its own dedicated row regardless.
     let html = '';
-    let prevGroup = null;
+    let prevOut = null;
     let esportsOpen = false;
     for (const s of visibleSports) {
-      if (prevGroup && s.group !== prevGroup) {
-        if (s.group === 'esports') {
+      if (s.group === 'esports') {
+        if (!esportsOpen) {
           html += '<div class="sport-tabs-esports-row"><span class="sport-tabs-esports-label">Esports</span>';
           esportsOpen = true;
-        } else {
+        }
+      } else {
+        const out = isOutOfSeason(s.key);
+        if (prevOut !== null && out !== prevOut) {
           html += '<span class="sport-tab-divider" aria-hidden="true">·</span>';
         }
+        prevOut = out;
       }
       const esportsCls = s.group === 'esports' ? ' esports' : '';
       html += `<button class="sport-tab${esportsCls} ${s.key === activeSport ? 'active' : ''}" data-sport="${s.key}"
           onclick="switchSport('${s.key}',this)">${s.label}
           <span class="tab-count" id="${s.key}-count">—</span>
         </button>`;
-      prevGroup = s.group;
     }
     if (esportsOpen) html += '</div>';
     tabsEl.innerHTML = html;
@@ -1079,7 +1095,7 @@
 
   // ── LOAD ───────────────────────────────────────────────────────────────
   // Map from frontend sport key to API response key
-  const API_KEY = { football:'soccer', nhl:'nhl', mlb:'mlb', nba:'nba', wnba:'wnba', nfl:'nfl', cricket:'cricket', tennis:'tennis', darts:'darts', softball:'softball', cs2:'cs2' };
+  const API_KEY = { football:'soccer', nhl:'nhl', mlb:'mlb', nba:'nba', wnba:'wnba', nfl:'nfl', ncaaf:'ncaaf', cricket:'cricket', tennis:'tennis', darts:'darts', softball:'softball', cs2:'cs2' };
 
   const TIMELINE_CAT_MAP = {
     scorefest:   makeCat('scorefest'),
@@ -1412,6 +1428,24 @@
             <button class="filter-btn ${state.football.league===l?'league-active':''}"
               onclick="setFootballFilter('league','${l}',this)">${l}</button>`).join('')}
         </div>`;
+    } else if (sport === 'ncaaf') {
+      // Two filter rows: category + division (FBS/FCS) — same pattern as football's league filter
+      el.innerHTML = `
+        <div class="filter-label">Category</div>
+        <div class="filters" id="ncaaf-cat-filters">
+          ${SPORTS.ncaaf.filterDefs.map(k => `
+            <button class="filter-btn ${state.ncaaf.cat===k?'active':''}"
+              onclick="setNCAAFFilter('cat','${k}',this)">${STD_FILTER_LABELS[k]}</button>`).join('')}
+        </div>
+        <div class="filter-label" style="margin-top:10px">Division</div>
+        <div class="filters" id="ncaaf-division-filters">
+          <button class="filter-btn ${state.ncaaf.division==='all'?'league-active':''}"
+            onclick="setNCAAFFilter('division','all',this)">🏆 All Divisions</button>
+          <button class="filter-btn ${state.ncaaf.division==='FBS'?'league-active':''}"
+            onclick="setNCAAFFilter('division','FBS',this)">FBS</button>
+          <button class="filter-btn ${state.ncaaf.division==='FCS'?'league-active':''}"
+            onclick="setNCAAFFilter('division','FCS',this)">FCS</button>
+        </div>`;
     } else if (sport === 'tennis') {
       el.innerHTML = `
         <div class="filters" id="tennis-cat-filters">
@@ -1467,10 +1501,19 @@
     renderGames('football');
   }
 
+  function setNCAAFFilter(type, value, btn) {
+    state.ncaaf[type] = value;
+    const groupId = type === 'cat' ? 'ncaaf-cat-filters' : 'ncaaf-division-filters';
+    const activeClass = type === 'cat' ? 'active' : 'league-active';
+    document.getElementById(groupId).querySelectorAll('.filter-btn').forEach(b => b.classList.remove(activeClass));
+    btn.classList.add(activeClass);
+    renderGames('ncaaf');
+  }
+
   // ── TOP PICKS HERO ─────────────────────────────────────────────────────
   const SPORT_LABELS = {
     football:'⚽ Football', nhl:'🏒 NHL', mlb:'⚾ MLB',
-    nba:'🏀 NBA', wnba:'🏀 WNBA', nfl:'🏈 NFL', cricket:'🏏 Cricket', tennis:'🎾 Tennis'
+    nba:'🏀 NBA', wnba:'🏀 WNBA', nfl:'🏈 NFL', ncaaf:'🎓 College Football', cricket:'🏏 Cricket', tennis:'🎾 Tennis'
   };
 
   // Priority order for picks: scorefest > watchworthy > watchable
@@ -1631,6 +1674,11 @@
           if (num >= 50) return 'High-scoring game';
           return null;
         }
+        if (sport === 'ncaaf') {
+          if (num >= 80) return 'They could not stop scoring';
+          if (num >= 65) return 'High-scoring game';
+          return null;
+        }
         return num >= 50 ? 'High-scoring game' : null;
       }
 
@@ -1670,6 +1718,12 @@
         if (sport === 'nfl') {
           if (n <= 3) return 'Down to the wire';
           if (n <= 7) return 'Came down to the closing minutes';
+          return null;
+        }
+        if (sport === 'ncaaf') {
+          if (n <= 3) return 'Down to the wire';
+          if (n <= 7) return 'Came down to the closing minutes';
+          if (n <= 14) return 'Stayed within reach';
           return null;
         }
         if (n <= 7) return 'Close finish';
@@ -1731,6 +1785,12 @@
       // overall context will already signal that via goals total.
       return null;
     }
+
+    // ── Ranked matchup (NCAAF, softball) ───────────────────────────────────
+    // Rank itself is already shown directly on the card via the team-name
+    // prefix — this just adds it to the insight reveal too for consistency.
+    if (/^#\d+ vs #\d+$/.test(label)) return 'A ranked matchup';
+    if (/^#\d+ ranked$/.test(label))  return 'One team is ranked';
 
     return null;
   }
@@ -2452,6 +2512,56 @@
           });
       }
 
+    } else if (sport === 'ncaaf') {
+      // Same pattern as football, but filtering on division (FBS/FCS) via
+      // g.league instead of a soccer league name.
+      let filtered = recent;
+      const catState = state.ncaaf.cat;
+      if (catState !== 'all') {
+        const allowed = FILTER_CLS_MAP[catState] || [];
+        filtered = filtered.filter(g => allowed.includes(g.cat.cls));
+      }
+      if (state.ncaaf.division !== 'all') filtered = filtered.filter(g => g.league === state.ncaaf.division);
+
+      if (filtered.length === 0) {
+        html += '<p class="no-games">Nothing in this filter right now.</p>';
+      } else {
+        const bestPick = state.ncaaf.division === 'all' ? sortByExcitement(filtered)[0] : null;
+        const byDate = {};
+        filtered.forEach(g => {
+          const key = g.dateKey || g.date;
+          if (!byDate[key]) byDate[key] = { games: [], maxTs: 0, label: g.date };
+          byDate[key].games.push(g);
+          if (g.ts > byDate[key].maxTs) byDate[key].maxTs = g.ts;
+        });
+        Object.entries(byDate)
+          .sort(([, a], [, b]) => b.maxTs - a.maxTs)
+          .forEach(([, { games, label }]) => {
+            html += `<div class="section-label">${label}</div>`;
+            html += renderDateGames(games, bestPick, sport);
+          });
+      }
+
+      let upcomingFilteredNCAAF = upcoming;
+      if (state.ncaaf.division !== 'all') upcomingFilteredNCAAF = upcomingFilteredNCAAF.filter(g => g.league === state.ncaaf.division);
+
+      if (upcomingFilteredNCAAF.length > 0) {
+        html += `<div class="upcoming-divider">📅 Coming Up This Week</div>`;
+        const byDate = {};
+        upcomingFilteredNCAAF.forEach(g => {
+          const key = g.dateKey || g.date;
+          if (!byDate[key]) byDate[key] = { games: [], maxTs: 0, label: g.date };
+          byDate[key].games.push(g);
+          if (g.ts > byDate[key].maxTs) byDate[key].maxTs = g.ts;
+        });
+        Object.entries(byDate)
+          .sort(([, a], [, b]) => a.maxTs - b.maxTs)
+          .forEach(([, { games, label }]) => {
+            html += `<div class="section-label">${label}</div>`;
+            html += games.map((g, i) => upcomingCardHTML(g, i)).join('');
+          });
+      }
+
     } else {
       // Standard sport rendering
       const filter = state[sport].cat;
@@ -2558,6 +2668,15 @@
     return ''; // hidden for now — re-enable when ready to surface feedback UI
   }
 
+  // Prefix a team name with its Top 25 rank if present (e.g. "#3 Ohio State").
+  // Not a spoiler — poll ranking is known before kickoff, doesn't reveal the
+  // result. rank is undefined/null for the large majority of sports/teams,
+  // so this is a harmless no-op outside NCAAF (and softball, which also
+  // carries rank data).
+  function teamLabel(name, rank) {
+    return rank ? `#${rank} ${name}` : name;
+  }
+
   function gameCardHTML(g, i, isBestPick = false, sport = null) {
     const gameId = makeGameId(g);
     const isTopPick = currentTopPickIds.has(gameId);
@@ -2584,7 +2703,7 @@
     return `
       <div class="game-card ${g.cat.cls}${isBestPick?' best-pick':''}" data-game-id="${gameId.replace(/"/g, '&quot;')}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
         <div class="teams" style="flex:1;min-width:0;">
-          <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
+          <div class="matchup">${teamLabel(g.home, g.homeRank)} <span class="vs">vs</span> ${teamLabel(g.away, g.awayRank)}</div>
           <div class="game-meta">${g.date} · ${g.league}</div>
           ${collinsworthHTML}
         </div>
@@ -2764,7 +2883,7 @@
     return `
       <div class="upcoming-card" style="animation-delay:${i*0.04}s">
         <div class="teams">
-          <div class="matchup">${g.home} <span class="vs">vs</span> ${g.away}</div>
+          <div class="matchup">${teamLabel(g.home, g.homeRank)} <span class="vs">vs</span> ${teamLabel(g.away, g.awayRank)}</div>
           <div class="game-meta">${g.league}</div>
           <div class="kickoff-time">🕐 ${formatGameTime(g.ts)}</div>
           ${watchStatusHTML || broadcast}
@@ -3181,7 +3300,7 @@
 
   // Hash routing — spoilerfreescores.com/#cricket lands on cricket tab
   const hashSport = window.location.hash.replace('#', '').toLowerCase();
-  const validSports = ['football','cricket','wnba','darts','tennis','nhl','nba','mlb','nfl','softball'];
+  const validSports = ['football','cricket','wnba','darts','tennis','nhl','nba','mlb','nfl','ncaaf','softball'];
   if (hashSport && validSports.includes(hashSport)) activeSport = hashSport;
 
   function switchSport(sport, tabEl) {
@@ -3207,7 +3326,7 @@
     window.fetch = (url, ...args) => {
       if (typeof url === 'string' && url.includes('get-scores')) {
         const emptyData = {};
-        ['soccer','nhl','mlb','nba','wnba','nfl','cricket','tennis','darts','softball','cs2'].forEach(k => { emptyData[k] = { recent: [], upcoming: [] }; });
+        ['soccer','nhl','mlb','nba','wnba','nfl','ncaaf','cricket','tennis','darts','softball','cs2'].forEach(k => { emptyData[k] = { recent: [], upcoming: [] }; });
         return Promise.resolve(new Response(JSON.stringify(emptyData), { status: 200, headers: { 'Content-Type': 'application/json' } }));
       }
       return _origFetch(url, ...args);
