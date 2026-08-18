@@ -1402,12 +1402,12 @@ exports.handler = async function (event, context) {
     const hasCloseChase  = hints.some(h => h.toLowerCase().includes('chase'));
     const hasHighScoring = hints.some(h => h.toLowerCase().includes('scoring'));
 
-    if (sport === 'worldcup' || sport === 'football') {
+    if (sport === 'football') {
       if      (total >= 7) { factors.push({ label: `${total} goals`, points: 25 }); score += 25; }
       else if (total >= 5) { factors.push({ label: `${total} goals`, points: 18 }); score += 18; }
       else if (total >= 3) { factors.push({ label: `${total} goals`, points: 12 }); score += 12; }
-      else if (total <= 1 && sport !== 'worldcup') { factors.push({ label: 'Very low scoring', points: -12 }); score -= 12; }
-      if      (diff === 0) { factors.push({ label: 'Draw', points: sport === 'worldcup' ? 20 : 13 }); score += sport === 'worldcup' ? 20 : 13; }
+      else if (total <= 1) { factors.push({ label: 'Very low scoring', points: -12 }); score -= 12; }
+      if      (diff === 0) { factors.push({ label: 'Draw', points: 13 }); score += 13; }
       else if (diff === 1) { factors.push({ label: '1 goal margin', points: 16 }); score += 16; }
       else if (diff === 2) { factors.push({ label: '2 goal margin', points: 5  }); score += 5;  }
       else                 { factors.push({ label: 'Large margin', points: -40 }); score -= 40; }
@@ -1436,15 +1436,10 @@ exports.handler = async function (event, context) {
         score += 40;
       }
 
-      if (sport === 'worldcup') {
-        // Small baseline for World Cup — every match has stakes, even low-scoring ones
-        factors.push({ label: 'World Cup', points: 10 }); score += 10;
-      } else {
-        const leagueTier = { 'Champions League': 1, 'Premier League': 1, 'La Liga': 2, 'Bundesliga': 2, 'Serie A': 2 };
-        const tier = leagueTier[g.league];
-        if      (tier === 1) { factors.push({ label: g.league, points: 6 }); score += 6; }
-        else if (tier === 2) { factors.push({ label: g.league, points: 3 }); score += 3; }
-      }
+      const leagueTier = { 'Champions League': 1, 'Premier League': 1, 'La Liga': 2, 'Bundesliga': 2, 'Serie A': 2 };
+      const tier = leagueTier[g.league];
+      if      (tier === 1) { factors.push({ label: g.league, points: 6 }); score += 6; }
+      else if (tier === 2) { factors.push({ label: g.league, points: 3 }); score += 3; }
 
     } else if (sport === 'nhl') {
       if      (total >= 8) { factors.push({ label: `${total} goals`, points: 25 }); score += 25; }
@@ -1686,6 +1681,15 @@ exports.handler = async function (event, context) {
       if (maxRush >= 200) { factors.push({ label: 'Big rushing game', points: 8 }); score += 8; }
       if (maxPass >= 300) { factors.push({ label: 'Lots of passing yards', points: 6 }); score += 6; }
 
+      // Individual standout performances, sacks, and missed kicks — same
+      // calibration approach: thresholds checked against a real Week-10 2025
+      // sample (22 team-games / 11 games). 150 rush and 120 receiving each
+      // caught roughly 2-3 of 22; 7+ sacks and any missed FG each caught
+      // roughly 3 of 11.
+      if ((g.maxRushLeader || 0) >= 150) { factors.push({ label: 'Huge game on the ground', points: 7 }); score += 7; }
+      if ((g.maxRecvLeader || 0) >= 120) { factors.push({ label: 'Big receiving day', points: 6 }); score += 6; }
+      if ((g.gameSacks || 0) >= 7)       { factors.push({ label: 'Lots of sacks', points: 6 }); score += 6; }
+
     } else if (sport === 'cs2') {
       // CS2 scoring — free tier only, so we score on series shape, not round counts.
       // Key signals:
@@ -1820,6 +1824,7 @@ exports.handler = async function (event, context) {
                     : sport === 'tennis'   ? 58
                     : sport === 'darts'    ? 50
                     : sport === 'cs2'      ? 55
+                    : sport === 'nfl'      ? 45
                     : 60;
     const watchable = sport === 'football' ? 33
                     : sport === 'nhl'      ? 30
@@ -1831,6 +1836,7 @@ exports.handler = async function (event, context) {
                     : sport === 'tennis'   ? 35
                     : sport === 'darts'    ? 25
                     : sport === 'cs2'      ? 28
+                    : sport === 'nfl'      ? 20
                     : 38;
 
     // Derive category from score
@@ -1840,7 +1846,14 @@ exports.handler = async function (event, context) {
     } else if (finalScore >= watchable) {
       cls = 'watchable';
     } else {
-      const isLargeMargin = (g.h != null && g.a != null && Math.abs(g.h - g.a) >= 3) ||
+      // "Large margin" (→ blowout vs. defensive) needs a sport-aware bar.
+      // A 3-point diff is a huge margin in soccer/hockey but a single field
+      // goal in football — using the same >=3 bar mislabeled close NFL
+      // games (e.g. a 3-point loss) as "blowout". NFL uses 17, matching the
+      // sport's own Blowout factor threshold above, so the label only
+      // applies to genuinely lopsided games.
+      const marginThreshold = sport === 'nfl' ? 17 : 3;
+      const isLargeMargin = (g.h != null && g.a != null && Math.abs(g.h - g.a) >= marginThreshold) ||
                             (g.resultType === 'wickets' && g.resultMargin >= 7) ||
                             (g.resultType === 'runs' && g.resultMargin >= 40);
       cls = isLargeMargin ? 'blowout' : 'defensive';
@@ -1901,11 +1914,15 @@ exports.handler = async function (event, context) {
     });
   }
 
-  // Fetch rushing/passing yardage per team for recent final NFL games, via
-  // ESPN's summary/boxscore endpoint (not present on the scoreboard response,
-  // unlike MLB linescores — this needs one extra fetch per game). Attaches
-  // homeRushYds/awayRushYds/homePassYds/awayPassYds for the scoring engine
-  // to turn into "Big rushing game" / "Lots of passing yards" insight tags.
+  // Fetch rushing/passing yardage per team, plus individual standout stats
+  // (leaders) and sacks, for recent final NFL games — all from the same
+  // ESPN summary/boxscore fetch (no extra API cost beyond what's already
+  // made). Attaches:
+  //   homeRushYds/awayRushYds/homePassYds/awayPassYds — team totals
+  //   maxRushLeader/maxRecvLeader — best individual rushing/receiving game
+  //     across both teams (passing skipped: it'd mostly duplicate the team
+  //     passing check, since one QB usually accounts for nearly all of it)
+  //   gameSacks — combined sacks both teams' QBs took
   // Capped at 40 games — a 14-day NFL window is ~32 games max, so this
   // never approaches NBA/WNBA-style volume concerns.
   async function enrichNFL(games) {
@@ -1925,29 +1942,47 @@ exports.handler = async function (event, context) {
       const idx = candidates.findIndex(c => c.id === g.id);
       if (idx === -1 || !summaries[idx]) return g;
 
-      const teams = summaries[idx]?.boxscore?.teams;
+      const summary = summaries[idx];
+      const teams = summary?.boxscore?.teams;
       if (!Array.isArray(teams) || teams.length < 2) return g;
 
       // ESPN's boxscore.teams doesn't reliably mark home/away — cross-reference
       // against the competitors' team id, which we already captured on g.
-      const competitors = summaries[idx]?.header?.competitions?.[0]?.competitors || [];
-      const findYards = (teamIdx, statName) => {
+      const competitors = summary?.header?.competitions?.[0]?.competitors || [];
+      const findStat = (teamIdx, statName) => {
         const stat = teams[teamIdx]?.statistics?.find(s => s.name === statName);
-        return stat ? parseInt(stat.displayValue, 10) || 0 : null;
+        return stat ? { raw: stat.displayValue, num: parseInt(stat.displayValue, 10) || 0 } : null;
       };
 
       let homeRushYds = null, awayRushYds = null, homePassYds = null, awayPassYds = null;
+      let gameSacks = 0;
       teams.forEach((t, idx2) => {
         const teamId = t?.team?.id;
         const comp = competitors.find(c => c?.team?.id === teamId);
         const isHome = comp?.homeAway === 'home';
-        const rush = findYards(idx2, 'rushingYards');
-        const pass = findYards(idx2, 'netPassingYards');
-        if (isHome) { homeRushYds = rush; homePassYds = pass; }
-        else        { awayRushYds = rush; awayPassYds = pass; }
+        const rush = findStat(idx2, 'rushingYards');
+        const pass = findStat(idx2, 'netPassingYards');
+        if (isHome) { homeRushYds = rush?.num ?? null; homePassYds = pass?.num ?? null; }
+        else        { awayRushYds = rush?.num ?? null; awayPassYds = pass?.num ?? null; }
+
+        // sacksYardsLost is formatted like "3-27" (3 sacks for 27 yards lost)
+        const sacksStat = findStat(idx2, 'sacksYardsLost');
+        if (sacksStat) gameSacks += parseInt(sacksStat.raw.split('-')[0], 10) || 0;
       });
 
-      return { ...g, homeRushYds, awayRushYds, homePassYds, awayPassYds };
+      // Individual standout stats — best rushing/receiving game across both
+      // teams' leaders. Passing intentionally skipped (see comment above).
+      let maxRushLeader = 0, maxRecvLeader = 0;
+      for (const teamLeaders of (summary?.leaders || [])) {
+        for (const cat of (teamLeaders.leaders || [])) {
+          const val = cat.leaders?.[0]?.value;
+          if (typeof val !== 'number') continue;
+          if (cat.name === 'rushingYards')    maxRushLeader = Math.max(maxRushLeader, val);
+          if (cat.name === 'receivingYards')  maxRecvLeader = Math.max(maxRecvLeader, val);
+        }
+      }
+
+      return { ...g, homeRushYds, awayRushYds, homePassYds, awayPassYds, maxRushLeader, maxRecvLeader, gameSacks };
     });
   }
 
@@ -2259,13 +2294,6 @@ exports.handler = async function (event, context) {
     };
   }
 
-  // ── WORLD CUP FETCHER ───────────────────────────────────────────────────
-  // Separate from SOCCER_LEAGUES — World Cup gets its own tab and key in the blob.
-  async function fetchWorldCup() {
-    const results = await fetchSoccerLeague('fifa.world', 'FIFA World Cup');
-    return results; // { recent: [...], upcoming: [...] }
-  }
-
   const SPORT_FETCHERS = {
     football: async () => { const r = await fetchAllSoccer();        return { soccer:  { ...r, recent: attachConfidence(r.recent,  'football') } }; },
     nhl:      async () => { const r = await fetchNHLWithTimeline();   return { nhl:     { ...r, recent: attachConfidence(r.recent,  'nhl')      } }; },
@@ -2278,14 +2306,13 @@ exports.handler = async function (event, context) {
     softball: async () => { const r = await fetchSoftball();          return { softball: { ...r, recent: attachConfidence(r.recent, 'softball') } }; },
     darts:    async () => { const r = await fetchDarts();             return { darts:   { ...r, recent: attachConfidence(r.recent,  'darts')    } }; },
     cs2:      async () => { const r = await fetchCS2();              return { cs2:     { ...r, recent: attachConfidence(r.recent,  'cs2')      } }; },
-    worldcup: async () => { const r = await fetchWorldCup();          return { worldcup: { ...r, recent: attachConfidence(r.recent, 'worldcup') } }; },
   };
 
   let body;
   let fetchedAt = Date.now();
 
   if (sportParam === 'all' || !SPORT_FETCHERS[sportParam]) {
-    const [soccer, nhl, mlb, nba, wnba, nfl, cricket, tennis, darts, softball, cs2, worldcup] = await Promise.all([
+    const [soccer, nhl, mlb, nba, wnba, nfl, cricket, tennis, darts, softball, cs2] = await Promise.all([
       fetchAllSoccer(),
       fetchNHLWithTimeline(),
       fetchSport(`${BASE}/baseball/mlb/scoreboard`,   "MLB", 15),
@@ -2297,7 +2324,6 @@ exports.handler = async function (event, context) {
       fetchDarts(),
       fetchSoftball(),
       fetchCS2(),
-      fetchWorldCup(),
     ]);
 
     // Merge redditData from the existing blob onto fresh CS2 matches before scoring.
@@ -2329,7 +2355,6 @@ exports.handler = async function (event, context) {
       darts:   { ...darts,   recent: attachConfidence(darts.recent,   'darts')    },
       softball:{ ...softball,recent: attachConfidence(softball.recent,'softball') },
       cs2:     { ...cs2,     recent: attachConfidence(cs2.recent,    'cs2')      },
-      worldcup:{ ...worldcup, recent: attachConfidence(worldcup.recent, 'worldcup') },
     };
 
     // Enrich high-scoring games with ESPN headline flavor (record/historic games)

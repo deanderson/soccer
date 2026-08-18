@@ -118,38 +118,6 @@
   .league-heading.world-cup{color:#f0c040;font-size:15px;letter-spacing:0.04em;}
   .league-heading.world-cup::after{background:rgba(240,192,64,0.3);}
 
-  /* World Cup tab sparkle animation */
-  @keyframes wc-sparkle {
-    0%,100% { text-shadow: 0 0 6px rgba(240,192,64,0); }
-    50%      { text-shadow: 0 0 12px rgba(240,192,64,0.8), 0 0 24px rgba(240,192,64,0.4); }
-  }
-  @keyframes wc-pulse {
-    0%,100% { opacity: 0.4; transform: scale(1); }
-    50%      { opacity: 1;   transform: scale(1.2); }
-  }
-  .sport-tab[data-sport="worldcup"] {
-    position: relative;
-    animation: wc-sparkle 2.4s ease-in-out infinite;
-  }
-  .sport-tab[data-sport="worldcup"]::before,
-  .sport-tab[data-sport="worldcup"]::after {
-    content: '✨';
-    position: absolute;
-    font-size: 9px;
-    top: 50%;
-    transform: translateY(-50%);
-    pointer-events: none;
-    animation: wc-pulse 1.8s ease-in-out infinite;
-  }
-  .sport-tab[data-sport="worldcup"]::before {
-    left: 3px;
-    animation-delay: 0s;
-  }
-  .sport-tab[data-sport="worldcup"]::after {
-    right: 3px;
-    animation-delay: 0.9s;
-  }
-
   /* UPCOMING DIVIDER */
   .upcoming-divider{display:flex;align-items:center;gap:12px;margin:32px 0 20px;font-size:13px;font-weight:600;color:var(--purple);}
   .upcoming-divider::before,.upcoming-divider::after{content:'';flex:1;height:1px;background:linear-gradient(to right,transparent,rgba(188,140,255,0.3),transparent);}
@@ -454,12 +422,6 @@
       <div class="all-games-title">ALL <span>GAMES</span></div>
     </div>
 
-    <!-- WORLD CUP -->
-    <div class="sport-panel" id="panel-worldcup">
-      <div class="filters" id="worldcup-filters"></div>
-      <div id="worldcup-games"></div>
-    </div>
-
     <!-- SOCCER -->
     <div class="sport-panel active" id="panel-football">
       <div class="filter-group" id="football-filters"></div>
@@ -676,7 +638,6 @@
     tennis:   { filterDefs: TENNIS_FILTER_DEFS  }, // tennis uses its own render path
     darts:    { filterDefs: FILTER_DEFS  }, // darts uses its own render path
     softball: { cat: (h,a) => categorizeMLB(h,a), filterDefs: FILTER_DEFS }, // same categorize as MLB
-    worldcup: { cat: (h,a) => categorizeFootball(h,a), filterDefs: FILTER_DEFS },
     cs2:      { cat: (h,a) => ({ cls: 'watchable', score: 0 }), filterDefs: FILTER_DEFS }, // scoring handled by backend
   };
 
@@ -830,14 +791,12 @@
     tennis:   { cat: 'all', tour: 'all' },
     darts:    { cat: 'all' },
     softball: { cat: 'all' },
-    worldcup: { cat: 'all' },
     cs2:      { cat: 'all' },
   };
   let allData = {};
 
   // ── SPORT VISIBILITY (feature #5) ──────────────────────────────────────
   const ALL_SPORTS = [
-    { key:'worldcup', label:'🏆 World Cup',      group:'identity' },
     { key:'football', label:'⚽ Football',      group:'identity' },
     { key:'cricket',  label:'🏏 Cricket (T20)', group:'identity' },
     { key:'wnba',     label:'🏀 WNBA',          group:'identity' },
@@ -851,6 +810,32 @@
     { key:'cs2',      label:'🎮 CS2',           group:'esports'  },
   ];
 
+  // A sport counts as "out of season" once we've actually loaded its data
+  // and found zero recent AND zero upcoming games. Before data loads (or if
+  // a fetch failed), we don't know — so we don't demote it, to avoid tabs
+  // jumping around based on transient load state rather than real season status.
+  function isOutOfSeason(key) {
+    const d = allData[key];
+    if (!d) return false;
+    return (d.recent?.length || 0) === 0 && (d.upcoming?.length || 0) === 0;
+  }
+
+  // Sorts within each group (identity/major/esports) so out-of-season sports
+  // sink to the end of their group, rather than a global reorder — keeps the
+  // existing group-divider UI intact instead of scrambling it.
+  function getOrderedSports() {
+    const groupOrder = { identity: 0, major: 1, esports: 2 };
+    return [...ALL_SPORTS].sort((a, b) => {
+      const gA = groupOrder[a.group] ?? 99;
+      const gB = groupOrder[b.group] ?? 99;
+      if (gA !== gB) return gA - gB;
+      const aOut = isOutOfSeason(a.key);
+      const bOut = isOutOfSeason(b.key);
+      if (aOut !== bOut) return aOut ? 1 : -1;
+      return 0; // stable — preserve original relative order otherwise
+    });
+  }
+
   // Load hidden sports from localStorage
   let hiddenSports = new Set(JSON.parse(localStorage.getItem('hiddenSports') || '[]'));
 
@@ -858,7 +843,7 @@
     const tabsEl = document.getElementById('sport-tabs');
 
     // Fall back to first visible sport if saved sport is now hidden
-    const visibleSports = ALL_SPORTS.filter(s => !hiddenSports.has(s.key));
+    const visibleSports = getOrderedSports().filter(s => !hiddenSports.has(s.key));
     if (!visibleSports.find(s => s.key === activeSport)) {
       activeSport = visibleSports[0]?.key || 'football';
     }
@@ -1094,7 +1079,7 @@
 
   // ── LOAD ───────────────────────────────────────────────────────────────
   // Map from frontend sport key to API response key
-  const API_KEY = { football:'soccer', nhl:'nhl', mlb:'mlb', nba:'nba', wnba:'wnba', nfl:'nfl', cricket:'cricket', tennis:'tennis', darts:'darts', softball:'softball', cs2:'cs2', worldcup:'worldcup' };
+  const API_KEY = { football:'soccer', nhl:'nhl', mlb:'mlb', nba:'nba', wnba:'wnba', nfl:'nfl', cricket:'cricket', tennis:'tennis', darts:'darts', softball:'softball', cs2:'cs2' };
 
   const TIMELINE_CAT_MAP = {
     scorefest:   makeCat('scorefest'),
@@ -1198,6 +1183,16 @@
 
       // Process all sports at once
       ALL_SPORTS.forEach(s => processSportData(data, s.key));
+
+      // Now that allData is populated, rebuild tabs so out-of-season sports
+      // (zero recent + zero upcoming) sink to the end of their group.
+      // Rebuilding replaces the tab DOM (counts reset to "—"), so re-populate
+      // counts immediately after — same pattern toggleSport() already uses.
+      buildSportTabs();
+      ALL_SPORTS.forEach(s => {
+        const el = document.getElementById(`${s.key}-count`);
+        if (el && allData[s.key]) el.textContent = allData[s.key].recent.length;
+      });
 
       renderTopPicks();
       // currentTopPickIds is now populated; re-render the active sport's
@@ -1474,7 +1469,7 @@
 
   // ── TOP PICKS HERO ─────────────────────────────────────────────────────
   const SPORT_LABELS = {
-    worldcup:'🏆 World Cup', football:'⚽ Football', nhl:'🏒 NHL', mlb:'⚾ MLB',
+    football:'⚽ Football', nhl:'🏒 NHL', mlb:'⚾ MLB',
     nba:'🏀 NBA', wnba:'🏀 WNBA', nfl:'🏈 NFL', cricket:'🏏 Cricket', tennis:'🎾 Tennis'
   };
 
@@ -1560,6 +1555,9 @@
     'Both sub-90 avg': 'Off night for both players',
     'Big rushing game':      'Big rushing game',
     'Lots of passing yards': 'Lots of passing yards',
+    'Huge game on the ground': 'Huge game on the ground',
+    'Big receiving day':       'Big receiving day',
+    'Lots of sacks':           'Lots of sacks',
 
     // HISTORIC RECORDS
     '🏆 Historic scoring game':     'Historically high scoring',
@@ -2389,19 +2387,19 @@
     const now = Date.now();
     let html = '';
 
-    if (sport === 'football' || sport === 'worldcup') {
-      // Apply category filter; worldcup has no league filter
+    if (sport === 'football') {
+      // Apply category filter
       let filtered = recent;
-      const catState = sport === 'football' ? state.football.cat : (state[sport]?.cat || 'all');
+      const catState = state.football.cat;
       if (catState !== 'all') {
         const allowed = FILTER_CLS_MAP[catState] || [];
         filtered = filtered.filter(g => allowed.includes(g.cat.cls));
       }
-      if (sport === 'football' && state.football.league !== 'all') filtered = filtered.filter(g => g.league === state.football.league);
+      if (state.football.league !== 'all') filtered = filtered.filter(g => g.league === state.football.league);
 
       if (filtered.length === 0) {
         html += '<p class="no-games">Nothing in this filter right now.</p>';
-      } else if (sport === 'worldcup' || state.football.league === 'all') {
+      } else if (state.football.league === 'all') {
         const bestPick = sortByExcitement(filtered)[0];
         const byDate = {};
         filtered.forEach(g => {
@@ -3183,7 +3181,7 @@
 
   // Hash routing — spoilerfreescores.com/#cricket lands on cricket tab
   const hashSport = window.location.hash.replace('#', '').toLowerCase();
-  const validSports = ['worldcup','football','cricket','wnba','darts','tennis','nhl','nba','mlb','nfl','softball'];
+  const validSports = ['football','cricket','wnba','darts','tennis','nhl','nba','mlb','nfl','softball'];
   if (hashSport && validSports.includes(hashSport)) activeSport = hashSport;
 
   function switchSport(sport, tabEl) {
@@ -3209,7 +3207,7 @@
     window.fetch = (url, ...args) => {
       if (typeof url === 'string' && url.includes('get-scores')) {
         const emptyData = {};
-        ['soccer','nhl','mlb','nba','wnba','nfl','cricket','tennis','darts','softball','cs2','worldcup'].forEach(k => { emptyData[k] = { recent: [], upcoming: [] }; });
+        ['soccer','nhl','mlb','nba','wnba','nfl','cricket','tennis','darts','softball','cs2'].forEach(k => { emptyData[k] = { recent: [], upcoming: [] }; });
         return Promise.resolve(new Response(JSON.stringify(emptyData), { status: 200, headers: { 'Content-Type': 'application/json' } }));
       }
       return _origFetch(url, ...args);

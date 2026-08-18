@@ -27,7 +27,6 @@ const SPORT_KEYS = {
   cricket:  'cricket',
   tennis:   'tennis',
   darts:    'darts',
-  worldcup: 'worldcup',
 };
 
 // Convert one game object from the blob into a row for the `games` table.
