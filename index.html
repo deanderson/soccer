@@ -358,6 +358,8 @@
   .sport-tab-divider{flex:0 0 auto;display:flex;align-items:center;justify-content:center;padding:0 8px;color:var(--border);font-size:20px;user-select:none;font-family:'Outfit',sans-serif;line-height:1;}
   .sport-tabs-esports-row{width:100%;display:flex;align-items:stretch;border-top:1px solid var(--border);background:rgba(181,123,255,0.06);}
   .sport-tabs-esports-label{display:flex;align-items:center;padding:0 12px;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--esports);border-right:1px solid var(--border);white-space:nowrap;user-select:none;opacity:0.9;}
+  .sport-tabs-offseason-row{width:100%;display:flex;flex-wrap:wrap;align-items:stretch;border-top:1px solid var(--border);}
+  .sport-tabs-offseason-label{display:flex;align-items:center;padding:0 12px;font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);border-right:1px solid var(--border);white-space:nowrap;user-select:none;opacity:0.7;}
   .sport-tab.esports{color:var(--muted);}
   .sport-tab.esports:hover{color:var(--esports);background:rgba(181,123,255,0.08);}
   .sport-tab.esports.active{background:rgba(181,123,255,0.1);color:var(--esports);box-shadow:inset 0 -2px 0 var(--esports);}
@@ -418,7 +420,7 @@
     </div>
 
     <!-- ALL GAMES -->
-    <div class="all-games-header">
+    <div class="all-games-header" id="all-games-header">
       <div class="all-games-title">ALL <span>GAMES</span></div>
     </div>
 
@@ -805,6 +807,7 @@
 
   // ── SPORT VISIBILITY (feature #5) ──────────────────────────────────────
   const ALL_SPORTS = [
+    { key:'all',      label:'🌟 All Sports',    group:'pinned'   },
     { key:'football', label:'⚽ Football',      group:'identity' },
     { key:'cricket',  label:'🏏 Cricket (T20)', group:'identity' },
     { key:'wnba',     label:'🏀 WNBA',          group:'identity' },
@@ -824,6 +827,7 @@
   // a fetch failed), we don't know — so we don't demote it, to avoid tabs
   // jumping around based on transient load state rather than real season status.
   function isOutOfSeason(key) {
+    if (key === 'all') return false; // pinned tab, never demoted
     const d = allData[key];
     if (!d) return false;
     return (d.recent?.length || 0) === 0 && (d.upcoming?.length || 0) === 0;
@@ -836,6 +840,9 @@
   // stable, preserving ALL_SPORTS' original identity-before-major ordering.
   function getOrderedSports() {
     return [...ALL_SPORTS].sort((a, b) => {
+      const aPinned = a.key === 'all';
+      const bPinned = b.key === 'all';
+      if (aPinned !== bPinned) return aPinned ? -1 : 1;
       const aEsports = a.group === 'esports';
       const bEsports = b.group === 'esports';
       if (aEsports !== bEsports) return aEsports ? 1 : -1;
@@ -858,26 +865,30 @@
       activeSport = visibleSports[0]?.key || 'football';
     }
 
-    // Render tabs with a subtle dot divider between in-season and
-    // out-of-season sports (not the old identity/major grouping — with
-    // season status as the primary sort key, those groups now interleave,
-    // so a group-change divider would scatter multiple dots through the
-    // list). Esports keeps its own dedicated row regardless.
+    // Render tabs with a labeled OFF-SEASON row for out-of-season sports,
+    // matching the existing Esports row pattern — season status is the
+    // primary sort key, so the old identity/major grouping no longer maps
+    // cleanly to a divider; a labeled row reads clearer than a bare dot.
+    // The pinned 'all' tab is never out-of-season and never enters either
+    // labeled row.
     let html = '';
-    let prevOut = null;
+    let offseasonOpen = false;
     let esportsOpen = false;
     for (const s of visibleSports) {
       if (s.group === 'esports') {
+        if (offseasonOpen) { html += '</div>'; offseasonOpen = false; }
         if (!esportsOpen) {
           html += '<div class="sport-tabs-esports-row"><span class="sport-tabs-esports-label">Esports</span>';
           esportsOpen = true;
         }
-      } else {
-        const out = isOutOfSeason(s.key);
-        if (prevOut !== null && out !== prevOut) {
-          html += '<span class="sport-tab-divider" aria-hidden="true">·</span>';
+      } else if (s.key !== 'all' && isOutOfSeason(s.key)) {
+        if (!offseasonOpen) {
+          html += '<div class="sport-tabs-offseason-row"><span class="sport-tabs-offseason-label">Off-season</span>';
+          offseasonOpen = true;
         }
-        prevOut = out;
+      } else if (offseasonOpen) {
+        html += '</div>';
+        offseasonOpen = false;
       }
       const esportsCls = s.group === 'esports' ? ' esports' : '';
       html += `<button class="sport-tab${esportsCls} ${s.key === activeSport ? 'active' : ''}" data-sport="${s.key}"
@@ -885,6 +896,7 @@
           <span class="tab-count" id="${s.key}-count">—</span>
         </button>`;
     }
+    if (offseasonOpen) html += '</div>';
     if (esportsOpen) html += '</div>';
     tabsEl.innerHTML = html;
 
@@ -1198,7 +1210,7 @@
       loadedAt = serverFetchedAt ? new Date(serverFetchedAt).getTime() : Date.now();
 
       // Process all sports at once
-      ALL_SPORTS.forEach(s => processSportData(data, s.key));
+      ALL_SPORTS.forEach(s => { if (s.key !== 'all') processSportData(data, s.key); });
 
       // Now that allData is populated, rebuild tabs so out-of-season sports
       // (zero recent + zero upcoming) sink to the end of their group.
@@ -1211,6 +1223,11 @@
       });
 
       renderTopPicks();
+      // Pinned "All Sports" tab has no inline game list underneath it —
+      // hide the ALL GAMES header if that's the sport a returning visitor
+      // last had active (saved in localStorage).
+      const allGamesHeader = document.getElementById('all-games-header');
+      if (allGamesHeader) allGamesHeader.style.display = (activeSport === 'all') ? 'none' : '';
       // currentTopPickIds is now populated; re-render the active sport's
       // inline games so Top Pick badges appear on matching cards. The
       // initial render inside processSportData happens BEFORE renderTopPicks,
@@ -1218,6 +1235,7 @@
       if (activeSport === 'cricket')      renderCricket();
       else if (activeSport === 'tennis')  renderTennis();
       else if (activeSport === 'darts')   renderDarts();
+      else if (activeSport === 'all')     { /* no inline panel for the merged view */ }
       else if (activeSport)               renderGames(activeSport);
 
       document.getElementById('loading').style.display = 'none';
@@ -2023,12 +2041,89 @@
     else                                 renderGames(activeSport);
   }
 
+  // Cross-sport Must Watch feed for the pinned "All Sports" tab. Strictly
+  // Must Watch tier only (scorefest/watchworthy, same SCORE_FLOOR as every
+  // other sport's Top Picks) — no Watchable backfill, since the point of
+  // this view is "what's actually worth your time across everything,"
+  // not "keep the grid populated." Caps at 2 picks per sport so a
+  // high-volume sport (MLB, CS2) can't crowd out a low-volume one (WNBA,
+  // Tennis) that only plays a couple of games a day.
+  const ALL_SPORTS_PER_SPORT_CAP = 2;
+  const ALL_SPORTS_FEED_MAX = 8;
+  function getAllSportsPicks(cutoff, SCORE_FLOOR) {
+    const candidates = [];
+
+    ALL_SPORTS.forEach(s => {
+      if (s.key === 'all') return;
+
+      // Darts is session-level, not match-level — mirrors the dedicated
+      // darts Top Picks logic (grouping by night/session) rather than
+      // treating individual matches as picks, for the same spoiler-safety
+      // reason: naming who won a bracket match reveals who's still in it.
+      if (s.key === 'darts') {
+        const games = (allData.darts?.recent || []).filter(g => g.ts >= cutoff);
+        const byNight = {};
+        games.forEach(g => {
+          const sessionKey = g.debug?.session || g.date;
+          const key = `${g.league}::${sessionKey}`;
+          if (!byNight[key]) byNight[key] = { league: g.league, date: sessionKey, ts: g.ts, games: [] };
+          byNight[key].games.push(g);
+          if (g.ts > byNight[key].ts) byNight[key].ts = g.ts;
+        });
+        Object.values(byNight)
+          .map(n => ({ ...n, summary: summarizeNight(n.games) }))
+          .filter(n => n.summary.cls === 'watchworthy') // Must Watch tier only, no Watchable backfill
+          .sort((a, b) => b.ts - a.ts)
+          .slice(0, ALL_SPORTS_PER_SPORT_CAP)
+          .forEach(n => candidates.push({
+            sport: 'darts',
+            mergedLabel: s.label,
+            isDartsNight: true,
+            league: n.league,
+            date: n.date,
+            ts: n.ts,
+            cat: { cls: n.summary.cls, icon: n.summary.icon, label: n.summary.label },
+            summary: n.summary,
+            watch: n.summary.watch,
+            isFallback: false,
+            _rank: 72, // synthetic — darts nights have no numeric confidence score to compare against other sports
+          }));
+        return;
+      }
+
+      const games = allData[s.key]?.recent || [];
+      games
+        .filter(g => g.ts >= cutoff)
+        .filter(g =>
+          (g.confidence?.score ?? 0) >= SCORE_FLOOR &&
+          (g.cat?.cls === 'scorefest' || g.cat?.cls === 'watchworthy')
+        )
+        .sort((a, b) => (b.confidence?.score ?? 0) - (a.confidence?.score ?? 0))
+        .slice(0, ALL_SPORTS_PER_SPORT_CAP)
+        .forEach(g => candidates.push({
+          ...g,
+          sport: s.key,
+          mergedLabel: s.label,
+          isFallback: false,
+          _rank: g.confidence?.score ?? 0,
+        }));
+    });
+
+    candidates.sort((a, b) => b._rank - a._rank);
+    return candidates.slice(0, ALL_SPORTS_FEED_MAX);
+  }
+
   function getTopPicksGames() {
     const now = Date.now();
     const DAY  = 86400000;
     const cutoff = now - tpWindowMs();
     tpWindow = getTpWindow(); // sync the legacy string for downstream comparisons
     const SCORE_FLOOR = 45; // minimum score to appear in Top Picks
+
+    // Pinned "All Sports" tab: cross-sport Must Watch feed, not a single
+    // sport's game list. Handled entirely separately since every other
+    // branch below assumes a single activeSport's data shape.
+    if (activeSport === 'all') return getAllSportsPicks(cutoff, SCORE_FLOOR);
 
     const games = allData[activeSport]?.recent || [];
 
@@ -2297,6 +2392,15 @@
     renderTpTabs();
     const picks = getTopPicksGames();
 
+    // The pinned tab's badge is "how many Must Watch picks are showing
+    // right now" rather than a total game count (there's no single
+    // "recent" list for a cross-sport feed) — it updates alongside the
+    // Today/Recent/This Week toggle like the rest of this view does.
+    if (activeSport === 'all') {
+      const allCountEl = document.getElementById('all-count');
+      if (allCountEl) allCountEl.textContent = picks.length;
+    }
+
     // Update the set of pick IDs so inline renders can badge matching cards.
     // Darts uses session-level picks (no individual matchups), so skip those.
     currentTopPickIds = new Set(
@@ -2366,7 +2470,7 @@
             <div class="top-pick-card ${g.cat.cls}${i === 0 ? ' best-pick' : ''}" style="animation-delay:${i*0.06}s">
               <div class="tp-header-row">
                 ${i === 0 ? `<span class="tp-best-pick-badge${g.isFallback ? ' is-fallback' : ''}">${g.isFallback ? '😐 Best Available' : '⭐ Top Session'}</span>` : ''}
-                <span class="tp-sport">${g.league}</span>
+                <span class="tp-sport">${g.mergedLabel ? g.mergedLabel + ' · ' + g.league : g.league}</span>
               </div>
               <div class="tp-matchup">${g.date}</div>
               <div class="tp-meta">${g.summary.hint}</div>
@@ -2388,7 +2492,8 @@
           : `${g.h},${g.a}`;
         const insightHTML = buildInsightHTML(g.confidence?.factors, g.sport, cycleArgs, g.espnHeadline);
         const dateLabel = g.date || g.dateStr || '';
-        const leagueLabel = g.league || g.leagueName || g.tournament || '';
+        const baseLeagueLabel = g.league || g.leagueName || g.tournament || '';
+        const leagueLabel = g.mergedLabel ? `${g.mergedLabel}${baseLeagueLabel ? ' · ' + baseLeagueLabel : ''}` : baseLeagueLabel;
         // In Top Picks every card is a deliberate recommendation, so show the
         // watch button on Watchable backfill picks too — not just Must Watch.
         // Main grid keeps the watchworthy-only gate to avoid button overload.
@@ -3312,12 +3417,19 @@
     tabEl.classList.add('active');
     document.getElementById(`panel-${sport}`)?.classList.add('active');
     renderTopPicks();
+    // The pinned "All Sports" tab is a cross-sport Must Watch feed only —
+    // there's no single-sport game list or filter set that makes sense
+    // underneath it, so hide the ALL GAMES section entirely rather than
+    // showing an empty header with nothing below it.
+    const allGamesHeader = document.getElementById('all-games-header');
+    if (allGamesHeader) allGamesHeader.style.display = (sport === 'all') ? 'none' : '';
     // Re-render inline games for the newly-active sport so Top Pick
     // badges reflect THIS sport's current picks (not whatever was rendered
     // at initial page load before TP picks were known).
     if (sport === 'cricket')      renderCricket();
     else if (sport === 'tennis')  renderTennis();
     else if (sport === 'darts')   renderDarts();
+    else if (sport === 'all')     { /* no inline panel for the merged view */ }
     else                          renderGames(sport);
   }
 
@@ -3342,7 +3454,9 @@
 
 </script>
 <footer style="text-align:center;padding:32px 16px 24px;font-size:11px;color:var(--muted);">
-  Made with ♥ · <a href="mailto:sfreescores@gmail.com" style="color:var(--muted);text-decoration:underline;text-underline-offset:2px;">sfreescores@gmail.com</a>
+  Made with ♥ · <a href="/cdn-cgi/l/email-protection#93e0f5e1f6f6e0f0fce1f6e0d3f4fef2faffbdf0fcfe" style="color:var(--muted);text-decoration:underline;text-underline-offset:2px;"><span class="__cf_email__" data-cfemail="10637662757563737f62756350777d71797c3e737f7d">[email&#160;protected]</span></a>
 </footer>
-</body>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script async id="netlify-rum-container" src="/.netlify/scripts/rum" data-netlify-rum-site-id="98511bc7-ae1e-4a36-8985-369dd7ae4188" data-netlify-deploy-branch="main" data-netlify-deploy-context="production" data-netlify-cwv-token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzaXRlX2lkIjoiOTg1MTFiYzctYWUxZS00YTM2LTg5ODUtMzY5ZGQ3YWU0MTg4IiwiYWNjb3VudF9pZCI6IjY5ZTEwZWVlMTAxYTczM2RiOWY2N2E3MiIsImRlcGxveV9pZCI6IjZhODQ5MTBjZTU3ZWYzMDAwODZhMzBhZCIsImlzc3VlciI6Im5mc2VydmVyIn0.Bn33qjPI5ObxRAs193pfi1MJw3l7f03K5UTn7lhNzkg"></script>
+<script>(function(){function c(){var b=a.contentDocument||(a.contentWindow&&a.contentWindow.document);if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a2d9f7500fee53d0',t:'MTc4NzE1MDk3OA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

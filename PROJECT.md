@@ -204,6 +204,38 @@ Reddit post-match thread data via Arctic Shift (free, no auth required).
 - Bot posts from `CS2_PostMatchThreads` preferred over user posts
 - D-tier CS2 matches filtered out before scoring — too many low-quality matches
 
+## Instagram autopost (in progress as of 2026-07-13)
+
+Daily carousel post of top 3 Must Watch games. No scores shown. Each slide: sport/league, matchup, insight tags, Must Watch badge, spoilerfreescores.com.
+
+Setup state:
+- Instagram Professional account: `spoilerfreescores` (Creator/Sports)
+- Facebook Page: "Spoilerfreescores" (Sports)
+- Next: link accounts → create Developer app at developers.facebook.com → get token → curl-test → build image generator + poster
+
+## CS2 enrichment (updated 2026-07-13)
+
+- 14-day window, paginated (100/page, up to 5 pages), client-side S/A/B filter
+- DO NOT use filter[tournament_tier] on PandaScore API — returns 0 results silently
+- enrich-reddit: 3-day filter, 20s time budget, 30 match max per run, runAgain flag
+- Reddit search: multi-query fallbacks, candidate scoring, normalizeTeamName
+- normalizeTeamName: BetBoom Team→BB, FUT Esports→FUT, Team Falcons→Falcons etc.
+- YouTube search button on all CS2 cards ("⚠️ titles may spoil")
+
+## Historic records scoring (2026-07-13)
+
+- NHL triple OT: +45, "🏆 Triple overtime thriller"
+- NBA 270+ pts: +25, "🏆 Historic scoring game"
+- MLB 13+ innings: +30, "🏆 Marathon extra innings"
+- NBA/WNBA deficit labels: "⚡ Close game after big lead" / "⚡ Close game after huge lead"
+- ESPN headline enrichment: games ≥70 fetch summary, record keywords → gold "🏆 Historic performance" tag
+
+## Suppressed insight labels
+
+- Penalty shootout — spoilery (reveals tied after 90min)
+- Walk-off — spoilery (not in INSIGHT_MAP)
+- Went full distance Bo3/Bo5 — non-differentiating (on every decider)
+
 ## NBA/WNBA comeback scaling (2026-06-12)
 
 Comeback bonus now scales with deficit size rather than flat +20:
