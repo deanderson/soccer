@@ -2015,6 +2015,20 @@ exports.handler = async function (event, context) {
       cls = isLargeMargin ? 'blowout' : 'defensive';
     }
 
+    // Upgrade to Score Fest when the richer timeline-based signal (extra
+    // ESPN event/boxscore data — goals, lead changes, close finishes —
+    // fetched separately from the point-based score above) agrees this was
+    // an elite game. Deliberately gated to only ever UPGRADE an already
+    // watchworthy game, never override a lower score-based tier: the older
+    // timeline heuristics for football/NHL check total score alone with no
+    // margin bound, and verified against real data would otherwise promote
+    // genuine blowouts (e.g. a real 6-2 football result) straight to the
+    // flashiest tier. This keeps Score Fest meaning "the best of our
+    // already-good games," not "anything the older heuristic flagged."
+    if (cls === 'watchworthy' && g.timelineCat === 'scorefest') {
+      cls = 'scorefest';
+    }
+
     return { score: finalScore, factors, cls };
   }
 
@@ -2310,9 +2324,17 @@ exports.handler = async function (event, context) {
       fetchNCAAFDivision(80, 'FBS'),
       fetchNCAAFDivision(81, 'FCS'),
     ]);
+    // ESPN's groups filter matches EITHER team: groups=80 returns every game
+    // with an FBS team, groups=81 every game with an FCS team, so FBS-vs-FCS
+    // games come back from both (38 of 68 FBS events on 9/5/26, verified via
+    // curl). Dedup by ESPN event id; FBS owns cross-division games. Must run
+    // here, before enrichNCAAF / attachConfidence, so duplicates don't burn
+    // enrichment slots or take two Top Picks / All Sports slots downstream.
+    const fbsIds = new Set([...fbs.recent, ...fbs.upcoming].map(g => g.id));
+    const notInFbs = g => !g.id || !fbsIds.has(g.id);
     return {
-      recent:   [...fbs.recent,   ...fcs.recent].sort((a, b) => a.ts - b.ts),
-      upcoming: [...fbs.upcoming, ...fcs.upcoming].sort((a, b) => a.ts - b.ts),
+      recent:   [...fbs.recent,   ...fcs.recent.filter(notInFbs)].sort((a, b) => a.ts - b.ts),
+      upcoming: [...fbs.upcoming, ...fcs.upcoming.filter(notInFbs)].sort((a, b) => a.ts - b.ts),
     };
   }
 

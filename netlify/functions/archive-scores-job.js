@@ -95,7 +95,24 @@ function blobToRows(blobData) {
       if (row) rows.push(row);
     }
   }
-  return rows;
+
+  // Postgres rejects an upsert batch containing the same id twice ("ON
+  // CONFLICT DO UPDATE command cannot affect row a second time") and the
+  // WHOLE 100-row batch is lost, including neighbouring sports' rows. NCAAF
+  // FBS-vs-FCS duplicates did exactly this Aug-Sep 2026, silently dropping
+  // all NCAAF and NFL rows every run. First occurrence wins; log it so a
+  // future duplicate source is visible instead of silent.
+  const seen = new Set();
+  const unique = [];
+  for (const row of rows) {
+    if (seen.has(row.id)) continue;
+    seen.add(row.id);
+    unique.push(row);
+  }
+  if (unique.length !== rows.length) {
+    console.warn(`archive-scores-job: dropped ${rows.length - unique.length} duplicate-id rows`);
+  }
+  return unique;
 }
 
 // Upsert rows in batches. Returns { written, failed, errors }.
