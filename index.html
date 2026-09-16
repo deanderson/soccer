@@ -463,6 +463,19 @@
     <!-- NCAA FOOTBALL (FBS + FCS) -->
     <div class="sport-panel" id="panel-ncaaf">
       <div class="filter-group" id="ncaaf-filters"></div>
+      <details id="ncaaf-chat" style="margin:12px 0 18px;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;">
+        <summary style="cursor:pointer;padding:12px 16px;font-weight:600;list-style:none;display:flex;align-items:center;gap:8px;">
+          <span>💬</span><span>Not sure what to watch? Ask.</span>
+          <span style="margin-left:auto;font-weight:400;font-size:0.85em;opacity:0.7;">Never shows scores or who won</span>
+        </summary>
+        <iframe
+          src="https://sfs-agent.deanderson.workers.dev/"
+          title="Spoiler Free Scores. What should I watch?"
+          style="width:100%;height:80vh;min-height:500px;border:0;border-top:1px solid #e5e5e5;display:block;"
+          loading="lazy"
+          referrerpolicy="no-referrer"
+        ></iframe>
+      </details>
       <div id="ncaaf-games"></div>
     </div>
 
