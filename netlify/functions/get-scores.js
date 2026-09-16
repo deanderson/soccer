@@ -125,10 +125,70 @@ exports.handler = async function (event, context) {
     return d.toISOString().slice(0, 10).replace(/-/g, "");
   }
 
+  // ESPN (Akamai) began 403ing browser-like User-Agents on site.api.espn.com
+  // around 2026-09-15 — "Mozilla/5.0" and full Chrome UA strings both get
+  // Access Denied, while programmatic client UAs (curl, python-requests,
+  // okhttp, Go-http-client) still return 200. Don't "upgrade" this to a
+  // realistic browser string: browser-like is the thing being blocked.
+  const ESPN_UA = "curl/8.5.0";
+
+  // ESPN also stopped accepting multi-day ranges (`dates=YYYYMMDD-YYYYMMDD`)
+  // around the same time — every scoreboard endpoint now 400s on them, even a
+  // same-day range. Single days (`dates=YYYYMMDD`) and whole months
+  // (`dates=YYYYMM`) still work, so ranges are rebuilt from month fetches and
+  // filtered client-side. Verified against per-day fetches over the 9-day
+  // window: month responses were complete for NCAAF, MLB, NFL and tennis
+  // (0 events missing).
+  //
+  // limit caps out around 500 — limit=900+ silently returns a truncated
+  // ~25-event response instead of erroring. Don't raise ESPN_LIMIT.
+  const ESPN_LIMIT = 500;
+
+  function espnMonthList(fromOffset, toOffset) {
+    const out = [];
+    const cur = new Date(Date.now() + fromOffset * 86400000);
+    const end = new Date(Date.now() + toOffset   * 86400000);
+    cur.setUTCDate(1);
+    while (cur <= end) {
+      out.push(`${cur.getUTCFullYear()}${String(cur.getUTCMonth() + 1).padStart(2, "0")}`);
+      cur.setUTCMonth(cur.getUTCMonth() + 1);
+    }
+    return out;
+  }
+
+  // Drop-in replacement for the old `dates=${espnDate(a)}-${espnDate(b)}`
+  // pattern. Fetches the month(s) spanning the offsets, merges and dedupes by
+  // event id, then trims to the requested window (±1 day, since ESPN buckets
+  // by ET and espnDate builds UTC days — downstream ts filters do the exact
+  // windowing anyway). Returns the same `{ events }` shape as fetchESPN.
+  async function fetchESPNRange(baseUrl, fromOffset, toOffset) {
+    const sep = baseUrl.includes("?") ? "&" : "?";
+    const months = espnMonthList(fromOffset, toOffset);
+    const pages = await Promise.all(
+      months.map(m => fetchESPN(`${baseUrl}${sep}dates=${m}&limit=${ESPN_LIMIT}`))
+    );
+
+    const lo = Date.now() + (fromOffset - 1) * 86400000;
+    const hi = Date.now() + (toOffset   + 1) * 86400000;
+
+    const seen = new Set();
+    const events = [];
+    for (const page of pages) {
+      for (const e of (page?.events || [])) {
+        if (!e?.id || seen.has(e.id)) continue;
+        const ts = Date.parse(e.date);
+        if (!Number.isFinite(ts) || ts < lo || ts > hi) continue;
+        seen.add(e.id);
+        events.push(e);
+      }
+    }
+    return { events };
+  }
+
   async function fetchESPN(url, timeoutMs = 8000) {
     try {
       const res = await fetch(url, {
-        headers: { "User-Agent": "Mozilla/5.0" },
+        headers: { "User-Agent": ESPN_UA },
         signal: AbortSignal.timeout(timeoutMs),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -255,8 +315,8 @@ exports.handler = async function (event, context) {
   async function fetchSport(scoreboardUrl, leagueName, upcomingCap = 50) {
     // Fetch recent (past 14 days) and upcoming (next 4 days) separately to avoid ESPN timeout
     const [recentData, upcomingData] = await Promise.all([
-      fetchESPN(`${scoreboardUrl}?dates=${espnDate(-14)}-${espnDate(0)}&limit=200`),
-      fetchESPN(`${scoreboardUrl}?dates=${espnDate(1)}-${espnDate(4)}&limit=100`),
+      fetchESPNRange(scoreboardUrl, -14, 0),
+      fetchESPNRange(scoreboardUrl, 1, 4),
     ]);
 
     const recentEvents  = normalizeEvents(recentData,   leagueName);
@@ -272,9 +332,7 @@ exports.handler = async function (event, context) {
       .slice(0, upcomingCap);
 
     if (recent14.length < MIN) {
-      const fallback = await fetchESPN(
-        `${scoreboardUrl}?dates=${espnDate(-60)}-${espnDate(-15)}&limit=100`
-      );
+      const fallback = await fetchESPNRange(scoreboardUrl, -60, -15);
       const fallbackRecent = normalizeEvents(fallback, leagueName)
         .filter(g => g.status === "final")
         .sort((a, b) => a.ts - b.ts)
@@ -329,8 +387,8 @@ exports.handler = async function (event, context) {
   async function fetchNCAADivisionESPN(groupsId, division) {
     const url = `${BASE}/football/college-football/scoreboard?groups=${groupsId}`;
     const [recentData, upcomingData] = await Promise.all([
-      fetchESPN(`${url}&dates=${espnDate(-14)}-${espnDate(0)}&limit=200`),
-      fetchESPN(`${url}&dates=${espnDate(1)}-${espnDate(4)}&limit=100`),
+      fetchESPNRange(url, -14, 0),
+      fetchESPNRange(url, 1, 4),
     ]);
     const recentEvents   = normalizeEvents(recentData,   'NCAAF').map(g => ({ ...g, division }));
     const upcomingEvents = normalizeEvents(upcomingData, 'NCAAF').map(g => ({ ...g, division }));
@@ -1040,9 +1098,7 @@ exports.handler = async function (event, context) {
 
     async function fetchTennisLeague(slug, leagueName) {
       // ESPN tennis scoreboard returns tournaments with nested groupings/competitions
-      const data = await fetchESPN(
-        `${BASE}/tennis/${slug}/scoreboard?dates=${espnDate(-21)}-${espnDate(7)}&limit=200`
-      );
+      const data = await fetchESPNRange(`${BASE}/tennis/${slug}/scoreboard`, -21, 7);
 
       const recent = [];
       const upcoming = [];
@@ -1239,8 +1295,8 @@ exports.handler = async function (event, context) {
   async function fetchNHLWithTimeline() {
     // Fetch recent (past 14 days) and upcoming (next 4 days) separately.
     const [recentData, upcomingData] = await Promise.all([
-      fetchESPN(`${BASE}/hockey/nhl/scoreboard?dates=${espnDate(-14)}-${espnDate(0)}&limit=200`),
-      fetchESPN(`${BASE}/hockey/nhl/scoreboard?dates=${espnDate(1)}-${espnDate(4)}&limit=100`),
+      fetchESPNRange(`${BASE}/hockey/nhl/scoreboard`, -14, 0),
+      fetchESPNRange(`${BASE}/hockey/nhl/scoreboard`, 1, 4),
     ]);
     const recentEvents   = normalizeEvents(recentData,   "NHL");
     const upcomingEvents = normalizeEvents(upcomingData, "NHL");
@@ -1390,8 +1446,8 @@ exports.handler = async function (event, context) {
     // The recent fetch feeds timeline enrichment; the upcoming fetch surfaces
     // scheduled games for the "Coming Up This Week" section.
     const [recentData, upcomingData] = await Promise.all([
-      fetchESPN(`${BASE}/basketball/nba/scoreboard?dates=${espnDate(-14)}-${espnDate(0)}&limit=200`),
-      fetchESPN(`${BASE}/basketball/nba/scoreboard?dates=${espnDate(1)}-${espnDate(4)}&limit=100`),
+      fetchESPNRange(`${BASE}/basketball/nba/scoreboard`, -14, 0),
+      fetchESPNRange(`${BASE}/basketball/nba/scoreboard`, 1, 4),
     ]);
     const recentEvents   = normalizeEvents(recentData,   "NBA");
     const upcomingEvents = normalizeEvents(upcomingData, "NBA");
@@ -1443,8 +1499,8 @@ exports.handler = async function (event, context) {
     // scheduled games with broadcast info for the "Coming Up This Week"
     // section. Both go through normalizeEvents which extracts geoBroadcasts.
     const [recentData, upcomingData] = await Promise.all([
-      fetchESPN(`${BASE}/basketball/wnba/scoreboard?dates=${espnDate(-14)}-${espnDate(0)}&limit=200`),
-      fetchESPN(`${BASE}/basketball/wnba/scoreboard?dates=${espnDate(1)}-${espnDate(4)}&limit=100`),
+      fetchESPNRange(`${BASE}/basketball/wnba/scoreboard`, -14, 0),
+      fetchESPNRange(`${BASE}/basketball/wnba/scoreboard`, 1, 4),
     ]);
     const recentEvents   = normalizeEvents(recentData,   "WNBA");
     const upcomingEvents = normalizeEvents(upcomingData, "WNBA");
@@ -2304,8 +2360,8 @@ exports.handler = async function (event, context) {
   async function fetchNCAAFDivision(groupId, divisionLabel) {
     const url = `${BASE}/football/college-football/scoreboard`;
     const [recentData, upcomingData] = await Promise.all([
-      fetchESPN(`${url}?groups=${groupId}&dates=${espnDate(-14)}-${espnDate(0)}&limit=300`),
-      fetchESPN(`${url}?groups=${groupId}&dates=${espnDate(1)}-${espnDate(4)}&limit=300`),
+      fetchESPNRange(`${url}?groups=${groupId}`, -14, 0),
+      fetchESPNRange(`${url}?groups=${groupId}`, 1, 4),
     ]);
     const recentEvents   = normalizeEvents(recentData,   divisionLabel);
     const upcomingEvents = normalizeEvents(upcomingData, divisionLabel);
