@@ -3424,6 +3424,7 @@
   function switchSport(sport, tabEl) {
     if (hiddenSports.has(sport)) return;
     activeSport = sport;
+    track('tab', sport);
     localStorage.setItem('activeSport', sport);
     document.querySelectorAll('.sport-tab').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.sport-panel').forEach(p => p.classList.remove('active'));
@@ -3460,15 +3461,22 @@
 
   loadScores();
 
-  // Visitor counter. Visit once with ?notrack to exclude this browser for good.
+  // Visitor tracking. Visit once with ?notrack to exclude this browser for good.
   if (new URLSearchParams(location.search).has('notrack')) localStorage.setItem('noTrack', '1');
-  if (location.protocol !== 'file:' && !localStorage.getItem('noTrack')) {
+  function track(event, sport, extra) {
+    if (location.protocol === 'file:' || localStorage.getItem('noTrack')) return;
     fetch('/.netlify/functions/track', {
       method: 'POST', keepalive: true,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sport: activeSport }),
+      body: JSON.stringify({ event, sport, ...extra }),
     }).catch(() => {});
   }
+  const today = new Date().toISOString().slice(0, 10);
+  const firstSeen = localStorage.getItem('sfsFirstSeen') || today;
+  const visits = (parseInt(localStorage.getItem('sfsVisits'), 10) || 0) + 1;
+  localStorage.setItem('sfsFirstSeen', firstSeen);
+  localStorage.setItem('sfsVisits', String(visits));
+  track('load', activeSport, { firstSeen, visits });
 
   // PWA service worker registration
   if ('serviceWorker' in navigator) {

@@ -22,3 +22,19 @@ SELECT day,
        COUNT(*)                     AS views
 FROM page_views
 GROUP BY day;
+
+-- v2: events, geo, returning visitors, device
+ALTER TABLE page_views
+  ADD COLUMN IF NOT EXISTS event        TEXT NOT NULL DEFAULT 'load',
+  ADD COLUMN IF NOT EXISTS region       TEXT,
+  ADD COLUMN IF NOT EXISTS city         TEXT,
+  ADD COLUMN IF NOT EXISTS device       TEXT,
+  ADD COLUMN IF NOT EXISTS first_seen   DATE,
+  ADD COLUMN IF NOT EXISTS visit_number INTEGER;
+
+CREATE OR REPLACE VIEW daily_visitors WITH (security_invoker = on) AS
+SELECT day,
+       COUNT(DISTINCT visitor_hash)                  AS visitors,
+       COUNT(*) FILTER (WHERE event = 'load')        AS views
+FROM page_views
+GROUP BY day;
