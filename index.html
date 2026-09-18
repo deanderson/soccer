@@ -3460,6 +3460,16 @@
 
   loadScores();
 
+  // Visitor counter. Visit once with ?notrack to exclude this browser for good.
+  if (new URLSearchParams(location.search).has('notrack')) localStorage.setItem('noTrack', '1');
+  if (location.protocol !== 'file:' && !localStorage.getItem('noTrack')) {
+    fetch('/.netlify/functions/track', {
+      method: 'POST', keepalive: true,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sport: activeSport }),
+    }).catch(() => {});
+  }
+
   // PWA service worker registration
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});
