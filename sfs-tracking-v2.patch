@@ -1,0 +1,276 @@
+From 1cb6813575b542375a6157803ec6772da51393ff Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Fri, 18 Sep 2026 16:28:01 +0000
+Subject: [PATCH] Tracking v2: location, returning visitors, sports viewed,
+ device
+
+---
+ index.html                          | 14 +++--
+ netlify/functions/stats.js          | 82 ++++++++++++++++++++++-------
+ netlify/functions/track.js          | 59 ++++++++++++++++-----
+ netlify/functions/visits-schema.sql | 16 ++++++
+ 4 files changed, 136 insertions(+), 35 deletions(-)
+
+diff --git a/index.html b/index.html
+index 39b0dfd..9d5fb63 100644
+--- a/index.html
++++ b/index.html
+@@ -3424,6 +3424,7 @@
+   function switchSport(sport, tabEl) {
+     if (hiddenSports.has(sport)) return;
+     activeSport = sport;
++    track('tab', sport);
+     localStorage.setItem('activeSport', sport);
+     document.querySelectorAll('.sport-tab').forEach(t => t.classList.remove('active'));
+     document.querySelectorAll('.sport-panel').forEach(p => p.classList.remove('active'));
+@@ -3460,15 +3461,22 @@
+ 
+   loadScores();
+ 
+-  // Visitor counter. Visit once with ?notrack to exclude this browser for good.
++  // Visitor tracking. Visit once with ?notrack to exclude this browser for good.
+   if (new URLSearchParams(location.search).has('notrack')) localStorage.setItem('noTrack', '1');
+-  if (location.protocol !== 'file:' && !localStorage.getItem('noTrack')) {
++  function track(event, sport, extra) {
++    if (location.protocol === 'file:' || localStorage.getItem('noTrack')) return;
+     fetch('/.netlify/functions/track', {
+       method: 'POST', keepalive: true,
+       headers: { 'Content-Type': 'application/json' },
+-      body: JSON.stringify({ sport: activeSport }),
++      body: JSON.stringify({ event, sport, ...extra }),
+     }).catch(() => {});
+   }
++  const today = new Date().toISOString().slice(0, 10);
++  const firstSeen = localStorage.getItem('sfsFirstSeen') || today;
++  const visits = (parseInt(localStorage.getItem('sfsVisits'), 10) || 0) + 1;
++  localStorage.setItem('sfsFirstSeen', firstSeen);
++  localStorage.setItem('sfsVisits', String(visits));
++  track('load', activeSport, { firstSeen, visits });
+ 
+   // PWA service worker registration
+   if ('serviceWorker' in navigator) {
+diff --git a/netlify/functions/stats.js b/netlify/functions/stats.js
+index f584629..cb8eaa4 100644
+--- a/netlify/functions/stats.js
++++ b/netlify/functions/stats.js
+@@ -1,37 +1,83 @@
+ // netlify/functions/stats.js
+ //
+-// Visitor counts for the last 30 days: /.netlify/functions/stats
++// Visitor dashboard for the last 30 days: /.netlify/functions/stats
+ // If STATS_KEY is set in Netlify env vars, require ?key=<STATS_KEY>.
+ 
+ const { createClient } = require('@supabase/supabase-js');
+ 
++const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
++
++function table(title, head, rows) {
++  if (!rows.length) return `<h3>${title}</h3><p class="m">No data yet.</p>`;
++  return `<h3>${title}</h3><table><tr>${head.map(h => `<th>${h}</th>`).join('')}</tr>${
++    rows.map(r => `<tr>${r.map(c => `<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table>`;
++}
++
++// Count distinct visitors per key, sorted desc.
++function tally(rows, keyFn, limit = 15) {
++  const m = new Map();
++  for (const r of rows) {
++    const k = keyFn(r);
++    if (!k) continue;
++    if (!m.has(k)) m.set(k, new Set());
++    m.get(k).add(`${r.day}|${r.visitor_hash}`);
++  }
++  return [...m].map(([k, s]) => [k, s.size]).sort((a, b) => b[1] - a[1]).slice(0, limit);
++}
++
+ exports.handler = async function (event) {
+   const key = process.env.STATS_KEY;
+-  if (key && event.queryStringParameters?.key !== key) {
+-    return { statusCode: 404, body: 'Not found' };
+-  }
++  if (key && event.queryStringParameters?.key !== key) return { statusCode: 404, body: 'Not found' };
+ 
+   const since = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
+   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+-  const { data, error } = await supabase
+-    .from('daily_visitors').select('*').gte('day', since).order('day', { ascending: false });
+-
++  const { data: rows, error } = await supabase
++    .from('page_views')
++    .select('day,visitor_hash,event,sport,country,region,city,device,first_seen,visit_number')
++    .gte('day', since).limit(50000);
+   if (error) return { statusCode: 500, body: `stats error: ${error.message}` };
+ 
+-  const sum = (rows, f) => rows.reduce((n, r) => n + r[f], 0);
+-  const last7 = data.slice(0, 7);
+-  const rows = data.map(r =>
+-    `<tr><td>${r.day}</td><td>${r.visitors}</td><td>${r.views}</td></tr>`).join('');
++  const loads = rows.filter(r => r.event === 'load');
++  const vid = r => `${r.day}|${r.visitor_hash}`;
++
++  // Per visitor-day: returning if any load that day had first_seen before that day.
++  const byVisitor = new Map();
++  for (const r of rows) {
++    const v = byVisitor.get(vid(r)) || { day: r.day, returning: false, engaged: false };
++    if (r.event === 'load' && r.first_seen && r.first_seen < r.day) v.returning = true;
++    if (r.event === 'tab') v.engaged = true;
++    byVisitor.set(vid(r), v);
++  }
++  const visitors = [...byVisitor.values()];
++
++  // Daily table
++  const days = [...new Set(visitors.map(v => v.day))].sort().reverse();
++  const daily = days.map(d => {
++    const vs = visitors.filter(v => v.day === d);
++    return [d, vs.length, vs.filter(v => !v.returning).length, vs.filter(v => v.returning).length,
++            vs.filter(v => v.engaged).length, loads.filter(r => r.day === d).length];
++  });
++
++  const total = visitors.length;
++  const ret = visitors.filter(v => v.returning).length;
++  const eng = visitors.filter(v => v.engaged).length;
++  const pct = n => total ? `${Math.round(100 * n / total)}%` : '–';
+ 
+   const html = `<!doctype html><meta name="viewport" content="width=device-width">
+ <title>SFS stats</title>
+-<style>body{font:15px system-ui;margin:24px;max-width:420px}td,th{padding:4px 14px;text-align:right}td:first-child,th:first-child{text-align:left}</style>
+-<h2>Spoiler Free Scores — visitors</h2>
+-<p>Today: <b>${data[0]?.day === new Date().toISOString().slice(0,10) ? data[0].visitors : 0}</b> ·
+-7 days: <b>${sum(last7,'visitors')}</b> visitor-days, ${sum(last7,'views')} views ·
+-30 days: <b>${sum(data,'visitors')}</b> visitor-days</p>
+-<table><tr><th>Day (UTC)</th><th>Visitors</th><th>Views</th></tr>${rows}</table>
+-<p style="color:#888;font-size:12px">Unique = same IP + browser within a UTC day. Bots excluded by user agent.</p>`;
++<style>body{font:15px system-ui;margin:24px;max-width:640px}table{border-collapse:collapse;margin-bottom:8px}
++td,th{padding:4px 12px;text-align:right}td:first-child,th:first-child{text-align:left}
++tr:nth-child(even){background:#8881}.m{color:#888;font-size:12px}h3{margin:24px 0 6px}</style>
++<h2>Spoiler Free Scores — last 30 days</h2>
++<p><b>${total}</b> visitor-days · <b>${pct(ret)}</b> returning · <b>${pct(eng)}</b> engaged (clicked a sport tab)</p>
++${table('By day (UTC)', ['Day', 'Visitors', 'New', 'Returning', 'Engaged', 'Views'], daily)}
++${table('Sports viewed', ['Sport', 'Visitors'], tally(rows, r => r.sport))}
++${table('Landing tab', ['Sport', 'Visitors'], tally(loads, r => r.sport))}
++${table('Country', ['Country', 'Visitors'], tally(rows, r => r.country))}
++${table('City', ['City', 'Visitors'], tally(rows, r => r.city && [r.city, r.region, r.country].filter(Boolean).join(', ')))}
++${table('Device', ['Device', 'Visitors'], tally(rows, r => r.device))}
++<p class="m">A visitor = same IP + browser within a UTC day. Returning = that browser first visited on an earlier day.
++Bots excluded by user agent. Visit with ?notrack once to exclude yourself.</p>`;
+ 
+   return { statusCode: 200, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }, body: html };
+ };
+diff --git a/netlify/functions/track.js b/netlify/functions/track.js
+index 9a5b5a5..d9a5059 100644
+--- a/netlify/functions/track.js
++++ b/netlify/functions/track.js
+@@ -1,7 +1,11 @@
+ // netlify/functions/track.js
+ //
+-// Visitor counter. index.html POSTs here once per page load.
+-// Skips bots, stores a daily-rotating hash instead of the IP.
++// Visitor tracking. index.html POSTs here:
++//   { event: 'load', sport, firstSeen, visits }  — once per page load
++//   { event: 'tab',  sport }                     — each time a sport tab is clicked
++// Skips bots, never stores the IP. visitor_hash rotates daily (salt|ip|ua|day).
++// "Returning" comes from the browser's own first-visit date (localStorage),
++// not from a persistent ID, so we can't follow anyone across days.
+ // View the numbers at /.netlify/functions/stats
+ 
+ const { createClient } = require('@supabase/supabase-js');
+@@ -9,34 +13,61 @@ const crypto = require('crypto');
+ 
+ const BOT_UA = /bot|crawl|spider|slurp|preview|monitor|uptime|headless|lighthouse|curl|wget|python|axios|node-fetch|go-http/i;
+ const VALID_SPORTS = new Set(['all','football','cricket','wnba','darts','tennis','nhl','nba','mlb','nfl','ncaaf','softball','cs2']);
++const VALID_EVENTS = new Set(['load', 'tab']);
++
++// Netlify passes geo as base64 JSON in x-nf-geo; fall back to country-only headers.
++function readGeo(h) {
++  try {
++    const g = JSON.parse(Buffer.from(h['x-nf-geo'] || '', 'base64').toString('utf8'));
++    return {
++      country: g.country?.code || null,
++      region:  g.subdivision?.name || g.subdivision?.code || null,
++      city:    g.city || null,
++    };
++  } catch {
++    const c = (h['x-country'] || h['x-nf-country'] || '').toUpperCase() || null;
++    return { country: c, region: null, city: null };
++  }
++}
++
++const clip = (s, n) => (typeof s === 'string' ? s.slice(0, n) : null);
+ 
+ exports.handler = async function (event) {
+   if (event.httpMethod !== 'POST') return { statusCode: 405, body: '' };
+ 
+-  const ua = event.headers?.['user-agent'] || '';
++  const h = event.headers || {};
++  const ua = h['user-agent'] || '';
+   if (!ua || BOT_UA.test(ua)) return { statusCode: 204, body: '' };
+ 
+-  const ip = (event.headers?.['x-nf-client-connection-ip']
+-           || event.headers?.['x-forwarded-for']?.split(',')[0]
+-           || '').trim();
++  let body = {};
++  try { body = JSON.parse(event.body || '{}'); } catch { /* ignore */ }
++
++  const ev = VALID_EVENTS.has(body.event) ? body.event : 'load';
++  const sport = VALID_SPORTS.has(body.sport) ? body.sport : null;
++  const firstSeen = /^\d{4}-\d{2}-\d{2}$/.test(body.firstSeen) ? body.firstSeen : null;
++  const visits = Number.isInteger(body.visits) && body.visits > 0 ? Math.min(body.visits, 100000) : null;
++
++  const ip = (h['x-nf-client-connection-ip'] || h['x-forwarded-for']?.split(',')[0] || '').trim();
+   const day = new Date().toISOString().slice(0, 10);
+-  const salt = process.env.VISITOR_SALT || '';
+   const visitor_hash = crypto.createHash('sha256')
+-    .update(`${salt}|${ip}|${ua}|${day}`).digest('hex').slice(0, 16);
++    .update(`${process.env.VISITOR_SALT || ''}|${ip}|${ua}|${day}`).digest('hex').slice(0, 16);
+ 
+-  let sport = null;
+-  try { sport = JSON.parse(event.body || '{}').sport; } catch { /* ignore */ }
+-  if (!VALID_SPORTS.has(sport)) sport = null;
++  const geo = readGeo(h);
++  const device = /mobile|iphone|android/i.test(ua) ? 'mobile' : 'desktop';
+ 
+-  const country = (event.headers?.['x-country'] || event.headers?.['x-nf-country'] || '').toUpperCase() || null;
++  const row = {
++    day, visitor_hash, event: ev, sport, device,
++    country: clip(geo.country, 8), region: clip(geo.region, 64), city: clip(geo.city, 64),
++    first_seen: ev === 'load' ? firstSeen : null,
++    visit_number: ev === 'load' ? visits : null,
++  };
+ 
+   try {
+     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+-    const { error } = await supabase.from('page_views').insert({ day, visitor_hash, sport, country });
++    const { error } = await supabase.from('page_views').insert(row);
+     if (error) console.error('track: insert failed:', error.message);
+   } catch (err) {
+     console.error('track: exception:', err.message);
+   }
+-  // Always 204 — the page never waits on or cares about this.
+   return { statusCode: 204, body: '' };
+ };
+diff --git a/netlify/functions/visits-schema.sql b/netlify/functions/visits-schema.sql
+index bbdbc9d..a1c1e96 100644
+--- a/netlify/functions/visits-schema.sql
++++ b/netlify/functions/visits-schema.sql
+@@ -22,3 +22,19 @@ SELECT day,
+        COUNT(*)                     AS views
+ FROM page_views
+ GROUP BY day;
++
++-- v2: events, geo, returning visitors, device
++ALTER TABLE page_views
++  ADD COLUMN IF NOT EXISTS event        TEXT NOT NULL DEFAULT 'load',
++  ADD COLUMN IF NOT EXISTS region       TEXT,
++  ADD COLUMN IF NOT EXISTS city         TEXT,
++  ADD COLUMN IF NOT EXISTS device       TEXT,
++  ADD COLUMN IF NOT EXISTS first_seen   DATE,
++  ADD COLUMN IF NOT EXISTS visit_number INTEGER;
++
++CREATE OR REPLACE VIEW daily_visitors WITH (security_invoker = on) AS
++SELECT day,
++       COUNT(DISTINCT visitor_hash)                  AS visitors,
++       COUNT(*) FILTER (WHERE event = 'load')        AS views
++FROM page_views
++GROUP BY day;
+-- 
+2.43.0
+

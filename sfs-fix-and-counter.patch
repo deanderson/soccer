@@ -1,0 +1,244 @@
+From 9ded910cbee1a82c31d1801c5a176b28dbdd827a Mon Sep 17 00:00:00 2001
+From: x <x>
+Date: Fri, 18 Sep 2026 14:49:39 +0000
+Subject: [PATCH] Call get-scores in-process from cron; add visitor counter
+
+---
+ index.html                            | 10 +++++
+ netlify/functions/fetch-scores-job.js | 64 ++++++++++-----------------
+ netlify/functions/stats.js            | 37 ++++++++++++++++
+ netlify/functions/track.js            | 42 ++++++++++++++++++
+ netlify/functions/visits-schema.sql   | 24 ++++++++++
+ 5 files changed, 137 insertions(+), 40 deletions(-)
+ create mode 100644 netlify/functions/stats.js
+ create mode 100644 netlify/functions/track.js
+ create mode 100644 netlify/functions/visits-schema.sql
+
+diff --git a/index.html b/index.html
+index 0fcaa5c..39b0dfd 100644
+--- a/index.html
++++ b/index.html
+@@ -3460,6 +3460,16 @@
+ 
+   loadScores();
+ 
++  // Visitor counter. Visit once with ?notrack to exclude this browser for good.
++  if (new URLSearchParams(location.search).has('notrack')) localStorage.setItem('noTrack', '1');
++  if (location.protocol !== 'file:' && !localStorage.getItem('noTrack')) {
++    fetch('/.netlify/functions/track', {
++      method: 'POST', keepalive: true,
++      headers: { 'Content-Type': 'application/json' },
++      body: JSON.stringify({ sport: activeSport }),
++    }).catch(() => {});
++  }
++
+   // PWA service worker registration
+   if ('serviceWorker' in navigator) {
+     navigator.serviceWorker.register('/sw.js').catch(() => {});
+diff --git a/netlify/functions/fetch-scores-job.js b/netlify/functions/fetch-scores-job.js
+index 9279785..1219ecc 100644
+--- a/netlify/functions/fetch-scores-job.js
++++ b/netlify/functions/fetch-scores-job.js
+@@ -1,54 +1,38 @@
+-// Scheduled function — runs every 15 minutes
+-
+-const { connectLambda, getStore } = require('@netlify/blobs');
+-
+-exports.handler = async function(event, context) {
+-  connectLambda(event);
+-
++// Scheduled function — runs every 15 minutes (schedule in netlify.toml).
++//
++// Calls get-scores in-process instead of over HTTP. The old version fetched
++// https://spoilerfreescores.com/.netlify/functions/get-scores, which goes
++// through Cloudflare — Cloudflare bot-challenged it (403) or timed out (502)
++// on roughly half of runs, and only the scheduler's retry kept data fresh.
++//
++// get-scores writes the 'latest' blob itself on internal calls, so there's
++// nothing left for this job to do but invoke it and log the result.
++
++const getScores = require('./get-scores');
++
++exports.handler = async function (event, context) {
+   const start = Date.now();
+-  console.log('fetch-scores-job: starting at', new Date().toISOString());
++  console.log('fetch-scores-job: starting at', new Date(start).toISOString());
+ 
+   try {
+-    // Use the Netlify site URL — try multiple env vars
+-    const siteUrl = process.env.URL || 'https://spoilerfreescores.com';
+-    console.log('fetch-scores-job: using URL', siteUrl);
+-
+-    const res = await fetch(
+-      `${siteUrl}/.netlify/functions/get-scores?sport=all&_internal=1`,
+-      {
+-        signal: AbortSignal.timeout(55000),
+-        headers: {
+-          'User-Agent': 'Mozilla/5.0 (compatible; Netlify-Function/1.0)',
+-        }
+-      }
++    // Pass the real event through so connectLambda() inside get-scores
++    // still gets the Blobs context; only override the query params.
++    const res = await getScores.handler(
++      { ...event, httpMethod: 'GET', queryStringParameters: { sport: 'all', _internal: '1' } },
++      context
+     );
+ 
+     const elapsed = Date.now() - start;
+-    console.log(`fetch-scores-job: response ${res.status} after ${elapsed}ms`);
++    console.log(`fetch-scores-job: get-scores returned ${res.statusCode} after ${elapsed}ms`);
+ 
+-    if (!res.ok) {
+-      const text = await res.text();
+-      console.error('fetch-scores-job: error body:', text.slice(0, 300));
+-      return { statusCode: 500, body: JSON.stringify({ ok: false, status: res.status }) };
++    if (res.statusCode !== 200) {
++      console.error('fetch-scores-job: error body:', String(res.body).slice(0, 300));
++      return { statusCode: 500, body: JSON.stringify({ ok: false, status: res.statusCode }) };
+     }
+-
+-    const data = await res.json();
+-
+-    // Write to blob ourselves as safety net
+-    const store = getStore('scores');
+-    const fetchedAt = Date.now();
+-    await store.setJSON('latest', { data, fetchedAt, fetchedAtISO: new Date(fetchedAt).toISOString() });
+-    console.log('fetch-scores-job: blob written at', new Date(fetchedAt).toISOString());
+-
+     return { statusCode: 200, body: JSON.stringify({ ok: true, elapsed }) };
+ 
+   } catch (err) {
+-    const elapsed = Date.now() - start;
+-    console.error('fetch-scores-job: exception after', elapsed, 'ms:', err.message);
++    console.error('fetch-scores-job: exception after', Date.now() - start, 'ms:', err.message);
+     return { statusCode: 500, body: JSON.stringify({ ok: false, error: err.message }) };
+   }
+ };
+-
+-exports.config = {
+-  schedule: '*/15 * * * *',
+-};
+diff --git a/netlify/functions/stats.js b/netlify/functions/stats.js
+new file mode 100644
+index 0000000..f584629
+--- /dev/null
++++ b/netlify/functions/stats.js
+@@ -0,0 +1,37 @@
++// netlify/functions/stats.js
++//
++// Visitor counts for the last 30 days: /.netlify/functions/stats
++// If STATS_KEY is set in Netlify env vars, require ?key=<STATS_KEY>.
++
++const { createClient } = require('@supabase/supabase-js');
++
++exports.handler = async function (event) {
++  const key = process.env.STATS_KEY;
++  if (key && event.queryStringParameters?.key !== key) {
++    return { statusCode: 404, body: 'Not found' };
++  }
++
++  const since = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
++  const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
++  const { data, error } = await supabase
++    .from('daily_visitors').select('*').gte('day', since).order('day', { ascending: false });
++
++  if (error) return { statusCode: 500, body: `stats error: ${error.message}` };
++
++  const sum = (rows, f) => rows.reduce((n, r) => n + r[f], 0);
++  const last7 = data.slice(0, 7);
++  const rows = data.map(r =>
++    `<tr><td>${r.day}</td><td>${r.visitors}</td><td>${r.views}</td></tr>`).join('');
++
++  const html = `<!doctype html><meta name="viewport" content="width=device-width">
++<title>SFS stats</title>
++<style>body{font:15px system-ui;margin:24px;max-width:420px}td,th{padding:4px 14px;text-align:right}td:first-child,th:first-child{text-align:left}</style>
++<h2>Spoiler Free Scores — visitors</h2>
++<p>Today: <b>${data[0]?.day === new Date().toISOString().slice(0,10) ? data[0].visitors : 0}</b> ·
++7 days: <b>${sum(last7,'visitors')}</b> visitor-days, ${sum(last7,'views')} views ·
++30 days: <b>${sum(data,'visitors')}</b> visitor-days</p>
++<table><tr><th>Day (UTC)</th><th>Visitors</th><th>Views</th></tr>${rows}</table>
++<p style="color:#888;font-size:12px">Unique = same IP + browser within a UTC day. Bots excluded by user agent.</p>`;
++
++  return { statusCode: 200, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' }, body: html };
++};
+diff --git a/netlify/functions/track.js b/netlify/functions/track.js
+new file mode 100644
+index 0000000..9a5b5a5
+--- /dev/null
++++ b/netlify/functions/track.js
+@@ -0,0 +1,42 @@
++// netlify/functions/track.js
++//
++// Visitor counter. index.html POSTs here once per page load.
++// Skips bots, stores a daily-rotating hash instead of the IP.
++// View the numbers at /.netlify/functions/stats
++
++const { createClient } = require('@supabase/supabase-js');
++const crypto = require('crypto');
++
++const BOT_UA = /bot|crawl|spider|slurp|preview|monitor|uptime|headless|lighthouse|curl|wget|python|axios|node-fetch|go-http/i;
++const VALID_SPORTS = new Set(['all','football','cricket','wnba','darts','tennis','nhl','nba','mlb','nfl','ncaaf','softball','cs2']);
++
++exports.handler = async function (event) {
++  if (event.httpMethod !== 'POST') return { statusCode: 405, body: '' };
++
++  const ua = event.headers?.['user-agent'] || '';
++  if (!ua || BOT_UA.test(ua)) return { statusCode: 204, body: '' };
++
++  const ip = (event.headers?.['x-nf-client-connection-ip']
++           || event.headers?.['x-forwarded-for']?.split(',')[0]
++           || '').trim();
++  const day = new Date().toISOString().slice(0, 10);
++  const salt = process.env.VISITOR_SALT || '';
++  const visitor_hash = crypto.createHash('sha256')
++    .update(`${salt}|${ip}|${ua}|${day}`).digest('hex').slice(0, 16);
++
++  let sport = null;
++  try { sport = JSON.parse(event.body || '{}').sport; } catch { /* ignore */ }
++  if (!VALID_SPORTS.has(sport)) sport = null;
++
++  const country = (event.headers?.['x-country'] || event.headers?.['x-nf-country'] || '').toUpperCase() || null;
++
++  try {
++    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
++    const { error } = await supabase.from('page_views').insert({ day, visitor_hash, sport, country });
++    if (error) console.error('track: insert failed:', error.message);
++  } catch (err) {
++    console.error('track: exception:', err.message);
++  }
++  // Always 204 — the page never waits on or cares about this.
++  return { statusCode: 204, body: '' };
++};
+diff --git a/netlify/functions/visits-schema.sql b/netlify/functions/visits-schema.sql
+new file mode 100644
+index 0000000..bbdbc9d
+--- /dev/null
++++ b/netlify/functions/visits-schema.sql
+@@ -0,0 +1,24 @@
++-- Visitor counter. One row per page load from a real browser.
++-- No raw IPs: visitor_hash = sha256(salt|ip|user-agent|UTC day), so the same
++-- person counts once per day and can't be tracked across days.
++
++CREATE TABLE IF NOT EXISTS page_views (
++  id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
++  viewed_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
++  day           DATE NOT NULL DEFAULT (NOW() AT TIME ZONE 'utc')::date,
++  visitor_hash  TEXT NOT NULL,
++  sport         TEXT,
++  country       TEXT
++);
++
++CREATE INDEX IF NOT EXISTS idx_page_views_day ON page_views(day DESC);
++
++-- Service-role key (used by the functions) bypasses RLS; nothing else gets in.
++ALTER TABLE page_views ENABLE ROW LEVEL SECURITY;
++
++CREATE OR REPLACE VIEW daily_visitors WITH (security_invoker = on) AS
++SELECT day,
++       COUNT(DISTINCT visitor_hash) AS visitors,
++       COUNT(*)                     AS views
++FROM page_views
++GROUP BY day;
+-- 
+2.43.0
+

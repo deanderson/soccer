@@ -1610,6 +1610,22 @@ exports.handler = async function (event, context) {
     return out;
   }
 
+  // Football signals with closeness de-duplicated. Close-at-the-half,
+  // one-score-entering-the-4th and close-after-a-lead all describe the same
+  // quality, so only the strongest one scores; the rest stay attached with
+  // 0 points so they can still appear as insight tags.
+  function footballSignals(g, sport) {
+    const all = [...checkpointSignals(g, sport), ...footballColorFactors(g, sport)];
+    const isClose = (f) => /^(⚡ )?(Tied at the half|Close at the half|Tied entering|One-(score|goal) game entering|Close game after)/.test(f.label);
+    const close = all.filter(isClose);
+    const out = all.filter(f => !isClose(f));
+    if (close.length) {
+      const best = close.reduce((a, b) => (b.points > a.points ? b : a));
+      for (const f of close) out.push(f === best ? f : { ...f, points: 0 });
+    }
+    return out;
+  }
+
   function computeConfidence(g, sport) {
     const factors = [];
     let score = 0;
@@ -1894,8 +1910,7 @@ exports.handler = async function (event, context) {
       }
 
     } else if (sport === 'nfl') {
-      for (const f of checkpointSignals(g, 'nfl'))   { factors.push(f); score += f.points; }
-      for (const f of footballColorFactors(g, 'nfl')) { factors.push(f); score += f.points; }
+      for (const f of footballSignals(g, 'nfl')) { factors.push(f); score += f.points; }
       if      (diff <= 3)  { factors.push({ label: `${diff} pt margin`, points: 30 }); score += 30; }
       else if (diff <= 7)  { factors.push({ label: `${diff} pt margin`, points: 20 }); score += 20; }
       else if (diff >= 17) { factors.push({ label: 'Blowout', points: -40 }); score -= 40; }
@@ -1922,8 +1937,7 @@ exports.handler = async function (event, context) {
       if ((g.gameSacks || 0) >= 7)       { factors.push({ label: 'Lots of sacks', points: 6 }); score += 6; }
 
     } else if (sport === 'ncaaf') {
-      for (const f of checkpointSignals(g, 'ncaaf')) { factors.push(f); score += f.points; }
-      for (const f of footballColorFactors(g, 'ncaaf')) { factors.push(f); score += f.points; }
+      for (const f of footballSignals(g, 'ncaaf')) { factors.push(f); score += f.points; }
       // Calibrated against a real Nov 8 2025 FBS Saturday (45 games): margins
       // are much wider than NFL's — half of all games land within 7 points,
       // but real blowout territory doesn't start until ~26-28 (vs NFL's 17).
@@ -2294,9 +2308,9 @@ exports.handler = async function (event, context) {
     else if (g.fbLeadChanges >= 3) out.push({ label: `${g.fbLeadChanges} lead changes`, points: 12 });
     // Big lead that turned into a close game — same spoiler-safe framing as NBA
     const diff = Math.abs((g.h ?? 0) - (g.a ?? 0));
-    if (g.fbLargestLead >= (cfb ? 21 : 17) && diff <= 8)
+    if (g.fbLargestLead >= 21 && diff <= 8)   // three scores
       out.push({ label: '⚡ Close game after huge lead', points: 25 });
-    else if (g.fbLargestLead >= (cfb ? 14 : 10) && diff <= 8)
+    else if (g.fbLargestLead >= 14 && diff <= 8)   // two scores
       out.push({ label: '⚡ Close game after big lead', points: 15 });
 
     if (g.fbTurnovers >= 5)           out.push({ label: 'Turnover-filled game', points: 8 });
