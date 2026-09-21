@@ -299,8 +299,10 @@ exports.handler = async function (event, context) {
       const awayRankRaw = away?.curatedRank?.current;
       if (homeRankRaw && homeRankRaw <= 25) out.homeRank = homeRankRaw;
       if (awayRankRaw && awayRankRaw <= 25) out.awayRank = awayRankRaw;
-      // MLB: pass through inning-by-inning linescores for drama analysis
-      if (leagueName === 'MLB') {
+      // Pass through period-by-period linescores for drama analysis.
+      // MLB uses them for inning analysis; NBA/WNBA/NFL/NCAAF/NHL for
+      // checkpoint signals (margin at the half / entering the final period).
+      if (['MLB','NBA','WNBA','NFL','NHL','NCAAF','FBS','FCS'].includes(leagueName)) {
         out.homeLinescores = (home?.linescores || []).map(l => parseInt(l.value ?? 0, 10));
         out.awayLinescores = (away?.linescores || []).map(l => parseInt(l.value ?? 0, 10));
       }
@@ -1558,6 +1560,56 @@ exports.handler = async function (event, context) {
   const SCORE_MUST_WATCH = 60; // ≥60 = Must Watch, 38-59 = Watchable, <38 = Skip
   const SCORE_WATCHABLE  = 38;
 
+  // ── Checkpoint signals ──────────────────────────────────────────────────
+  // Derived from period linescores. These describe how close the game was at
+  // a fixed point (halftime, entering the final period) without revealing how
+  // it ended — a game tied entering the 4th can still finish as a blowout.
+  // Returns factors; caller adds them and sums points.
+  function checkpointSignals(g, sport) {
+    const hl = g.homeLinescores || [];
+    const al = g.awayLinescores || [];
+    const out = [];
+    const sum = (arr, n) => arr.slice(0, n).reduce((s, v) => s + (Number(v) || 0), 0);
+
+    const cfg = {
+      nba:   { periods: 4, half: 2, closeHalf: 5, oneScore: 5,  wildFinal: 60, swing: 12 },
+      wnba:  { periods: 4, half: 2, closeHalf: 5, oneScore: 5,  wildFinal: 50, swing: 10 },
+      nfl:   { periods: 4, half: 2, closeHalf: 7, oneScore: 8,  wildFinal: 21, swing: 10 },
+      ncaaf: { periods: 4, half: 2, closeHalf: 7, oneScore: 8,  wildFinal: 24, swing: 14 },
+      nhl:   { periods: 3, half: null, closeHalf: null, oneScore: 1, wildFinal: 4, swing: null },
+    }[sport];
+    if (!cfg) return out;
+    if (hl.length < cfg.periods || al.length < cfg.periods) return out;
+
+    const finalName = cfg.periods === 4 ? '4th' : '3rd';
+    const scoreUnit = sport === 'nhl' ? 'goal' : 'score';
+
+    // Halftime (4-period sports only)
+    if (cfg.half) {
+      const halfMargin = Math.abs(sum(hl, cfg.half) - sum(al, cfg.half));
+      if (halfMargin === 0)                out.push({ label: '⚡ Tied at the half',   points: 6 });
+      else if (halfMargin <= cfg.closeHalf) out.push({ label: 'Close at the half',    points: 4 });
+    }
+
+    // Entering the final period
+    const preFinal = cfg.periods - 1;
+    const enterMargin = Math.abs(sum(hl, preFinal) - sum(al, preFinal));
+    if (enterMargin === 0)                 out.push({ label: `⚡ Tied entering the ${finalName}`, points: 14 });
+    else if (enterMargin <= cfg.oneScore)  out.push({ label: `One-${scoreUnit} game entering the ${finalName}`, points: 10 });
+
+    // Final regulation period volume
+    const finalPts = (Number(hl[cfg.periods - 1]) || 0) + (Number(al[cfg.periods - 1]) || 0);
+    if (finalPts >= cfg.wildFinal)         out.push({ label: `Wild ${finalName} period`, points: 8 });
+
+    // Swing in the final period — margin moved a lot, direction unstated
+    if (cfg.swing) {
+      const finalMargin = Math.abs(sum(hl, cfg.periods) - sum(al, cfg.periods));
+      if (Math.abs(enterMargin - finalMargin) >= cfg.swing)
+        out.push({ label: `Big swing in the ${finalName}`, points: 10 });
+    }
+    return out;
+  }
+
   function computeConfidence(g, sport) {
     const factors = [];
     let score = 0;
@@ -1616,6 +1668,7 @@ exports.handler = async function (event, context) {
       else if (tier === 2) { factors.push({ label: g.league, points: 3 }); score += 3; }
 
     } else if (sport === 'nhl') {
+      for (const f of checkpointSignals(g, 'nhl'))   { factors.push(f); score += f.points; }
       if      (total >= 8) { factors.push({ label: `${total} goals`, points: 25 }); score += 25; }
       else if (total >= 6) { factors.push({ label: `${total} goals`, points: 15 }); score += 15; }
       else if (total >= 4) { factors.push({ label: `${total} goals`, points: 8  }); score += 8;  }
@@ -1639,6 +1692,7 @@ exports.handler = async function (event, context) {
       if (lc >= 2 && !hasBackForth) { factors.push({ label: `${lc} lead changes`, points: 12 }); score += 12; }
 
     } else if (sport === 'nba') {
+      for (const f of checkpointSignals(g, 'nba'))   { factors.push(f); score += f.points; }
       if      (total >= 270) { factors.push({ label: '🏆 Historic scoring game', points: 25 }); score += 25; }
       else if (total >= 230) { factors.push({ label: `${total} pts`, points: 15 }); score += 15; }
       else if (total >= 210) { factors.push({ label: `${total} pts`, points: 8  }); score += 8;  }
@@ -1672,6 +1726,7 @@ exports.handler = async function (event, context) {
       else if (lc >= 8)  { factors.push({ label: `${lc} lead changes`, points: 12 }); score += 12; }
 
     } else if (sport === 'wnba') {
+      for (const f of checkpointSignals(g, 'wnba'))  { factors.push(f); score += f.points; }
       // WNBA scoring profile: typical total ~160 (vs NBA ~220), margins
       // proportionally tighter. Thresholds scaled ~0.73x from NBA's.
       // Initial v1 estimates — to be tuned after 1-2 weeks of real games.
@@ -1839,6 +1894,8 @@ exports.handler = async function (event, context) {
       }
 
     } else if (sport === 'nfl') {
+      for (const f of checkpointSignals(g, 'nfl'))   { factors.push(f); score += f.points; }
+      for (const f of footballColorFactors(g, 'nfl')) { factors.push(f); score += f.points; }
       if      (diff <= 3)  { factors.push({ label: `${diff} pt margin`, points: 30 }); score += 30; }
       else if (diff <= 7)  { factors.push({ label: `${diff} pt margin`, points: 20 }); score += 20; }
       else if (diff >= 17) { factors.push({ label: 'Blowout', points: -40 }); score -= 40; }
@@ -1865,6 +1922,8 @@ exports.handler = async function (event, context) {
       if ((g.gameSacks || 0) >= 7)       { factors.push({ label: 'Lots of sacks', points: 6 }); score += 6; }
 
     } else if (sport === 'ncaaf') {
+      for (const f of checkpointSignals(g, 'ncaaf')) { factors.push(f); score += f.points; }
+      for (const f of footballColorFactors(g, 'ncaaf')) { factors.push(f); score += f.points; }
       // Calibrated against a real Nov 8 2025 FBS Saturday (45 games): margins
       // are much wider than NFL's — half of all games land within 7 points,
       // but real blowout territory doesn't start until ~26-28 (vs NFL's 17).
@@ -2140,6 +2199,121 @@ exports.handler = async function (event, context) {
     });
   }
 
+  // ── Football color extractor (NFL + NCAAF) ───────────────────────────────
+  // Pulls additional game-character signals out of an ESPN football summary.
+  // Everything here describes HOW the game was played, not who won:
+  //   scoringPlays → leadChanges, largestLead (same shape NBA uses)
+  //   team stats   → turnovers, defensive TDs, penalties, 4th-down attempts,
+  //                  combined/min total yards
+  //   player stats → best passer (yds/TD), missed kicks, long FG, return TDs,
+  //                  best INT and sack counts
+  function extractFootballColor(summary) {
+    const out = {};
+    const teams = summary?.boxscore?.teams || [];
+    const num = (v) => parseInt(String(v ?? '').split('/')[0].split('-')[0], 10) || 0;
+
+    // Team stats
+    let turnovers = 0, defTD = 0, penalties = 0, fourthAtt = 0, yards = [];
+    for (const t of teams) {
+      const stat = (n) => t.statistics?.find(s => s.name === n)?.displayValue;
+      turnovers += num(stat('turnovers'));
+      defTD     += num(stat('defensiveTouchdowns'));
+      penalties += num(stat('totalPenaltiesYards'));
+      const fd = String(stat('fourthDownEff') || '0-0').split('-');
+      fourthAtt += parseInt(fd[1], 10) || 0;
+      const ty = num(stat('totalYards'));
+      if (ty) yards.push(ty);
+    }
+    out.fbTurnovers = turnovers;
+    out.fbDefTD = defTD;
+    out.fbPenalties = penalties;
+    out.fbFourthAtt = fourthAtt;
+    out.fbTotalYards = yards.reduce((a, b) => a + b, 0);
+    out.fbMinYards = yards.length ? Math.min(...yards) : null;
+
+    // Scoring sequence → lead changes / largest lead
+    let leadChanges = 0, largestLead = 0, prev = null;
+    for (const p of (summary?.scoringPlays || [])) {
+      const hs = p.homeScore ?? 0, as = p.awayScore ?? 0;
+      largestLead = Math.max(largestLead, Math.abs(hs - as));
+      const leader = hs > as ? 'h' : as > hs ? 'a' : 'tie';
+      if (prev && leader !== 'tie' && prev !== 'tie' && leader !== prev) leadChanges++;
+      if (leader !== 'tie') prev = leader;
+    }
+    out.fbLeadChanges = leadChanges;
+    out.fbLargestLead = largestLead;
+
+    // Player stats
+    let maxPassYds = 0, maxPassTD = 0, missedKicks = 0, longFG = 0, returnTD = 0, maxINT = 0, maxSacks = 0;
+    for (const team of (summary?.boxscore?.players || [])) {
+      for (const cat of (team.statistics || [])) {
+        const keys = cat.keys || [];
+        const col = (name) => keys.indexOf(name);
+        for (const ath of (cat.athletes || [])) {
+          const st = ath.stats || [];
+          const get = (name) => { const i = col(name); return i >= 0 ? st[i] : undefined; };
+          if (cat.name === 'passing') {
+            maxPassYds = Math.max(maxPassYds, num(get('passingYards')));
+            maxPassTD  = Math.max(maxPassTD,  num(get('passingTouchdowns')));
+          } else if (cat.name === 'kicking') {
+            const fg = String(get('fieldGoalsMade/fieldGoalAttempts') || '0/0').split('/');
+            const xp = String(get('extraPointsMade/extraPointAttempts') || '0/0').split('/');
+            missedKicks += ((parseInt(fg[1],10)||0) - (parseInt(fg[0],10)||0)) + ((parseInt(xp[1],10)||0) - (parseInt(xp[0],10)||0));
+            longFG = Math.max(longFG, num(get('longFieldGoalMade')));
+          } else if (cat.name === 'kickReturns') {
+            returnTD += num(get('kickReturnTouchdowns'));
+          } else if (cat.name === 'puntReturns') {
+            returnTD += num(get('puntReturnTouchdowns'));
+          } else if (cat.name === 'interceptions') {
+            maxINT = Math.max(maxINT, num(get('interceptions')));
+            returnTD += num(get('interceptionTouchdowns'));
+          } else if (cat.name === 'defensive') {
+            maxSacks = Math.max(maxSacks, num(get('sacks')));
+          }
+        }
+      }
+    }
+    out.fbMaxPassYds = maxPassYds;
+    out.fbMaxPassTD = maxPassTD;
+    out.fbMissedKicks = missedKicks;
+    out.fbLongFG = longFG;
+    out.fbReturnTD = returnTD;
+    out.fbMaxINT = maxINT;
+    out.fbMaxSacks = maxSacks;
+    return out;
+  }
+
+  // Scoring factors from extractFootballColor output. Thresholds differ a
+  // little for college (wider margins, more penalties, more scoring).
+  function footballColorFactors(g, sport) {
+    const out = [];
+    if (g.fbLeadChanges == null) return out; // not enriched
+    const cfb = sport === 'ncaaf';
+
+    if      (g.fbLeadChanges >= 5) out.push({ label: `${g.fbLeadChanges} lead changes`, points: 20 });
+    else if (g.fbLeadChanges >= 3) out.push({ label: `${g.fbLeadChanges} lead changes`, points: 12 });
+    // Big lead that turned into a close game — same spoiler-safe framing as NBA
+    const diff = Math.abs((g.h ?? 0) - (g.a ?? 0));
+    if (g.fbLargestLead >= (cfb ? 21 : 17) && diff <= 8)
+      out.push({ label: '⚡ Close game after huge lead', points: 25 });
+    else if (g.fbLargestLead >= (cfb ? 14 : 10) && diff <= 8)
+      out.push({ label: '⚡ Close game after big lead', points: 15 });
+
+    if (g.fbTurnovers >= 5)           out.push({ label: 'Turnover-filled game', points: 8 });
+    if (g.fbDefTD >= 1)               out.push({ label: 'Defensive touchdown', points: 6 });
+    if (g.fbReturnTD >= 1)            out.push({ label: 'Return touchdown', points: 8 });
+    if (g.fbPenalties >= (cfb ? 22 : 18)) out.push({ label: 'Flag-heavy game', points: 3 });
+    if (g.fbFourthAtt >= 3)           out.push({ label: 'Aggressive on 4th down', points: 5 });
+    if (g.fbTotalYards >= (cfb ? 1000 : 900)) out.push({ label: 'Offensive shootout', points: 10 });
+    else if (g.fbMinYards != null && g.fbTotalYards > 0 && g.fbMinYards <= 220 && g.fbTotalYards <= 550)
+      out.push({ label: 'Defensive slugfest', points: 5 });
+    if (g.fbMaxPassYds >= 400 || g.fbMaxPassTD >= 4) out.push({ label: 'Huge passing day', points: 8 });
+    if (g.fbMissedKicks >= 2)         out.push({ label: 'Missed kicks', points: 5 });
+    else if (g.fbMissedKicks === 1)   out.push({ label: 'Missed kick', points: 3 });
+    if (g.fbMaxINT >= 2 || g.fbMaxSacks >= 3) out.push({ label: 'Defensive standout', points: 6 });
+    return out;
+  }
+
   // Fetch rushing/passing yardage per team, plus individual standout stats
   // (leaders) and sacks, for recent final NFL games — all from the same
   // ESPN summary/boxscore fetch (no extra API cost beyond what's already
@@ -2208,7 +2382,7 @@ exports.handler = async function (event, context) {
         }
       }
 
-      return { ...g, homeRushYds, awayRushYds, homePassYds, awayPassYds, maxRushLeader, maxRecvLeader, gameSacks };
+      return { ...g, homeRushYds, awayRushYds, homePassYds, awayPassYds, maxRushLeader, maxRecvLeader, gameSacks, ...extractFootballColor(summary) };
     });
   }
 
@@ -2455,7 +2629,7 @@ exports.handler = async function (event, context) {
         }
       }
 
-      return { ...g, homeRushYds, awayRushYds, homePassYds, awayPassYds, maxRushLeader, maxRecvLeader };
+      return { ...g, homeRushYds, awayRushYds, homePassYds, awayPassYds, maxRushLeader, maxRecvLeader , ...extractFootballColor(summary) };
     });
   }
 

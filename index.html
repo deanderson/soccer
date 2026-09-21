@@ -1582,11 +1582,10 @@
 
     // COMEBACK SCALE — safe to show, doesn't reveal winner
     '⚡ Huge rally':            'Massive rally',
-    '⚡ Close game after big lead':  'Close game after big lead',
 
     // DRAMA SIGNALS — these are great for users
-    '⚡ Overtime':          'Went to overtime',
-    '⚡ Exciting overtime': 'Exciting overtime finish',
+    '⚡ Overtime':          null,  // spoiler — reveals tied at end of regulation
+    '⚡ Exciting overtime': null,  // spoiler
     '⚡ Back & forth':  'Back-and-forth game',
     '⚡ Last over finish': 'Came down to the last over',
     '⚡ Close chase':   'Tense run chase',
@@ -1633,10 +1632,34 @@
     'Big receiving day':       'Big receiving day',
     'Lots of sacks':           'Lots of sacks',
 
+    // FOOTBALL COLOR (NFL + NCAAF) — game character, result unstated
+    'Turnover-filled game':   'Turnover-filled game',
+    'Defensive touchdown':    'Defense scored a touchdown',
+    'Return touchdown':       'Return touchdown',
+    'Flag-heavy game':        'Flag-heavy game',
+    'Aggressive on 4th down': 'Aggressive 4th-down calls',
+    'Offensive shootout':     'Offensive shootout',
+    'Defensive slugfest':     'Defensive slugfest',
+    'Huge passing day':       'Huge passing day',
+    'Missed kicks':           'Missed kicks',
+    'Missed kick':            'A missed kick',
+    'Defensive standout':     'Defensive standout performance',
+    // CHECKPOINT SIGNALS — closeness at a fixed point, ending unstated
+    '⚡ Double overtime':                 null,
+    '⚡ Tied at the half':                'Tied at the half',
+    'Close at the half':                 'Close at the half',
+    '⚡ Tied entering the 4th':           'Tied entering the 4th',
+    '⚡ Tied entering the 3rd':           'Tied entering the 3rd',
+    'One-score game entering the 4th':   'One-score game entering the 4th',
+    'One-goal game entering the 3rd':    'One-goal game entering the 3rd',
+    'Wild 4th period':                   'Wild 4th quarter',
+    'Wild 3rd period':                   'Wild 3rd period',
+    'Big swing in the 4th':              'Big swing in the 4th',
+
     // HISTORIC RECORDS
     '🏆 Historic scoring game':     'Historically high scoring',
     '⚡ Close game after huge lead': 'Close game after huge lead',
-    '🏆 Triple overtime thriller':  'Triple overtime thriller',
+    '🏆 Triple overtime thriller':  null,  // spoiler
     'Marathon extra innings':       null,  // handled dynamically below
 
     // ROUND CONTEXT
@@ -1826,7 +1849,89 @@
     return null;
   }
 
-  function getInsightPhrases(factors, sport) {
+  // ── Phrase variants ──────────────────────────────────────────────────────
+  // Keyed by the canonical phrase (the INSIGHT_MAP / formatDynamicLabel
+  // output). Each game picks one variant deterministically from its id, so
+  // a card reads the same on reload but neighbouring cards don't all say
+  // the same thing. Every variant must stay spoiler-safe: describe the
+  // shape of the game, never the result.
+  const PHRASE_VARIANTS = {
+    'Down to the wire':            ['Down to the wire', 'Decided late', 'Nail-biter finish', 'Came down to the final moments', 'Tight to the end'],
+    'Close finish':                ['Close finish', 'Tight finish', 'Decided by a whisker', 'Every possession mattered late', 'Photo finish'],
+    'Competitive finish':          ['Competitive finish', 'Stayed close late', 'In the balance until the end', 'Neither side pulled away', 'Close all the way'],
+    'Came down to the closing minutes': ['Came down to the closing minutes', 'Decided in the final minutes', 'Late-game drama', 'Tense final stretch', 'The last few minutes mattered'],
+    'High-scoring game':           ['High-scoring game', 'Points came in bunches', 'Offense ran wild', 'Scoreboard got a workout', 'Buckets everywhere'],
+    'They could not stop scoring': ['They could not stop scoring', 'Defense was optional', 'Track meet', 'Scoring frenzy', 'A shootout from the tip'],
+    'Plenty of offense':           ['Plenty of offense', 'Both sides found the end zone', 'Offense on display', 'Scoring aplenty', 'Points were not hard to come by'],
+    'Goals galore':                ['Goals galore', 'Goals flew in', 'Plenty of goals', 'A goal-fest', 'Nets bulging all game'],
+    'Lots of runs scored':         ['Lots of runs scored', 'Bats were hot', 'Runs came easy', 'A slugfest', 'Pitchers had a long day'],
+    'Multiple lead changes':       ['Multiple lead changes', 'Lead changed hands repeatedly', 'Back-and-forth affair', 'Momentum kept swinging', 'Neither team held the lead for long'],
+    'Back and forth all game':     ['Back and forth all game', 'Traded blows throughout', 'A seesaw battle', 'Lead swapped all night', 'Punch for punch'],
+    'Back-and-forth game':         ['Back-and-forth game', 'A seesaw contest', 'Lead swapped hands', 'Traded blows', 'Momentum swung both ways'],
+    'Wildly competitive':          ['Wildly competitive', 'A genuine slugfest', 'Neither side blinked', 'Fiercely contested', 'A proper scrap'],
+    'Stayed within reach':         ['Stayed within reach', 'Never got away', 'Kept it interesting', 'Within striking distance throughout', 'Never out of reach'],
+    'Close game after big lead':   ['Close game after big lead', 'A big lead got tight', 'A comfortable lead evaporated', 'Big lead, nervy finish', 'The gap closed fast'],
+    'Close game after huge lead':  ['Close game after huge lead', 'A huge lead got nervous', 'Massive lead, tight finish', 'A runaway that came all the way back', 'Big cushion, no comfort'],
+    'Massive rally':               ['Massive rally', 'A huge swing late', 'The gap closed in a hurry', 'Momentum turned completely', 'A stunning turnaround in the margin'],
+    'Tied at the half':            ['Tied at the half', 'Level at halftime', 'Dead even at the break', 'All square at the half', 'Nothing between them at halftime'],
+    'Close at the half':           ['Close at the half', 'Tight at halftime', 'Within a score at the break', 'A one-possession game at halftime', 'Little to separate them at the half'],
+    'Tied entering the 4th':       ['Tied entering the 4th', 'Level going into the 4th', 'All square entering the final quarter', 'Dead heat after three', 'Deadlocked with one quarter left'],
+    'Tied entering the 3rd':       ['Tied entering the 3rd', 'Level heading into the third', 'All square after two periods', 'Dead even with a period to play', 'Deadlocked entering the 3rd'],
+    'One-score game entering the 4th': ['One-score game entering the 4th', 'Within one score going into the 4th', 'A single score in it after three', 'Tight entering the final quarter', 'One possession separated them after three'],
+    'One-goal game entering the 3rd':  ['One-goal game entering the 3rd', 'A one-goal game heading into the third', 'A single goal in it after two', 'Tight entering the final period', 'One goal separated them after two'],
+    'Wild 4th quarter':            ['Wild 4th quarter', 'A frantic final quarter', 'Fourth-quarter fireworks', 'Everything happened in the 4th', 'A chaotic last quarter'],
+    'Wild 3rd period':             ['Wild 3rd period', 'A frantic third period', 'Third-period fireworks', 'Everything happened in the third', 'A chaotic final period'],
+    'Big swing in the 4th':        ['Big swing in the 4th', 'The 4th quarter changed everything', 'Fourth-quarter momentum shift', 'A late-game swing', 'The margin moved a lot in the 4th'],
+    'Turnover-filled game':        ['Turnover-filled game', 'Sloppy with the ball', 'Turnovers everywhere', 'The ball was on the ground a lot', 'Giveaways piled up'],
+    'Defense scored a touchdown':  ['Defense scored a touchdown', 'A defensive score', 'Defense got in the end zone', 'A pick-six or scoop-and-score', 'Points from the defense'],
+    'Return touchdown':            ['Return touchdown', 'A return went the distance', 'Special teams score', 'A kick or punt taken to the house', 'A return TD'],
+    'Flag-heavy game':             ['Flag-heavy game', 'Penalties piled up', 'Lots of laundry on the field', 'A whistle-happy game', 'Flags flew all game'],
+    'Aggressive 4th-down calls':   ['Aggressive 4th-down calls', 'Coaches went for it', 'Bold fourth-down decisions', 'Fourth-down gambles', 'Nobody wanted to punt'],
+    'Offensive shootout':          ['Offensive shootout', 'Yards came easy', 'An offensive explosion', 'Both offenses rolled', 'Defenses were on their heels'],
+    'Defensive slugfest':          ['Defensive slugfest', 'Yards were hard to come by', 'A grind-it-out game', 'Defenses dominated', 'A rock fight'],
+    'Huge passing day':            ['Huge passing day', 'A quarterback went off', 'Big numbers through the air', 'A passing clinic', 'The air attack was on'],
+    'Big rushing game':            ['Big rushing game', 'The ground game rolled', 'A heavy dose of the run', 'Rushing yards piled up', 'They ran it down their throats'],
+    'Huge game on the ground':     ['Huge game on the ground', 'A running back went off', 'A monster rushing day', 'One runner did the damage', 'A workhorse performance'],
+    'Big receiving day':           ['Big receiving day', 'A receiver went off', 'One pass-catcher feasted', 'A big day catching the ball', 'A receiver was uncoverable'],
+    'Lots of passing yards':       ['Lots of passing yards', 'Big yardage through the air', 'The passing game clicked', 'Lots of air yards', 'Quarterbacks stayed busy'],
+    'Lots of sacks':               ['Lots of sacks', 'Quarterbacks got hit', 'The pass rush feasted', 'A sack-filled game', 'QBs spent time on the turf'],
+    'Missed kicks':                ['Missed kicks', 'Kickers had a rough day', 'Points left on the field', 'Multiple missed kicks', 'Special teams wobbled'],
+    'A missed kick':               ['A missed kick', 'A kick sailed wide', 'One kick did not go through', 'A kicker missed', 'A missed field goal or PAT'],
+    'Defensive standout performance': ['Defensive standout performance', 'A defender took over', 'One defender was everywhere', 'A defensive star turn', 'Somebody on defense had a night'],
+    'Standout individual performance': ['Standout individual performance', 'Someone had a big night', 'A star turn', 'One player carried the load', 'A big individual performance'],
+    'A player went off (40+ pts)':  ['A player went off (40+ pts)', 'A 40-point night', 'Someone was unstoppable', 'A scoring explosion from one player', 'One player dropped 40'],
+    'A bench player put up big numbers': ['A bench player put up big numbers', 'Big minutes from the bench', 'A reserve stepped up', 'The bench delivered', 'An unexpected scorer showed up'],
+    'Decided by a late goal':      ['Decided by a late goal', 'A late goal mattered', 'Late drama', 'A goal in the closing stages', 'The ending came late'],
+    'Decided in injury time':      ['Decided in injury time', 'Stoppage-time drama', 'A goal after the 90th minute', 'It went into added time', 'Injury-time twist'],
+    'A player was sent off':       ['A player was sent off', 'Down to ten men', 'A red card changed things', 'Someone saw red', 'A dismissal in the game'],
+    'Ended level':                 ['Ended level', 'Honors even', 'Shared the points', 'Nothing to separate them', 'All square at the whistle'],
+    'Went to extra innings':       ['Went to extra innings', 'Free baseball', 'Extra innings needed', 'Nine was not enough', 'Bonus baseball'],
+    'Marathon extra innings':      ['Marathon extra innings', 'A very long night', 'Extra innings went on and on', 'A marathon at the ballpark', 'Deep into extras'],
+    'Went to 3 sets':              ['Went to 3 sets', 'A deciding set', 'Needed a third set', 'Three sets to settle it', 'Went the distance'],
+    'A 5-set marathon':            ['A 5-set marathon', 'Five sets of tennis', 'A deciding fifth set', 'Went the full five', 'An epic five-setter'],
+    'Decided in a tiebreak':       ['Decided in a tiebreak', 'A tiebreak decided a set', 'Tiebreak tension', 'Settled in a breaker', 'A set went to a tiebreak'],
+    'Tiebreak in close sets':      ['Tiebreak in close sets', 'Tight sets and a breaker', 'Every set was close', 'Tiebreak drama in tight sets', 'Nothing between them in the sets'],
+    'Closely contested':           ['Closely contested', 'Tight all the way', 'A close contest', 'Hard-fought', 'Neither side gave an inch'],
+    'Stayed competitive':          ['Stayed competitive', 'Kept it close', 'Never a runaway', 'Competitive throughout', 'A real contest'],
+    'Came down to the last over':  ['Came down to the last over', 'Last-over finish', 'Decided in the final over', 'Went to the last six balls', 'Final-over drama'],
+    'Tense run chase':             ['Tense run chase', 'A nervy chase', 'The chase went deep', 'A run chase that got tight', 'Pressure chase'],
+    'Historically high scoring':   ['Historically high scoring', 'Record-territory scoring', 'An all-time scoring night', 'Historic offensive output', 'Scoring for the record books'],
+  };
+
+  function hashSeed(str) {
+    let h = 2166136261;
+    for (let i = 0; i < String(str).length; i++) { h ^= String(str).charCodeAt(i); h = Math.imul(h, 16777619); }
+    h ^= h >>> 13; h = Math.imul(h, 0x5bd1e995); h ^= h >>> 15;
+    return h >>> 0;
+  }
+
+  function pickVariant(phrase, seed, index) {
+    const arr = PHRASE_VARIANTS[phrase];
+    if (!arr || arr.length === 0 || seed == null) return phrase;
+    return arr[hashSeed(`${seed}|${phrase}|${index}`) % arr.length];
+  }
+
+  function getInsightPhrases(factors, sport, seed) {
     if (!Array.isArray(factors) || factors.length === 0) return [];
 
     // Sort factors by absolute point contribution (most impactful first)
@@ -1840,7 +1945,8 @@
     const leadChanges = lcFactor ? parseInt(lcFactor.label, 10) : 0;
     const hasComeback = factors.some(f => f.label?.includes('Close game after'));
     // A comeback proves it wasn't wire-to-wire even with few recorded lead changes
-    const hasRealBackAndForth = leadChanges >= 3 || hasComeback;
+    const hasCheckpointTie = factors.some(f => /Tied entering|Tied at the half/.test(f.label || ''));
+    const hasRealBackAndForth = leadChanges >= 3 || hasComeback || hasCheckpointTie;
 
     const phrases = [];
     const seen = new Set();
@@ -1856,13 +1962,13 @@
       // isn't a nail-biter even if the margin looks close.
       // Only apply to WNBA/NBA where we have reliable lead change data.
       if (phrase && (phrase === 'Down to the wire' || phrase === 'Close finish' || phrase === 'Competitive finish')
-          && (sport === 'wnba' || sport === 'nba') && !hasRealBackAndForth) {
+          && ['wnba','nba','nfl','ncaaf'].includes(sport) && !hasRealBackAndForth) {
         phrase = null;
       }
       if (!phrase) continue;
       if (seen.has(phrase)) continue;     // dedupe (e.g. multiple "High-scoring")
       seen.add(phrase);
-      phrases.push(phrase);
+      phrases.push(pickVariant(phrase, seed, phrases.length));
       if (phrases.length >= 3) break;
     }
 
@@ -1878,8 +1984,8 @@
   // scoreBtnArgs is the JS-literal string used inside the toggleScore call,
   // e.g. "5,3" for sports with numeric h/a, or "'set scores','' " for cricket/
   // tennis. Caller pre-builds it so this helper stays sport-agnostic.
-  function buildInsightHTML(factors, sport, scoreBtnArgs, espnHeadline) {
-    const phrases = getInsightPhrases(factors, sport);
+  function buildInsightHTML(factors, sport, scoreBtnArgs, espnHeadline, seed) {
+    const phrases = getInsightPhrases(factors, sport, seed);
     // Historic headline goes first, styled differently
     const historicHTML = espnHeadline
       ? `<span class="insight-tag insight-tag--historic">${espnHeadline}</span>`
@@ -2503,7 +2609,7 @@
         const cycleArgs = (isCricket || isTennis)
           ? `'${escapedScore}',''`
           : `${g.h},${g.a}`;
-        const insightHTML = buildInsightHTML(g.confidence?.factors, g.sport, cycleArgs, g.espnHeadline);
+        const insightHTML = buildInsightHTML(g.confidence?.factors, g.sport, cycleArgs, g.espnHeadline, g.id || `${g.home}|${g.away}|${g.date}`);
         const dateLabel = g.date || g.dateStr || '';
         const baseLeagueLabel = g.league || g.leagueName || g.tournament || '';
         const leagueLabel = g.mergedLabel ? `${g.mergedLabel}${baseLeagueLabel ? ' · ' + baseLeagueLabel : ''}` : baseLeagueLabel;
@@ -2815,7 +2921,7 @@
       : (g.watch && g.cat.cls === 'watchworthy' && !shouldHideWatchProvider(g))
         ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
         : '';
-    const insightHTML = buildInsightHTML(g.confidence?.factors, sport || g.sport, `${g.h},${g.a}`, g.espnHeadline);
+    const insightHTML = buildInsightHTML(g.confidence?.factors, sport || g.sport, `${g.h},${g.a}`, g.espnHeadline, g.id || `${g.home}|${g.away}|${g.date}`);
     const collinsworthHTML = g.collinsworthWarning
       ? `<div class="collinsworth-warning">🚨 Caution: Cris Collinsworth</div>` : '';
     return `
@@ -2887,7 +2993,7 @@
     const watchBtn = (g.watch && g.cat.cls === 'watchworthy')
       ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
       : '';
-    const insightHTML = buildInsightHTML(g.confidence?.factors, 'cricket', `'${safeStatus}',''`);
+    const insightHTML = buildInsightHTML(g.confidence?.factors, 'cricket', `'${safeStatus}',''`, null, g.id || `${g.home}|${g.away}`);
     return `
       <div class="game-card ${g.cat.cls}${isBestPick?' best-pick':''}" data-game-id="${gameId.replace(/"/g, '&quot;')}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
         <div class="teams" style="flex:1;min-width:0;">
@@ -2936,7 +3042,7 @@
     const gameId = makeGameId(g);
     const isTopPick = currentTopPickIds.has(gameId);
     const safeId = gameId.replace(/'/g, "\\'");
-    const insightHTML = buildInsightHTML(g.confidence?.factors, 'tennis', `'${safeScore}',''`);
+    const insightHTML = buildInsightHTML(g.confidence?.factors, 'tennis', `'${safeScore}',''`, null, `${g.home}|${g.away}|${g.date}`);
     return `
       <div class="game-card ${g.cat.cls}${isBestPick?' best-pick':''}" data-game-id="${gameId.replace(/"/g, '&quot;')}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
         <div class="teams" style="flex:1;min-width:0;">
