@@ -291,6 +291,9 @@ exports.handler = async function (event, context) {
       if (broadcast     !== undefined) out.broadcast     = broadcast;
       if (geoBroadcasts !== undefined) out.geoBroadcasts = geoBroadcasts;
       if (collinsworthWarning) out.collinsworthWarning = true;
+      // Neutral-site games (bowls, kickoff classics, WCWS, international NFL)
+      // have no real home team — frontend shows "vs" instead of "at".
+      if (comp?.neutralSite) out.neutral = true;
 
       // Team rank (Top 25 poll position) — cheap to always attempt, only
       // ESPN's college sports populate curatedRank; harmless no-op elsewhere.
@@ -1911,6 +1914,8 @@ exports.handler = async function (event, context) {
 
     } else if (sport === 'nfl') {
       for (const f of footballSignals(g, 'nfl')) { factors.push(f); score += f.points; }
+      if (g.fbWpLate5 != null && g.fbWpLate5 >= 0.9) { factors.push({ label: 'In doubt until the final minutes', points: 12 }); score += 12; }
+      if (g.fbWpEI != null && g.fbWpEI >= 3.0)       { factors.push({ label: 'Momentum swung back and forth', points: 8 }); score += 8; }
       if      (diff <= 3)  { factors.push({ label: `${diff} pt margin`, points: 30 }); score += 30; }
       else if (diff <= 7)  { factors.push({ label: `${diff} pt margin`, points: 20 }); score += 20; }
       else if (diff >= 17) { factors.push({ label: 'Blowout', points: -40 }); score -= 40; }
@@ -1938,6 +1943,8 @@ exports.handler = async function (event, context) {
 
     } else if (sport === 'ncaaf') {
       for (const f of footballSignals(g, 'ncaaf')) { factors.push(f); score += f.points; }
+      if (g.fbWpLate5 != null && g.fbWpLate5 >= 0.9) { factors.push({ label: 'In doubt until the final minutes', points: 12 }); score += 12; }
+      if (g.fbWpEI != null && g.fbWpEI >= 3.0)       { factors.push({ label: 'Momentum swung back and forth', points: 8 }); score += 8; }
       // Calibrated against a real Nov 8 2025 FBS Saturday (45 games): margins
       // are much wider than NFL's — half of all games land within 7 points,
       // but real blowout territory doesn't start until ~26-28 (vs NFL's 17).
@@ -2089,10 +2096,17 @@ exports.handler = async function (event, context) {
       if (g.debug?.nineDart) { factors.push({ label: '⚡ 9-darter on night', points: 8 }); score += 8; }
     }
 
-        // Recency bonus (small)
+    // Football: the four-pillar model decides the score when the game has
+    // full enrichment; factors above stay as "Why watch?" tag color.
+    const model = (sport === 'nfl' || sport === 'ncaaf') ? footballModel(g, sport) : null;
+    if (model) score = model.score;
+
+    // Recency bonus (small) — not applied to model scores (calibrated without it)
     const daysAgo = (Date.now() - (g.ts ?? 0)) / 86400000;
-    if      (daysAgo <= 1) { factors.push({ label: 'Today', points: 5 }); score += 5; }
-    else if (daysAgo <= 3) { factors.push({ label: 'Last 3 days', points: 3 }); score += 3; }
+    if (!model) {
+      if      (daysAgo <= 1) { factors.push({ label: 'Today', points: 5 }); score += 5; }
+      else if (daysAgo <= 3) { factors.push({ label: 'Last 3 days', points: 3 }); score += 3; }
+    }
 
     const finalScore = Math.max(0, Math.min(100, Math.round(score)));
 
@@ -2107,6 +2121,7 @@ exports.handler = async function (event, context) {
                     : sport === 'tennis'   ? 58
                     : sport === 'darts'    ? 50
                     : sport === 'cs2'      ? 55
+                    : model                ? 50
                     : sport === 'nfl'      ? 45
                     : sport === 'ncaaf'    ? 45
                     : 60;
@@ -2120,6 +2135,7 @@ exports.handler = async function (event, context) {
                     : sport === 'tennis'   ? 35
                     : sport === 'darts'    ? 25
                     : sport === 'cs2'      ? 28
+                    : model                ? 25
                     : sport === 'nfl'      ? 20
                     : sport === 'ncaaf'    ? 20
                     : 38;
@@ -2158,7 +2174,7 @@ exports.handler = async function (event, context) {
       cls = 'scorefest';
     }
 
-    return { score: finalScore, factors, cls };
+    return model ? { score: finalScore, factors, cls, model } : { score: finalScore, factors, cls };
   }
 
   // Attach confidence + derived category to all games
@@ -2294,6 +2310,37 @@ exports.handler = async function (event, context) {
     out.fbReturnTD = returnTD;
     out.fbMaxINT = maxINT;
     out.fbMaxSacks = maxSacks;
+
+    // Win probability → total movement (excitement) and doubt in the final
+    // five minutes / OT. ESPN's track has one-play glitch spikes (0% → 60% →
+    // 0%), so a 3-point median filter is applied first. Plays are matched to
+    // period + clock via the drive log. null = no track (model falls back).
+    const pmap = new Map();
+    for (const d of (summary?.drives?.previous || [])) {
+      for (const p of (d.plays || [])) {
+        const [mm, ss] = String(p.clock?.displayValue || '0:00').split(':');
+        pmap.set(String(p.id), [p.period?.number || 0, (parseInt(mm, 10) || 0) * 60 + (parseInt(ss, 10) || 0)]);
+      }
+    }
+    const raw = (summary?.winprobability || [])
+      .map(w => [Number(w.homeWinPercentage), pmap.get(String(w.playId))])
+      .filter(x => !isNaN(x[0]));
+    if (raw.length >= 3) {
+      const ps = raw.map(x => x[0]);
+      const sm = ps.map((p, i) => (i === 0 || i === ps.length - 1) ? p : [ps[i - 1], p, ps[i + 1]].sort((a, b) => a - b)[1]);
+      let ei = 0;
+      for (let i = 1; i < sm.length; i++) ei += Math.abs(sm[i] - sm[i - 1]);
+      let late = 0;
+      raw.forEach((x, i) => {
+        const t = x[1];
+        if (t && ((t[0] === 4 && t[1] <= 300) || t[0] >= 5)) late = Math.max(late, 1 - 2 * Math.abs(sm[i] - 0.5));
+      });
+      out.fbWpEI = Math.round(ei * 100) / 100;
+      out.fbWpLate5 = Math.round(late * 100) / 100;
+    } else {
+      out.fbWpEI = null;
+      out.fbWpLate5 = null;
+    }
     return out;
   }
 
@@ -2316,7 +2363,7 @@ exports.handler = async function (event, context) {
     if (g.fbTurnovers >= 5)           out.push({ label: 'Turnover-filled game', points: 8 });
     if (g.fbDefTD >= 1)               out.push({ label: 'Defensive touchdown', points: 6 });
     if (g.fbReturnTD >= 1)            out.push({ label: 'Return touchdown', points: 8 });
-    if (g.fbPenalties >= (cfb ? 22 : 18)) out.push({ label: 'Flag-heavy game', points: 3 });
+    if (g.fbPenalties >= (cfb ? 22 : 18)) out.push({ label: 'Flag-heavy game', points: -6 });  // penalties kill the flow
     if (g.fbFourthAtt >= 3)           out.push({ label: 'Aggressive on 4th down', points: 5 });
     if (g.fbTotalYards >= (cfb ? 1000 : 900)) out.push({ label: 'Offensive shootout', points: 10 });
     else if (g.fbMinYards != null && g.fbTotalYards > 0 && g.fbMinYards <= 220 && g.fbTotalYards <= 550)
@@ -2326,6 +2373,78 @@ exports.handler = async function (event, context) {
     else if (g.fbMissedKicks === 1)   out.push({ label: 'Missed kick', points: 3 });
     if (g.fbMaxINT >= 2 || g.fbMaxSacks >= 3) out.push({ label: 'Defensive standout', points: 6 });
     return out;
+  }
+
+  // ── Enrichment carry-forward ─────────────────────────────────────────────
+  // Finished games never change, so enrichment from the previous blob is
+  // reused and only games not yet enriched get a summary fetch. A weekend
+  // slate fills in over a few cron runs; after that each run fetches ~nothing.
+  // Requires fbWpLate5 to be present so games enriched by older code refetch.
+  let _priorBlob;
+  async function priorRecent(key) {
+    if (_priorBlob === undefined) {
+      try { _priorBlob = await getStore('scores').get('latest', { type: 'json' }); }
+      catch (e) { _priorBlob = null; }
+    }
+    return _priorBlob?.data?.[key]?.recent || [];
+  }
+
+  const ENRICH_KEYS = ['homeRushYds', 'awayRushYds', 'homePassYds', 'awayPassYds', 'maxRushLeader', 'maxRecvLeader', 'gameSacks'];
+  function carryForward(games, prior) {
+    const byId = new Map((prior || [])
+      .filter(p => p && p.id && p.status === 'final' && p.fbWpLate5 !== undefined)
+      .map(p => [p.id, p]));
+    const done = new Set();
+    const merged = games.map(g => {
+      const p = (g.id && g.status === 'final') ? byId.get(g.id) : null;
+      if (!p) return g;
+      done.add(g.id);
+      const extra = {};
+      for (const [k, v] of Object.entries(p)) if (k.startsWith('fb') || ENRICH_KEYS.includes(k)) extra[k] = v;
+      return { ...g, ...extra };
+    });
+    return { merged, done };
+  }
+
+  // ── Football game model (NFL + NCAAF) ────────────────────────────────────
+  // Four questions, each 0–1:
+  //   Action   (35) — combined points + total yards
+  //   Contest  (35) — final margin (half) + win-probability doubt late (half)
+  //   Drama    (20) — win-probability movement, lead changes, OT / big lead got close
+  //   Moments  (10) — return/defensive TD, 400-yd or 4-TD passer, 150-yd
+  //                   rusher/receiver, 5+ turnovers
+  // Action only counts fully when the game was competitive (gate), so a
+  // decided shootout doesn't coast on points. Flag-heavy games lose 4.
+  // Calibrated on NFL weeks 2–3 2026: ~3 Must Watch per weekend at 50.
+  // Returns null when enrichment/WP is missing → caller keeps legacy score.
+  const FB_MODEL = {
+    nfl:   { pts: [24, 64], yds: [600, 900],  bands: [3, 7, 8, 10, 14], flags: 18 },
+    ncaaf: { pts: [30, 75], yds: [700, 1050], bands: [3, 7, 8, 11, 17], flags: 22 },
+  };
+  function footballModel(g, sport) {
+    const P = FB_MODEL[sport];
+    if (!P || g.fbWpLate5 == null || g.fbLeadChanges == null || g.h == null || g.a == null) return null;
+    const cl = (x) => Math.max(0, Math.min(1, x));
+    const pts = g.h + g.a, m = Math.abs(g.h - g.a), b = P.bands;
+    const A = 0.75 * cl((pts - P.pts[0]) / (P.pts[1] - P.pts[0]))
+            + 0.25 * cl(((g.fbTotalYards || 0) - P.yds[0]) / (P.yds[1] - P.yds[0]));
+    const ms = m <= b[0] ? 1 : m <= b[1] ? 0.8 : m <= b[2] ? 0.65 : m <= b[3] ? 0.45 : m <= b[4] ? 0.25 : 0;
+    const C = 0.5 * ms + 0.5 * g.fbWpLate5;
+    const ot = (g.period || 4) > 4 ? 1 : 0;
+    const bigLeadClose = (g.fbLargestLead || 0) >= 14 && m <= 8 ? 1 : 0;
+    const D = cl(0.45 * cl(((g.fbWpEI || 0) - 1.5) / 2.5) + 0.25 * cl((g.fbLeadChanges || 0) / 4) + 0.3 * Math.max(ot, bigLeadClose));
+    const moments = [
+      (g.fbReturnTD || 0) > 0, (g.fbDefTD || 0) > 0,
+      (g.fbMaxPassYds || 0) >= 400 || (g.fbMaxPassTD || 0) >= 4,
+      (g.maxRushLeader || 0) >= 150, (g.maxRecvLeader || 0) >= 150,
+      (g.fbTurnovers || 0) >= 5,
+    ].filter(Boolean).length;
+    const M = cl(moments / 3);
+    const pen = (g.fbPenalties || 0) >= P.flags ? 4 : 0;
+    const gate = 0.5;
+    const s = 35 * A * (gate + (1 - gate) * C) + 35 * C + 20 * D + 10 * M - pen;
+    const r2 = (x) => Math.round(x * 100) / 100;
+    return { score: Math.round(Math.max(0, Math.min(100, s))), action: r2(A), contest: r2(C), drama: r2(D), moments: r2(M) };
   }
 
   // Fetch rushing/passing yardage per team, plus individual standout stats
@@ -2339,8 +2458,10 @@ exports.handler = async function (event, context) {
   //   gameSacks — combined sacks both teams' QBs took
   // Capped at 40 games — a 14-day NFL window is ~32 games max, so this
   // never approaches NBA/WNBA-style volume concerns.
-  async function enrichNFL(games) {
-    const candidates = games.filter(g => g.id).slice(0, 40);
+  async function enrichNFL(games, prior) {
+    const cf = carryForward(games, prior);
+    games = cf.merged;
+    const candidates = games.filter(g => g.id && !cf.done.has(g.id)).slice(0, 40);
     if (candidates.length === 0) return games;
 
     const summaries = await Promise.all(
@@ -2594,9 +2715,13 @@ exports.handler = async function (event, context) {
   // tripping ESPN's own rate limiting on the shared "fetch all" cron run.
   // Blowouts (diff>=28, our own NCAAF threshold) don't need enrichment to
   // classify correctly anyway — enrichment mainly helps close/mid games.
-  async function enrichNCAAF(games) {
-    const sorted = [...games].sort((a, b) => Math.abs(a.h - a.a) - Math.abs(b.h - b.a));
-    const candidates = sorted.filter(g => g.id).slice(0, 25);
+  async function enrichNCAAF(games, prior) {
+    const cf = carryForward(games, prior);
+    games = cf.merged;
+    // Closest games first so the best candidates enrich on the first run;
+    // the rest fill in on subsequent runs via carry-forward.
+    const sorted = [...games].filter(g => g.id && !cf.done.has(g.id)).sort((a, b) => Math.abs(a.h - a.a) - Math.abs(b.h - b.a));
+    const candidates = sorted.slice(0, 40);
     if (candidates.length === 0) return games;
 
     const summaries = await Promise.all(
@@ -2825,8 +2950,8 @@ exports.handler = async function (event, context) {
     mlb:      async () => { const r = await fetchSport(`${BASE}/baseball/mlb/scoreboard`, "MLB", 15); const enriched = enrichMLB(r.recent); return { mlb: { ...r, recent: attachConfidence(enriched, 'mlb') } }; },
     nba:      async () => { const r = await fetchNBAWithTimeline();   return { nba:     { ...r, recent: attachConfidence(r.recent,  'nba')      } }; },
     wnba:     async () => { const r = await fetchWNBAWithTimeline();  return { wnba:    { ...r, recent: attachConfidence(r.recent,  'wnba')     } }; },
-    nfl:      async () => { const r = await fetchSport(`${BASE}/football/nfl/scoreboard`, "NFL");     const enriched = await enrichNFL(r.recent); return { nfl: { ...r, recent: attachConfidence(enriched, 'nfl') } }; },
-    ncaaf:    async () => { const r = await fetchNCAAF();               const enriched = await enrichNCAAF(r.recent); return { ncaaf: { ...r, recent: attachConfidence(enriched, 'ncaaf') } }; },
+    nfl:      async () => { const r = await fetchSport(`${BASE}/football/nfl/scoreboard`, "NFL");     const enriched = await enrichNFL(r.recent, await priorRecent('nfl')); return { nfl: { ...r, recent: attachConfidence(enriched, 'nfl') } }; },
+    ncaaf:    async () => { const r = await fetchNCAAF();               const enriched = await enrichNCAAF(r.recent, await priorRecent('ncaaf')); return { ncaaf: { ...r, recent: attachConfidence(enriched, 'ncaaf') } }; },
     cricket:  async () => { const r = await fetchCricket();           return { cricket: { ...r, recent: attachConfidence(r.recent,  'cricket')  } }; },
     tennis:   async () => { const r = await fetchTennis();            return { tennis:  { ...r, recent: attachConfidence(r.recent,  'tennis')   } }; },
     softball: async () => { const r = await fetchSoftball();          return { softball: { ...r, recent: attachConfidence(r.recent, 'softball') } }; },
@@ -2876,8 +3001,8 @@ exports.handler = async function (event, context) {
       mlb:     { ...mlb,     recent: attachConfidence(enrichMLB(mlb.recent),     'mlb')      },
       nba:     { ...nba,     recent: attachConfidence(nba.recent,     'nba')      },
       wnba:    { ...wnba,    recent: attachConfidence(wnba.recent,    'wnba')     },
-      nfl:     { ...nfl,     recent: attachConfidence(await enrichNFL(nfl.recent),     'nfl')      },
-      ncaaf:   { ...ncaaf,   recent: attachConfidence(await enrichNCAAF(ncaaf.recent), 'ncaaf')    },
+      nfl:     { ...nfl,     recent: attachConfidence(await enrichNFL(nfl.recent, await priorRecent('nfl')),     'nfl')      },
+      ncaaf:   { ...ncaaf,   recent: attachConfidence(await enrichNCAAF(ncaaf.recent, await priorRecent('ncaaf')), 'ncaaf')    },
       cricket: { ...cricket, recent: attachConfidence(cricket.recent, 'cricket')  },
       tennis:  { ...tennis,  recent: attachConfidence(tennis.recent,  'tennis')   },
       darts:   { ...darts,   recent: attachConfidence(darts.recent,   'darts')    },

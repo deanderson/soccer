@@ -1634,11 +1634,15 @@
     'Big receiving day':       'Big receiving day',
     'Lots of sacks':           'Lots of sacks',
 
+    // WIN PROBABILITY (NFL + NCAAF) — outcome in doubt, result unstated
+    'In doubt until the final minutes':  'In doubt until the final minutes',
+    'Momentum swung back and forth':     'Momentum swung back and forth',
+
     // FOOTBALL COLOR (NFL + NCAAF) — game character, result unstated
     'Turnover-filled game':   'Turnover-filled game',
     'Defensive touchdown':    'Defense scored a touchdown',
     'Return touchdown':       'Return touchdown',
-    'Flag-heavy game':        'Flag-heavy game',
+    'Flag-heavy game':        null,  // penalty signal — not a reason to watch
     'Aggressive on 4th down': 'Aggressive 4th-down calls',
     'Offensive shootout':     'Offensive shootout',
     'Defensive slugfest':     'Defensive slugfest',
@@ -1883,6 +1887,8 @@
     'Wild 4th quarter':            ['Wild 4th quarter', 'A frantic final quarter', 'Fourth-quarter fireworks', 'Everything happened in the 4th', 'A chaotic last quarter'],
     'Wild 3rd period':             ['Wild 3rd period', 'A frantic third period', 'Third-period fireworks', 'Everything happened in the third', 'A chaotic final period'],
     'Big swing in the 4th':        ['Big swing in the 4th', 'The 4th quarter changed everything', 'Fourth-quarter momentum shift', 'A late-game swing', 'The margin moved a lot in the 4th'],
+    'In doubt until the final minutes': ['In doubt until the final minutes', 'Anyone’s game late', 'Unresolved deep into the 4th', 'Hung in the balance late', 'Nobody could relax until the end'],
+    'Momentum swung back and forth':    ['Momentum swung back and forth', 'The game kept flipping', 'Wild momentum swings', 'Neither side could hold control', 'A game of runs'],
     'Turnover-filled game':        ['Turnover-filled game', 'Sloppy with the ball', 'Turnovers everywhere', 'The ball was on the ground a lot', 'Giveaways piled up'],
     'Defense scored a touchdown':  ['Defense scored a touchdown', 'A defensive score', 'Defense got in the end zone', 'A pick-six or scoop-and-score', 'Points from the defense'],
     'Return touchdown':            ['Return touchdown', 'A return went the distance', 'Special teams score', 'A kick or punt taken to the house', 'A return TD'],
@@ -2380,6 +2386,14 @@
     return pickFrom(watchable, minPicks).map(g => ({ ...g, sport: activeSport, isFallback: true }));
   }
 
+  // US leagues read "Away at Home" (venue implied); everything else keeps
+  // "Home vs Away". Neutral-site games have no real home team, so they stay
+  // "vs". Wherever the names flip, the revealed score must flip with them.
+  const AT_SPORTS = new Set(['nfl','ncaaf','nba','wnba','mlb','nhl','softball']);
+  function usesAt(g, sport) {
+    return AT_SPORTS.has(sport || g.sport || activeSport) && !g.neutral;
+  }
+
   function tpScoreStr(g) {
     if (g.sport === 'cricket') return g.status || '';
     if (g.sport === 'tennis') {
@@ -2609,7 +2623,7 @@
         const escapedScore = scoreStr.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
         const cycleArgs = (isCricket || isTennis)
           ? `'${escapedScore}',''`
-          : `${g.h},${g.a}`;
+          : (usesAt(g) ? `${g.a},${g.h}` : `${g.h},${g.a}`);
         const insightHTML = buildInsightHTML(g.confidence?.factors, g.sport, cycleArgs, g.espnHeadline, g.id || `${g.home}|${g.away}|${g.date}`);
         const dateLabel = g.date || g.dateStr || '';
         const baseLeagueLabel = g.league || g.leagueName || g.tournament || '';
@@ -2627,8 +2641,8 @@
               <span class="tp-sport">${leagueLabel}</span>
             </div>
             <div class="tp-matchup">
-              <div class="tp-team">${g.home}</div>
-              <div class="tp-team-second"><span class="tp-vs">vs</span> ${g.away}</div>
+              <div class="tp-team">${usesAt(g) ? g.away : g.home}</div>
+              <div class="tp-team-second"><span class="tp-vs">${usesAt(g) ? 'at' : 'vs'}</span> ${usesAt(g) ? g.home : g.away}</div>
             </div>
             <div class="tp-meta">${dateLabel}</div>
             <div class="tp-badge">${g.cat.icon} ${g.cat.label}${g.cat.badge ? ' · ' + g.cat.badge : ''}</div>
@@ -2922,13 +2936,14 @@
       : (g.watch && g.cat.cls === 'watchworthy' && !shouldHideWatchProvider(g))
         ? `<a class="watch-btn" href="${g.watch.url}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎬 Watch on ${g.watch.name}</a>`
         : '';
-    const insightHTML = buildInsightHTML(g.confidence?.factors, sport || g.sport, `${g.h},${g.a}`, g.espnHeadline, g.id || `${g.home}|${g.away}|${g.date}`);
+    const atMode = usesAt(g, sport);
+    const insightHTML = buildInsightHTML(g.confidence?.factors, sport || g.sport, atMode ? `${g.a},${g.h}` : `${g.h},${g.a}`, g.espnHeadline, g.id || `${g.home}|${g.away}|${g.date}`);
     const collinsworthHTML = g.collinsworthWarning
       ? `<div class="collinsworth-warning">🚨 Caution: Cris Collinsworth</div>` : '';
     return `
       <div class="game-card ${g.cat.cls}${isBestPick?' best-pick':''}" data-game-id="${gameId.replace(/"/g, '&quot;')}" style="animation-delay:${i*0.04}s;flex-wrap:wrap;">
         <div class="teams" style="flex:1;min-width:0;">
-          <div class="matchup">${teamLabel(g.home, g.homeRank)} <span class="vs">vs</span> ${teamLabel(g.away, g.awayRank)}</div>
+          <div class="matchup">${atMode ? `${teamLabel(g.away, g.awayRank)} <span class="vs">at</span> ${teamLabel(g.home, g.homeRank)}` : `${teamLabel(g.home, g.homeRank)} <span class="vs">vs</span> ${teamLabel(g.away, g.awayRank)}`}</div>
           <div class="game-meta">${g.date} · ${g.league}</div>
           ${collinsworthHTML}
         </div>
@@ -3108,7 +3123,7 @@
     return `
       <div class="upcoming-card" style="animation-delay:${i*0.04}s">
         <div class="teams">
-          <div class="matchup">${teamLabel(g.home, g.homeRank)} <span class="vs">vs</span> ${teamLabel(g.away, g.awayRank)}</div>
+          <div class="matchup">${usesAt(g) ? `${teamLabel(g.away, g.awayRank)} <span class="vs">at</span> ${teamLabel(g.home, g.homeRank)}` : `${teamLabel(g.home, g.homeRank)} <span class="vs">vs</span> ${teamLabel(g.away, g.awayRank)}`}</div>
           <div class="game-meta">${g.league}</div>
           <div class="kickoff-time">🕐 ${formatGameTime(g.ts)}</div>
           ${watchStatusHTML || broadcast}
