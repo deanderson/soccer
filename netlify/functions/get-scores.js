@@ -2441,8 +2441,16 @@ exports.handler = async function (event, context) {
     ].filter(Boolean).length;
     const M = cl(moments / 3);
     const pen = (g.fbPenalties || 0) >= P.flags ? 4 : 0;
+    // College relevance bump: FBS is the higher level (bigger audience, TV,
+    // rankings/playoff stakes) and ranked teams carry stakes casual fans care
+    // about. Small on purpose — breaks close calls, can't lift a dull game.
+    let prestige = 0;
+    if (sport === 'ncaaf') {
+      if (g.league === 'FBS') prestige += 3;
+      prestige += (g.homeRank && g.awayRank) ? 5 : (g.homeRank || g.awayRank) ? 2 : 0;
+    }
     const gate = 0.5;
-    const s = 35 * A * (gate + (1 - gate) * C) + 35 * C + 20 * D + 10 * M - pen;
+    const s = 35 * A * (gate + (1 - gate) * C) + 35 * C + 20 * D + 10 * M - pen + prestige;
     const r2 = (x) => Math.round(x * 100) / 100;
     return { score: Math.round(Math.max(0, Math.min(100, s))), action: r2(A), contest: r2(C), drama: r2(D), moments: r2(M) };
   }

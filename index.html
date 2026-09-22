@@ -2343,6 +2343,14 @@
         seenLeagues.add(g.league);
         picks.push(g);
       }
+      // Variety is a preference, not a cap: once each league has its best
+      // game in, fill remaining slots with the best of the rest. A second
+      // Must Watch from the same league (e.g. two FCS thrillers) beats
+      // backfilling with a Watchable.
+      for (const g of candidates) {
+        if (picks.length >= max) break;
+        if (!picks.includes(g)) picks.push(g);
+      }
       return picks;
     }
 
