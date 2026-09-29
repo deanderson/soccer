@@ -3171,10 +3171,13 @@
     const p = g.period;
     if (!p || p < 1) return 'In progress';
     const ord = n => ['', '1st', '2nd', '3rd', '4th'][n] || `${n}th`;
-    if (sport === 'nhl')  return p > 3 ? 'Overtime' : `${ord(p)} period`;
-    if (sport === 'mlb')  return `Inning ${p}`;
-    if (['nfl','ncaaf','nba','wnba'].includes(sport)) return p > 4 ? 'Overtime' : `${ord(p)} quarter`;
-    if (sport === 'football') return p > 2 ? 'Extra time' : (p === 1 ? 'First half' : 'Second half');
+    // Anything past regulation is a spoiler: overtime, extra time and extra
+    // innings all reveal the game was level when regulation ended. INSIGHT_MAP
+    // nulls every overtime label for exactly this reason — this must match.
+    if (sport === 'nhl')  return p > 3 ? 'In progress' : `${ord(p)} period`;
+    if (sport === 'mlb')  return p > 9 ? 'In progress' : `Inning ${p}`;
+    if (['nfl','ncaaf','nba','wnba'].includes(sport)) return p > 4 ? 'In progress' : `${ord(p)} quarter`;
+    if (sport === 'football') return p > 2 ? 'In progress' : (p === 1 ? 'First half' : 'Second half');
     return 'In progress';
   }
 
