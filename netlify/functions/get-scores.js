@@ -204,13 +204,16 @@ exports.handler = async function (event, context) {
     return fetchESPN(url, 5000);
   }
 
-  const FINAL_STATUSES = new Set([
-    "STATUS_FINAL", "STATUS_FULL_TIME", "STATUS_FT",
-    "STATUS_ENDED", "STATUS_COMPLETED",
-  ]);
-  const UPCOMING_STATUSES = new Set([
-    "STATUS_SCHEDULED", "STATUS_PREGAME",
-  ]);
+  // Game lifecycle comes from ESPN's own status fields, not from the status
+  // NAME. `type.state` is "pre" | "in" | "post" and `type.completed` is true
+  // only for a game that actually finished. Status names are open-ended and
+  // per-sport (STATUS_IN_PROGRESS, STATUS_HALFTIME, STATUS_END_PERIOD,
+  // STATUS_FIRST_HALF, STATUS_DELAYED, STATUS_RAIN_DELAY, ...), so a name
+  // allow-list silently drops every status it has not been taught. That is
+  // what hid in-progress games from the site entirely: they matched neither
+  // the final nor the upcoming list and fell into an unread "other" bucket.
+  // Postponed/canceled are state "post" with completed false, so they still
+  // land in "other" and stay excluded — which is what we want.
 
   // Sports where broadcast data is shown in the UI. We only capture
   // geoBroadcasts for these to avoid bloating the blob with unused data
@@ -224,7 +227,9 @@ exports.handler = async function (event, context) {
       const comp   = ev.competitions?.[0];
       const home   = comp?.competitors?.find(c => c.homeAway === "home");
       const away   = comp?.competitors?.find(c => c.homeAway === "away");
-      const status = ev.status?.type?.name ?? "";
+      const statusType = ev.status?.type ?? {};
+      const gameState  = statusType.state ?? "";
+      const isLive     = gameState === "in";
       const date   = new Date(ev.date);
       // Guard against null/malformed dates from ESPN — skip events that can't be parsed
       if (isNaN(date.getTime())) return null;
@@ -276,14 +281,17 @@ exports.handler = async function (event, context) {
         id:     ev.id ?? null,
         home:   home?.team?.displayName ?? "TBD",
         away:   away?.team?.displayName ?? "TBD",
-        h:      parseInt(home?.score ?? "0", 10),
-        a:      parseInt(away?.score ?? "0", 10),
+        // Spoiler safety: a game in progress has a real, changing score on
+        // ESPN. It must never reach the blob — the blob is public JSON.
+        h:      isLive ? null : parseInt(home?.score ?? "0", 10),
+        a:      isLive ? null : parseInt(away?.score ?? "0", 10),
         date:   displayDate,
         dateKey: dateKey,
         time:   date.toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit", timeZoneName:"short" }),
         league: leagueName,
-        status: FINAL_STATUSES.has(status)    ? "final"
-              : UPCOMING_STATUSES.has(status) ? "upcoming"
+        status: statusType.completed === true ? "final"
+              : isLive                        ? "live"
+              : gameState === "pre"           ? "upcoming"
               : "other",
         ts: date.getTime(),
         period: ev.status?.period ?? null,
@@ -317,6 +325,20 @@ exports.handler = async function (event, context) {
   const now  = Date.now();
   const twoWeeksAgo = now - 9 * 86400000;
 
+  // A live game belongs with upcoming, never with scored: there is no final
+  // result to rate, and attachConfidence only ever runs over `recent`, so
+  // routing it here is what keeps the confidence engine away from a game
+  // that has not finished. Its kickoff is already in the past, so the
+  // `ts >= now` guard that protects the scheduled list would drop it —
+  // hence the separate arm. Cricket already works this way (isPre || isLive).
+  // LIVE_MAX_AGE_MS is a backstop, not a clock: if ESPN leaves a status stuck
+  // on "in", this stops a finished game sitting under "On Now" forever.
+  // 8h clears even a long extra-innings MLB game.
+  const LIVE_MAX_AGE_MS = 8 * 3600000;
+  const showsUpcoming = g =>
+    (g.status === "live" && now - g.ts < LIVE_MAX_AGE_MS) ||
+    (g.status === "upcoming" && g.ts >= now);
+
   async function fetchSport(scoreboardUrl, leagueName, upcomingCap = 50) {
     // Fetch recent (past 14 days) and upcoming (next 4 days) separately to avoid ESPN timeout
     const [recentData, upcomingData] = await Promise.all([
@@ -332,7 +354,7 @@ exports.handler = async function (event, context) {
       .sort((a, b) => a.ts - b.ts);
 
     const upcoming = upcomingEvents
-      .filter(g => g.status === "upcoming" && g.ts >= now)
+      .filter(showsUpcoming)
       .sort((a, b) => a.ts - b.ts)
       .slice(0, upcomingCap);
 
@@ -399,7 +421,7 @@ exports.handler = async function (event, context) {
     const upcomingEvents = normalizeEvents(upcomingData, 'NCAAF').map(g => ({ ...g, division }));
     return {
       recent:   recentEvents.filter(g => g.status === 'final' && g.ts >= twoWeeksAgo),
-      upcoming: upcomingEvents.filter(g => g.status === 'upcoming' && g.ts >= now),
+      upcoming: upcomingEvents.filter(showsUpcoming),
     };
   }
 
@@ -442,6 +464,8 @@ exports.handler = async function (event, context) {
         };
         if (g.gameState === 'final' && !isNaN(h) && !isNaN(a)) {
           recent.push({ ...base, status: 'final', h, a });
+        } else if (g.gameState === 'in') {
+          upcoming.push({ ...base, status: 'live', h: null, a: null });
         } else if (g.gameState === 'pre' && ts >= now) {
           upcoming.push({ ...base, status: 'upcoming', h: null, a: null });
         }
@@ -567,7 +591,7 @@ exports.handler = async function (event, context) {
       }); // newest first
 
     const upcoming = allEvents
-      .filter(g => g.status === "upcoming" && g.ts >= now)
+      .filter(showsUpcoming)
       .sort((a, b) => a.ts - b.ts)
       .slice(0, 10);
 
@@ -1123,6 +1147,7 @@ exports.handler = async function (event, context) {
             if (EXCLUDED_ROUNDS.has(comp.round?.id)) continue;
 
             const isCompleted = comp.status?.type?.completed === true;
+            const isLiveMatch = comp.status?.type?.state === 'in';
             const date = new Date(comp.startDate || comp.date);
             const ts = date.getTime();
 
@@ -1186,6 +1211,10 @@ exports.handler = async function (event, context) {
 
             if (isCompleted && ts >= threeWeeksAgo) {
               recent.push(match);
+            } else if (isLiveMatch && now - ts < LIVE_MAX_AGE_MS) {
+              // Same spoiler rule as the team sports: the set scores on a
+              // match in progress are live and must not reach the blob.
+              upcoming.push({ ...match, status: 'live', homeSets: null, awaySets: null, sets: [] });
             } else if (!isCompleted && ts >= now) {
               upcoming.push(match);
             }
@@ -1307,7 +1336,7 @@ exports.handler = async function (event, context) {
     const upcomingEvents = normalizeEvents(upcomingData, "NHL");
 
     const recent   = recentEvents.filter(g => g.status === "final" && g.ts >= twoWeeksAgo).sort((a, b) => b.ts - a.ts);
-    const upcoming = upcomingEvents.filter(g => g.status === "upcoming" && g.ts >= now).sort((a, b) => a.ts - b.ts).slice(0, 50);
+    const upcoming = upcomingEvents.filter(showsUpcoming).sort((a, b) => a.ts - b.ts).slice(0, 50);
 
     // Hard pre-filter: 3+ goal margin = Skip, no need for expensive timeline fetch
     const candidates = recent.filter(g => g.id && Math.abs(g.h - g.a) < 3).slice(0, 30);
@@ -1458,7 +1487,7 @@ exports.handler = async function (event, context) {
     const upcomingEvents = normalizeEvents(upcomingData, "NBA");
 
     const recent   = recentEvents.filter(g => g.status === "final" && g.ts >= twoWeeksAgo).sort((a, b) => b.ts - a.ts);
-    const upcoming = upcomingEvents.filter(g => g.status === "upcoming" && g.ts >= now).sort((a, b) => a.ts - b.ts).slice(0, 50);
+    const upcoming = upcomingEvents.filter(showsUpcoming).sort((a, b) => a.ts - b.ts).slice(0, 50);
 
     // Analyze all games except clear blowouts — skip diff>=20
     const candidates = recent.filter(g => g.id && Math.abs(g.h - g.a) < 20).slice(0, 30);
@@ -1511,7 +1540,7 @@ exports.handler = async function (event, context) {
     const upcomingEvents = normalizeEvents(upcomingData, "WNBA");
 
     const recent   = recentEvents.filter(g => g.status === "final" && g.ts >= twoWeeksAgo).sort((a, b) => b.ts - a.ts);
-    const upcoming = upcomingEvents.filter(g => g.status === "upcoming" && g.ts >= now).sort((a, b) => a.ts - b.ts).slice(0, 50);
+    const upcoming = upcomingEvents.filter(showsUpcoming).sort((a, b) => a.ts - b.ts).slice(0, 50);
 
     // Skip clear blowouts in timeline enrichment. WNBA blowout threshold scaled
     // from NBA's 20: roughly 15. Saves API calls on games that won't tier up.
@@ -2686,7 +2715,7 @@ exports.handler = async function (event, context) {
       .filter(g => g.status === "final" && g.ts >= twoWeeksAgo)
       .sort((a, b) => a.ts - b.ts);
     const upcoming = upcomingEvents
-      .filter(g => g.status === "upcoming" && g.ts >= now)
+      .filter(showsUpcoming)
       .sort((a, b) => a.ts - b.ts)
       .slice(0, 150);
     return { recent, upcoming };

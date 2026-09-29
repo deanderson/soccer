@@ -141,6 +141,20 @@
   .debug-toast{position:fixed;top:16px;right:16px;background:var(--card);border:1px solid var(--green);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:700;color:var(--green);z-index:300;opacity:0;transition:opacity 0.2s;pointer-events:none;}
   .debug-toast.show{opacity:1;}
 
+  /* ON NOW — games in progress. Orange so it reads as its own thing at a
+     glance, distinct from both scored (green) and upcoming (purple). These
+     cards carry no score, no confidence rating and no tier badge: the game
+     has not finished, so there is nothing honest to rate and any score on
+     it is a spoiler. */
+  .live-divider{display:flex;align-items:center;gap:12px;margin:0 0 20px;font-size:13px;font-weight:600;color:var(--orange);}
+  .live-divider::before,.live-divider::after{content:'';flex:1;height:1px;background:linear-gradient(to right,transparent,rgba(240,136,62,0.3),transparent);}
+  .live-card{background:var(--orange-bg);border:1px solid rgba(240,136,62,0.2);border-left:3px solid var(--orange)!important;border-radius:12px;padding:14px 18px;margin-bottom:9px;display:flex;align-items:center;gap:14px;animation:fadeUp 0.35s ease both;}
+  .live-badge{display:flex;align-items:center;gap:6px;background:rgba(240,136,62,0.12);border:1px solid rgba(240,136,62,0.25);color:var(--orange);padding:5px 12px;border-radius:7px;font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0;}
+  .live-dot{width:7px;height:7px;border-radius:50%;background:var(--orange);flex-shrink:0;animation:livePulse 1.8s ease-in-out infinite;}
+  @keyframes livePulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+  .live-progress{font-size:11px;color:var(--orange);font-weight:500;margin-top:2px;}
+  @media (prefers-reduced-motion: reduce){.live-dot{animation:none;}}
+
   /* UPCOMING CARD */
   .upcoming-card{background:var(--purple-bg);border:1px solid rgba(188,140,255,0.2);border-left:3px solid var(--purple)!important;border-radius:12px;padding:14px 18px;margin-bottom:9px;display:flex;align-items:center;gap:14px;animation:fadeUp 0.35s ease both;}
   .upcoming-badge{display:flex;align-items:center;gap:5px;background:rgba(188,140,255,0.12);border:1px solid rgba(188,140,255,0.25);color:var(--purple);padding:5px 12px;border-radius:7px;font-size:11px;font-weight:700;white-space:nowrap;flex-shrink:0;}
@@ -378,6 +392,8 @@
     .score-reveal{font-size:14px;min-width:40px;}
     .upcoming-card{flex-wrap:wrap;gap:8px;padding:12px 14px;}
     .upcoming-badge{font-size:10px;padding:4px 9px;}
+    .live-card{flex-wrap:wrap;gap:8px;padding:12px 14px;}
+    .live-badge{font-size:10px;padding:4px 9px;}
     .stat-num{font-size:20px;}
     .stat{padding:10px 8px;}
     .filter-btn{font-size:11px;padding:4px 10px;}
@@ -2693,6 +2709,12 @@
     const container = document.getElementById(`${sport}-games`);
     const now = Date.now();
     let html = '';
+    // Games in progress travel in `upcoming` (nothing to score yet). Split
+    // them out before any date grouping — their start time is in the past,
+    // so they would otherwise be filed under yesterday in "Coming Up".
+    const liveAll   = (upcoming || []).filter(g => g.status === 'live');
+    const scheduled = (upcoming || []).filter(g => g.status !== 'live');
+    let liveHTML = '';
 
     if (sport === 'football') {
       // Apply category filter
@@ -2738,8 +2760,12 @@
           });
       }
 
-      // Upcoming — filter by league only (no scores yet to filter by category)
-      let upcomingFiltered = upcoming;
+      // On Now + Upcoming — filter by league only (no scores to filter on)
+      let liveFiltered = liveAll;
+      if (state.football.league !== 'all') liveFiltered = liveFiltered.filter(g => g.league === state.football.league);
+      liveHTML = liveSectionHTML(liveFiltered, sport);
+
+      let upcomingFiltered = scheduled;
       if (sport === 'football' && state.football.league !== 'all') upcomingFiltered = upcomingFiltered.filter(g => g.league === state.football.league);
 
       if (upcomingFiltered.length > 0) {
@@ -2789,7 +2815,11 @@
           });
       }
 
-      let upcomingFilteredNCAAF = upcoming;
+      let liveFilteredNCAAF = liveAll;
+      if (state.ncaaf.division !== 'all') liveFilteredNCAAF = liveFilteredNCAAF.filter(g => g.league === state.ncaaf.division);
+      liveHTML = liveSectionHTML(liveFilteredNCAAF, sport);
+
+      let upcomingFilteredNCAAF = scheduled;
       if (state.ncaaf.division !== 'all') upcomingFilteredNCAAF = upcomingFilteredNCAAF.filter(g => g.league === state.ncaaf.division);
 
       if (upcomingFilteredNCAAF.length > 0) {
@@ -2822,8 +2852,10 @@
       // wants "where can I watch tonight" — broadcast info on upcoming cards is
       // the unique answer this site provides. For other sports, broadcast confusion
       // is less of a fan pain point, so upcoming stays below past games as before.
+      liveHTML = liveSectionHTML(liveAll, sport);
+
       let upcomingHTML = '';
-      if (upcoming.length > 0) {
+      if (scheduled.length > 0) {
         const configured = hasSubscriptions();
         const watchBtn = sport === 'wnba'
           ? `<button class="personalize-btn${configured?' active':''}" id="wnba-personalize-btn" onclick="togglePersonalize()" style="margin-left:auto;flex-shrink:0">📺 ${configured ? 'My Services ✓' : 'Can I watch this?'}</button>`
@@ -2833,7 +2865,7 @@
           upcomingHTML += `<div class="personalize-panel" id="wnba-personalize-panel"><div class="personalize-title">What do you have access to?</div><div class="personalize-options" id="wnba-personalize-options"></div><button class="personalize-save" onclick="savePersonalize()">Save</button><div class="personalize-hint">We'll show ✅ or ⚠️ on upcoming games so you know before you plan your night.</div></div>`;
         }
         const byDate = {};
-        upcoming.forEach(g => { if(!byDate[g.date]) byDate[g.date]=[]; byDate[g.date].push(g); });
+        scheduled.forEach(g => { if(!byDate[g.date]) byDate[g.date]=[]; byDate[g.date].push(g); });
         Object.entries(byDate).forEach(([date, dayGames]) => {
           upcomingHTML += `<div class="section-label">${date}</div>`;
           upcomingHTML += dayGames.map((g,i) => upcomingCardHTML(g,i)).join('');
@@ -2864,7 +2896,7 @@
       }
     }
 
-    container.innerHTML = html;
+    container.innerHTML = liveHTML + html;
   }
 
   // ── DEBUG MODE ─────────────────────────────────────────────────────────
@@ -3117,6 +3149,50 @@
       wrapper.dataset.expanded = 'true';
       btn.textContent = 'Show fewer ↑';
     }
+  }
+
+  // Spoiler-safe progress label: period only. Never the clock, never the
+  // score. It answers "is this worth tuning into right now" without saying
+  // anything about how the game is going.
+  function livePeriodLabel(sport, g) {
+    const p = g.period;
+    if (!p || p < 1) return 'In progress';
+    const ord = n => ['', '1st', '2nd', '3rd', '4th'][n] || `${n}th`;
+    if (sport === 'nhl')  return p > 3 ? 'Overtime' : `${ord(p)} period`;
+    if (sport === 'mlb')  return `Inning ${p}`;
+    if (['nfl','ncaaf','nba','wnba'].includes(sport)) return p > 4 ? 'Overtime' : `${ord(p)} quarter`;
+    if (sport === 'football') return p > 2 ? 'Extra time' : (p === 1 ? 'First half' : 'Second half');
+    return 'In progress';
+  }
+
+  // "On Now" — games in progress. Deliberately unrated: no confidence score,
+  // no tier badge, no Top Picks slot. Backend routes these into `upcoming`
+  // precisely so attachConfidence (which only runs over `recent`) can never
+  // rate a game that has not finished.
+  function liveSectionHTML(games, sport) {
+    if (!games || games.length === 0) return '';
+    return `<div class="live-divider">🔴 On Now</div>` +
+      games.slice().sort((a, b) => a.ts - b.ts).map((g, i) => liveCardHTML(g, i, sport)).join('');
+  }
+
+  function liveCardHTML(g, i, sport) {
+    const isWNBA = g.league === 'WNBA';
+    const watchStatusHTML = isWNBA ? buildWatchStatusHTML(g) : '';
+    const broadcast = (!watchStatusHTML && (g.geoBroadcasts !== undefined || g.broadcast))
+      ? buildBroadcastHTML(g) : '';
+    const collinsworthHTML = g.collinsworthWarning
+      ? `<div class="collinsworth-warning">🚨 Caution: Cris Collinsworth</div>` : '';
+    return `
+      <div class="live-card" style="animation-delay:${i*0.04}s">
+        <div class="teams">
+          <div class="matchup">${usesAt(g) ? `${teamLabel(g.away, g.awayRank)} <span class="vs">at</span> ${teamLabel(g.home, g.homeRank)}` : `${teamLabel(g.home, g.homeRank)} <span class="vs">vs</span> ${teamLabel(g.away, g.awayRank)}`}</div>
+          <div class="game-meta">${g.league}</div>
+          <div class="live-progress">${livePeriodLabel(sport, g)} · started ${formatGameTime(g.ts)}</div>
+          ${watchStatusHTML || broadcast}
+          ${collinsworthHTML}
+        </div>
+        <div class="live-badge"><span class="live-dot"></span>On Now</div>
+      </div>`;
   }
 
   function upcomingCardHTML(g, i) {
